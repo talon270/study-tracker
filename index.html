@@ -949,37 +949,132 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .companion__body{display:flex; justify-content:center; padding:var(--s2) 0 var(--s3)}
 .companion__caption{font-size:12.5px; color:var(--text-dim); text-align:center;
   line-height:1.5; margin:0}
-.owl{overflow:visible; transform-origin:60px 55px}
-.owl-body,.owl-ears,.owl-wings,.owl-branch{fill:none; stroke:var(--text-dim);
+
+.owl{width:100%; max-width:238px; height:auto; overflow:visible}
+.owl-body,.owl-ears,.owl-wing,.owl-feet{fill:none; stroke:var(--text-dim);
   stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round}
-.owl-branch{stroke:var(--border)}
-.owl-eyes-open circle{fill:none; stroke:var(--text-dim); stroke-width:2.6}
-.owl-eyes-open .owl-pupil{fill:var(--text-strong); stroke:none}
-.owl-eyes-half path,.owl-eyes-closed path{fill:none; stroke:var(--text-dim);
-  stroke-width:2.6; stroke-linecap:round}
-.owl-beak{fill:var(--accent); stroke:none}
-.owl-zzz path{fill:none; stroke:var(--accent); stroke-width:2.2;
+.owl-branch,.owl-prop{fill:none; stroke:var(--border); stroke-width:2.4;
   stroke-linecap:round; stroke-linejoin:round}
+.owl-eye-ring{fill:none; stroke:var(--text-dim); stroke-width:2.6}
+.owl-pupil{fill:var(--text-strong); stroke:none}
+.owl-lid{fill:none; stroke:var(--text-dim); stroke-width:2.6; stroke-linecap:round}
+.owl-beak{fill:var(--accent); stroke:none}
+.owl-steam,.owl-zzz,.owl-page{fill:none; stroke:var(--accent); stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round}
+
 /* One shape, four moods -- the matching group is shown, the rest stay hidden
    rather than swapping in a different SVG per mood. */
-.owl-eyes-open{transform-origin:60px 52px}
-.owl-eyes-half,.owl-eyes-closed,.owl-zzz{display:none}
+.owl-eyes-half,.owl-eyes-shut,.owl-zzz,.owl-steam,.owl-page{display:none}
 .owl.mood-resting .owl-eyes-open{display:none}
 .owl.mood-resting .owl-eyes-half{display:block}
+.owl.mood-resting .owl-steam{display:block}
 .owl.mood-dozing .owl-eyes-open{display:none}
-.owl.mood-dozing .owl-eyes-closed{display:block}
+.owl.mood-dozing .owl-eyes-shut{display:block}
 .owl.mood-dozing .owl-zzz{display:block}
-.owl.mood-dozing{transform:rotate(-6deg)}
+.owl.mood-focused .owl-page{display:block}
 /* Focus reads as warmth, not a different pose: the ears and beak alone pick
    up the accent, the same way an active nav item or a met goal does. */
 .owl.mood-focused .owl-ears,.owl.mood-focused .owl-beak{stroke:var(--accent)}
 .owl.mood-focused .owl-beak{fill:var(--accent)}
-@keyframes owlBlink{0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.08)}}
-@keyframes owlBreathe{0%,100%{transform:scale(1)} 50%{transform:scale(1.015)}}
-.owl.mood-alert .owl-eyes-open,.owl.mood-focused .owl-eyes-open{
-  animation:owlBlink 6s ease-in-out infinite}
-.owl.mood-alert,.owl.mood-focused,.owl.mood-resting{
-  animation:owlBreathe 4.5s ease-in-out infinite}
+
+/* Three nested groups so the three motions compose instead of fighting over
+   one transform: `pos` is where in the scene it stands (transitioned, so a
+   mood change glides rather than teleports), `anim` is the hop or bob, `tilt`
+   is the lean. The static placement lives on a plain SVG transform attribute
+   one level up -- a CSS transform here would overwrite it outright. */
+.owl-pos{transform:translate(0px,0px); transition:transform .9s var(--ease)}
+.owl.mood-focused .owl-pos{transform:translate(-34px,2px)}
+.owl.mood-resting .owl-pos{transform:translate(24px,1px)}
+.owl-tilt{transform-box:fill-box; transform-origin:50% 95%}
+.owl-eyes-open{transform-box:fill-box; transform-origin:50% 50%}
+.owl-wing-l,.owl-wing-r{transform-box:fill-box; transform-origin:50% 0%}
+
+/* It looks around the scene rather than out of the screen: every stop below
+   is off-centre, so the pupils never sit dead-centre pointing at the reader. */
+@keyframes owlGlance{
+  0%,9%   {transform:translate(-2.6px,1.4px)}
+  15%,26% {transform:translate(2.9px,.6px)}
+  32%,43% {transform:translate(-1.8px,-1.7px)}
+  49%,60% {transform:translate(3.1px,-1.1px)}
+  66%,78% {transform:translate(-3.1px,.5px)}
+  84%,100%{transform:translate(-2.2px,1.5px)}
+}
+@keyframes owlLookDown{0%,100%{transform:translate(-1.2px,2.7px)}
+  50%{transform:translate(1.2px,2.9px)}}
+@keyframes owlLookMug{0%,100%{transform:translate(3.2px,1.2px)}
+  50%{transform:translate(3.6px,1.8px)}}
+
+/* Pottering: two hops out and back along the branch, with long still pauses
+   between -- constant motion in the corner of your eye is the thing that
+   makes a mascot unusable while you are trying to work. */
+@keyframes owlPotter{
+  0%,17%   {transform:translate(0,0)}
+  21%      {transform:translate(-10px,-10px)}
+  25%,41%  {transform:translate(-20px,0)}
+  45%      {transform:translate(-10px,-11px)}
+  49%,63%  {transform:translate(0,0)}
+  67%      {transform:translate(11px,-10px)}
+  71%,87%  {transform:translate(22px,0)}
+  91%      {transform:translate(11px,-11px)}
+  100%     {transform:translate(0,0)}
+}
+@keyframes owlBob{0%,100%{transform:translate(0,0)} 50%{transform:translate(0,-2.6px)}}
+@keyframes owlSway{0%,100%{transform:translate(0,0)} 50%{transform:translate(0,-1.6px)}}
+@keyframes owlSip{0%,52%,100%{transform:translate(0,0)}
+  64%,80%{transform:translate(7px,3px)}}
+
+@keyframes owlLean{
+  0%,13%   {transform:rotate(0deg)}
+  21%,35%  {transform:rotate(-9deg)}
+  43%,57%  {transform:rotate(7deg)}
+  65%,79%  {transform:rotate(-4deg)}
+  87%,100% {transform:rotate(0deg)}
+}
+@keyframes owlLeanBook{0%,100%{transform:rotate(10deg)} 50%{transform:rotate(13deg)}}
+@keyframes owlLeanMug{0%,52%,100%{transform:rotate(0deg)} 70%{transform:rotate(-13deg)}}
+@keyframes owlLeanDoze{0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(-9deg)}}
+
+@keyframes owlBlink{0%,93%,100%{transform:scaleY(1)} 96%{transform:scaleY(.1)}}
+@keyframes owlFlapL{0%,79%,100%{transform:rotate(0deg)}
+  85%{transform:rotate(-22deg)} 92%{transform:rotate(6deg)}}
+@keyframes owlFlapR{0%,79%,100%{transform:rotate(0deg)}
+  85%{transform:rotate(22deg)} 92%{transform:rotate(-6deg)}}
+
+@keyframes owlSteam{0%{opacity:0; transform:translateY(4px)}
+  40%{opacity:.9} 100%{opacity:0; transform:translateY(-10px)}}
+@keyframes owlZzz{0%{opacity:0; transform:translate(0,4px) scale(.85)}
+  30%{opacity:1} 100%{opacity:0; transform:translate(6px,-12px) scale(1.05)}}
+@keyframes owlPage{0%,68%,100%{opacity:.45; transform:translateX(0)}
+  80%{opacity:1; transform:translateX(3px)}}
+
+.owl.mood-alert .owl-anim{animation:owlPotter 17s var(--ease) infinite}
+.owl.mood-alert .owl-tilt{animation:owlLean 17s var(--ease) infinite}
+.owl.mood-alert .owl-pupils{animation:owlGlance 9s var(--ease) infinite}
+.owl.mood-alert .owl-eyes-open{animation:owlBlink 6.5s ease-in-out infinite}
+.owl.mood-alert .owl-wing-l{animation:owlFlapL 17s var(--ease) infinite}
+.owl.mood-alert .owl-wing-r{animation:owlFlapR 17s var(--ease) infinite}
+
+.owl.mood-focused .owl-anim{animation:owlBob 4.2s ease-in-out infinite}
+.owl.mood-focused .owl-tilt{animation:owlLeanBook 4.2s ease-in-out infinite}
+.owl.mood-focused .owl-pupils{animation:owlLookDown 4.2s ease-in-out infinite}
+.owl.mood-focused .owl-eyes-open{animation:owlBlink 7.5s ease-in-out infinite}
+.owl.mood-focused .owl-page{animation:owlPage 5s ease-in-out infinite}
+
+.owl.mood-resting .owl-anim{animation:owlSip 7s var(--ease) infinite}
+.owl.mood-resting .owl-tilt{animation:owlLeanMug 7s var(--ease) infinite}
+.owl.mood-resting .owl-pupils{animation:owlLookMug 7s ease-in-out infinite}
+.owl.mood-resting .owl-steam path{animation:owlSteam 3s ease-out infinite}
+.owl.mood-resting .owl-steam path:nth-child(2){animation-delay:1.3s}
+
+.owl.mood-dozing .owl-anim{animation:owlSway 5.5s ease-in-out infinite}
+.owl.mood-dozing .owl-tilt{animation:owlLeanDoze 5.5s ease-in-out infinite}
+.owl.mood-dozing .owl-zzz path{animation:owlZzz 3.4s ease-out infinite}
+.owl.mood-dozing .owl-zzz path:nth-child(2){animation-delay:1.5s}
+
+/* Under prefers-reduced-motion the global rule in section 6 collapses every
+   duration, which lands each keyframe set on its 100% pose. Those are all
+   chosen to be a settled, sensible still -- including the glance, which ends
+   looking off to one side rather than back at the reader. */
 
 /* --- sidebar today readout --- */
 .side__today{display:flex; align-items:center; gap:var(--s3);
@@ -1327,29 +1422,58 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
             <span class="chip" id="companionMoodChip"></span>
           </div>
           <div class="companion__body">
-            <svg class="owl" id="companionSvg" width="104" height="90" viewBox="0 0 120 104"
-                 aria-hidden="true">
-              <path class="owl-branch" d="M6 96 H114"/>
-              <path class="owl-body" d="M60 14C82 14 98 32 98 56C98 80 82 92 60 92
-                C38 92 22 80 22 56C22 32 38 14 60 14Z"/>
-              <path class="owl-ears" d="M40 16 34 4 48 12M80 16 86 4 72 12"/>
-              <path class="owl-wings" d="M28 50Q22 66 30 82M92 50Q98 66 90 82"/>
-              <g class="owl-eyes-open">
-                <circle cx="46" cy="52" r="12"/>
-                <circle cx="74" cy="52" r="12"/>
-                <circle class="owl-pupil" cx="46" cy="52" r="4.5"/>
-                <circle class="owl-pupil" cx="74" cy="52" r="4.5"/>
+            <svg class="owl" id="companionSvg" viewBox="0 10 236 104"
+                 role="img" aria-labelledby="companionAlt">
+              <title id="companionAlt">A small owl perched on a branch between a stack
+                of books and a mug</title>
+              <path class="owl-branch" d="M10 104H226"/>
+
+              <!-- Props it actually uses: it reads at the books while a block runs
+                   and drifts to the mug on a break. -->
+              <rect class="owl-prop" x="26" y="95" width="38" height="9" rx="2.5"/>
+              <rect class="owl-prop" x="29" y="86" width="32" height="9" rx="2.5"/>
+              <rect class="owl-prop" x="32" y="77" width="26" height="9" rx="2.5"/>
+              <path class="owl-page" d="M37 80H53M37 84.5H48"/>
+
+              <path class="owl-prop" d="M174 82h24v13a7 7 0 0 1-7 7h-10a7 7 0 0 1-7-7z"/>
+              <path class="owl-prop" d="M198 86a7 7 0 0 1 0 12"/>
+              <g class="owl-steam">
+                <path d="M181 78q4-5 0-10"/>
+                <path d="M190 78q4-5 0-10"/>
               </g>
-              <g class="owl-eyes-half">
-                <path d="M34 52Q46 60 58 52"/>
-                <path d="M62 52Q74 60 86 52"/>
+
+              <g class="owl-zzz">
+                <path d="M150 36h9l-9 10h9"/>
+                <path d="M164 26h6l-6 7h6"/>
               </g>
-              <g class="owl-eyes-closed">
-                <path d="M36 53Q46 58 56 53"/>
-                <path d="M64 53Q74 58 84 53"/>
+
+              <g transform="translate(70,26) scale(0.8)">
+                <g class="owl-pos"><g class="owl-anim"><g class="owl-tilt">
+                  <path class="owl-body" d="M60 14C82 14 98 32 98 56C98 80 82 92 60 92
+                    C38 92 22 80 22 56C22 32 38 14 60 14Z"/>
+                  <path class="owl-ears" d="M40 16 34 4 48 12M80 16 86 4 72 12"/>
+                  <path class="owl-wing owl-wing-l" d="M34 48Q28 64 36 80"/>
+                  <path class="owl-wing owl-wing-r" d="M86 48Q92 64 84 80"/>
+                  <g class="owl-eyes-open">
+                    <circle class="owl-eye-ring" cx="46" cy="52" r="12"/>
+                    <circle class="owl-eye-ring" cx="74" cy="52" r="12"/>
+                    <g class="owl-pupils">
+                      <circle class="owl-pupil" cx="46" cy="52" r="4.5"/>
+                      <circle class="owl-pupil" cx="74" cy="52" r="4.5"/>
+                    </g>
+                  </g>
+                  <g class="owl-eyes-half">
+                    <path class="owl-lid" d="M34 52Q46 60 58 52"/>
+                    <path class="owl-lid" d="M62 52Q74 60 86 52"/>
+                  </g>
+                  <g class="owl-eyes-shut">
+                    <path class="owl-lid" d="M36 53Q46 58 56 53"/>
+                    <path class="owl-lid" d="M64 53Q74 58 84 53"/>
+                  </g>
+                  <path class="owl-beak" d="M60 60 54 70 60 74 66 70Z"/>
+                  <path class="owl-feet" d="M52 92v6M68 92v6"/>
+                </g></g></g>
               </g>
-              <path class="owl-beak" d="M60 60 54 70 60 74 66 70Z"/>
-              <g class="owl-zzz"><path d="M92 20H100L92 28H100"/></g>
             </svg>
           </div>
           <p class="companion__caption" id="companionCaption"></p>
@@ -2551,18 +2675,18 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     return "alert";
   }
 
-  var COMPANION_LABEL = { focused: "Focused", resting: "On a break",
-    alert: "Watching", dozing: "Dozing" };
+  var COMPANION_LABEL = { focused: "Reading", resting: "On a break",
+    alert: "Pottering", dozing: "Dozing" };
 
   function companionCaption(mood) {
-    if (mood === "focused") return "Locked in with you. It settles the moment you take a break.";
-    if (mood === "resting") return "Taking the break with you.";
+    if (mood === "focused") return "Head down in the books while your block runs.";
+    if (mood === "resting") return "Wandered over to the mug for the break.";
     if (mood === "dozing") {
       return inQuiet()
         ? "Asleep for quiet hours — back once they end."
         : "Nothing logged in a couple of days. No judgement, just resting.";
     }
-    return "Awake and watching. Start a block and it focuses with you.";
+    return "Hopping about the branch. Start a block and it settles into the books.";
   }
 
   function renderCompanion() {

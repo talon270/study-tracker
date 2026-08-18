@@ -3,7 +3,7 @@
    a stale shell is always better than a blank page. Bump CACHE on release. */
 "use strict";
 
-var CACHE = "study-tracker-v6";   // bumped: session subjects are now editable after the fact
+var CACHE = "study-tracker-v7";   // bumped: the companion moves around the scene now
 var ASSETS = [
   "./",
   "./index.html",
