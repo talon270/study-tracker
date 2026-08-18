@@ -1,0 +1,12 @@
+# Local safety copies taken before large edits. Useful on disk, noise in history.
+index.backup-*.html
+
+# Design doc: references absolute paths on my machine, and a course-code
+# integration that is planned rather than shipped. Delete this line to publish it.
+PLAN-study-tracker.md
+
+# Editor / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/

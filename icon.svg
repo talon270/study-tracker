@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="42" fill="#EF9F27"/>
+  <!-- Four heatmap cells and a timer arc: the two things the app is. -->
+  <g fill="#854F0B" opacity=".38">
+    <rect x="34" y="122" width="20" height="20" rx="5"/>
+    <rect x="60" y="122" width="20" height="20" rx="5"/>
+    <rect x="112" y="122" width="20" height="20" rx="5"/>
+    <rect x="138" y="122" width="20" height="20" rx="5"/>
+  </g>
+  <rect x="86" y="122" width="20" height="20" rx="5" fill="#854F0B"/>
+  <circle cx="96" cy="72" r="34" fill="none" stroke="#854F0B" stroke-width="11" opacity=".34"/>
+  <path d="M96 38 a34 34 0 0 1 34 34" fill="none" stroke="#854F0B" stroke-width="11"
+        stroke-linecap="round"/>
+  <rect x="91" y="50" width="10" height="26" rx="5" fill="#854F0B"/>
+</svg>

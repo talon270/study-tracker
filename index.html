@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F5F1E8" id="metaTheme">
+<title>Study Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+/* ======================================================================
+   STUDY TRACKER · STYLES
+   · TOKENS      the two palettes, defined together, plus what derives
+                 from them; nothing is a literal colour below this block
+   · SHELL       sidebar (desktop), topbar + bottom nav (mobile), main
+   · PRIMITIVES  card, stat, chip, button, field, switch, ring, bar
+   · MODULES     timer, heatmap, badges, log table, banners, toast
+   · RESPONSIVE  one breakpoint at 960px, plus motion + print
+   ====================================================================== */
+
+/* ---------------------------------------------------------------------
+   1 · TOKENS
+   Light and dark are two complete palettes, never one bolted onto the
+   other. Everything below section 1 reads a token, so switching themes
+   reaches every wash, hairline and shadow rather than the obvious parts.
+   ------------------------------------------------------------------- */
+/* The bare :root carries Paper so the very first paint is correct even before
+   any script runs; the media block below covers a dark system the same way.
+   Every named palette then overrides via [data-palette], which an inline script
+   in <head> stamps from localStorage before the page renders. */
+:root {
+  --bg:#F5F1E8; --surface:#FBF9F4; --border:#E4DCCB;
+  --text:#2C2C2A; --text-dim:#6B6862;
+  --accent:#EF9F27; --accent-lt:#FBE4C3; --accent-dk:#854F0B;
+  --accent-ink:#854F0B; --accent-rgb:239,159,39;
+  --surface-2:#EDE7DB; --surface-3:#E4DCCB; --line-strong:#BCB5A8;
+  --text-strong:#1D1D1B; --bg-deep:#ECE8DF;
+  --accent-text:#12100C; --on-accent-ink:#12100C;
+  --good:#2F6B45; --good-rgb:47,107,69;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#E7E0D1; --heat-1:#F8E2BF; --heat-2:#F4C883; --heat-3:#EF9F27; --heat-4:#854F0B;
+  --wash-1:rgba(239,159,39,.16); --wash-2:rgba(133,79,11,.07);
+  --shadow:0 1px 2px rgba(44,44,42,.05), 0 6px 18px -8px rgba(44,44,42,.15);
+  --shadow-lg:0 20px 48px -18px rgba(44,44,42,.34);
+  --ring-focus:#854F0B;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-palette]) {
+    --bg:#17181A; --surface:#23252A; --border:#31343A;
+    --text:#E8E6E1; --text-dim:#9C9A92;
+    --accent:#1D9E75; --accent-lt:#5DCAA5; --accent-dk:#0F6E56;
+    --accent-ink:#5DCAA5; --accent-rgb:29,158,117;
+    --surface-2:#2A2D33; --surface-3:#31343A; --line-strong:#3E424A;
+    --text-strong:#F6F4EF; --bg-deep:#131416;
+    --accent-text:#0C1210; --on-accent-ink:#0C1210;
+    --good:#5DCAA5; --good-rgb:93,202,165;
+    --warn:#C9A227; --warn-rgb:201,162,39;
+    --danger:#E5705C; --danger-rgb:229,112,92;
+    --heat-0:#2A2D33; --heat-1:#123E33; --heat-2:#0F6E56; --heat-3:#1D9E75; --heat-4:#5DCAA5;
+    --wash-1:rgba(29,158,117,.09); --wash-2:rgba(93,202,165,.055);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -10px rgba(0,0,0,.55);
+    --shadow-lg:0 22px 52px -18px rgba(0,0,0,.72);
+    --ring-focus:#5DCAA5;
+  }
+}
+
+/* ---- palettes: 5 light, 21 dark. Every one sets the same token set, so
+     nothing below section 1 ever needs to know which is active.
+     The 20 named dark palettes are ported from ~/Claude/Themes/*.txt. ---- */
+:root[data-palette="paper"]{
+  --bg:#F5F1E8; --surface:#FBF9F4; --border:#E4DCCB;
+  --text:#2C2C2A; --text-dim:#6B6862;
+  --accent:#EF9F27; --accent-lt:#FBE4C3; --accent-dk:#854F0B;
+  --accent-ink:#854F0B; --accent-rgb:239,159,39;
+  --surface-2:#EDE7DB; --surface-3:#E4DCCB; --line-strong:#BCB5A8;
+  --text-strong:#1D1D1B; --bg-deep:#ECE8DF;
+  --accent-text:#12100C; --on-accent-ink:#12100C;
+  --good:#2F6B45; --good-rgb:47,107,69;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#E7E0D1; --heat-1:#F8E2BF; --heat-2:#F4C883; --heat-3:#EF9F27; --heat-4:#854F0B;
+  --wash-1:rgba(239,159,39,.16); --wash-2:rgba(133,79,11,.07);
+  --shadow:0 1px 2px rgba(44,44,42,.05), 0 6px 18px -8px rgba(44,44,42,.15); --shadow-lg:0 20px 48px -18px rgba(44,44,42,.34);
+  --ring-focus:#854F0B;
+}
+:root[data-palette="porcelain"]{
+  --bg:#F2F4F7; --surface:#FFFFFF; --border:#DCE1E8;
+  --text:#1E2430; --text-dim:#5C6675;
+  --accent:#2563A8; --accent-lt:#C2D3E7; --accent-dk:#17457A;
+  --accent-ink:#17457A; --accent-rgb:37,99,168;
+  --surface-2:#E9ECF1; --surface-3:#DCE1E8; --line-strong:#B2B7C0;
+  --text-strong:#14171F; --bg-deep:#E8EBEE;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#2F6B45; --good-rgb:47,107,69;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#E1E6EB; --heat-1:#C6D6E8; --heat-2:#87A9CF; --heat-3:#2563A8; --heat-4:#17457A;
+  --wash-1:rgba(37,99,168,.16); --wash-2:rgba(23,69,122,.07);
+  --shadow:0 1px 2px rgba(30,36,48,.05), 0 6px 18px -8px rgba(30,36,48,.15); --shadow-lg:0 20px 48px -18px rgba(30,36,48,.34);
+  --ring-focus:#17457A;
+}
+:root[data-palette="linen"]{
+  --bg:#F3EDE3; --surface:#FAF6EF; --border:#E2D8C8;
+  --text:#332C24; --text-dim:#6E6353;
+  --accent:#A6522B; --accent-lt:#E6CFC4; --accent-dk:#733517;
+  --accent-ink:#733517; --accent-rgb:166,82,43;
+  --surface-2:#EBE3D7; --surface-3:#E2D8C8; --line-strong:#BCB2A4;
+  --text-strong:#211D17; --bg-deep:#EAE4DA;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#2F6B45; --good-rgb:47,107,69;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#E6DCCE; --heat-1:#E4CBBC; --heat-2:#CC9C83; --heat-3:#A6522B; --heat-4:#733517;
+  --wash-1:rgba(166,82,43,.16); --wash-2:rgba(115,53,23,.07);
+  --shadow:0 1px 2px rgba(51,44,36,.05), 0 6px 18px -8px rgba(51,44,36,.15); --shadow-lg:0 20px 48px -18px rgba(51,44,36,.34);
+  --ring-focus:#733517;
+}
+:root[data-palette="meadow"]{
+  --bg:#F1F5F0; --surface:#FCFDFB; --border:#D9E3D6;
+  --text:#1F2A22; --text-dim:#5A685C;
+  --accent:#166B4A; --accent-lt:#BED6CC; --accent-dk:#0B462F;
+  --accent-ink:#0B462F; --accent-rgb:22,107,74;
+  --surface-2:#E6EDE4; --surface-3:#D9E3D6; --line-strong:#B0BAAE;
+  --text-strong:#141B16; --bg-deep:#E8ECE7;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#11533A; --good-rgb:17,83,58;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#DEE7DC; --heat-1:#C0D7CD; --heat-2:#7EAD9A; --heat-3:#166B4A; --heat-4:#0B462F;
+  --wash-1:rgba(22,107,74,.16); --wash-2:rgba(11,70,47,.07);
+  --shadow:0 1px 2px rgba(31,42,34,.05), 0 6px 18px -8px rgba(31,42,34,.15); --shadow-lg:0 20px 48px -18px rgba(31,42,34,.34);
+  --ring-focus:#0B462F;
+}
+:root[data-palette="ink"]{
+  --bg:#F4F4F7; --surface:#FDFDFF; --border:#DEDEE6;
+  --text:#1B1B26; --text-dim:#5B5B6B;
+  --accent:#3B3F8F; --accent-lt:#C8C9E0; --accent-dk:#242766;
+  --accent-ink:#242766; --accent-rgb:59,63,143;
+  --surface-2:#EAEAF0; --surface-3:#DEDEE6; --line-strong:#B3B3BC;
+  --text-strong:#121219; --bg-deep:#EAEAEE;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#2F6B45; --good-rgb:47,107,69;
+  --warn:#8A5A0C; --warn-rgb:138,90,12;
+  --danger:#A33A2A; --danger-rgb:163,58,42;
+  --heat-0:#E3E3EA; --heat-1:#CBCCE2; --heat-2:#9294C1; --heat-3:#3B3F8F; --heat-4:#242766;
+  --wash-1:rgba(59,63,143,.16); --wash-2:rgba(36,39,102,.07);
+  --shadow:0 1px 2px rgba(27,27,38,.05), 0 6px 18px -8px rgba(27,27,38,.15); --shadow-lg:0 20px 48px -18px rgba(27,27,38,.34);
+  --ring-focus:#242766;
+}
+:root[data-palette="pine"]{
+  --bg:#17181A; --surface:#23252A; --border:#31343A;
+  --text:#E8E6E1; --text-dim:#9C9A92;
+  --accent:#1D9E75; --accent-lt:#5DCAA5; --accent-dk:#0F6E56;
+  --accent-ink:#5DCAA5; --accent-rgb:29,158,117;
+  --surface-2:#2A2D33; --surface-3:#31343A; --line-strong:#3E424A;
+  --text-strong:#F6F4EF; --bg-deep:#131416;
+  --accent-text:#0C1210; --on-accent-ink:#0C1210;
+  --good:#5DCAA5; --good-rgb:93,202,165;
+  --warn:#C9A227; --warn-rgb:201,162,39;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#2A2D33; --heat-1:#22403A; --heat-2:#205F4E; --heat-3:#1D9E75; --heat-4:#5DCAA5;
+  --wash-1:rgba(29,158,117,.10); --wash-2:rgba(93,202,165,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#5DCAA5;
+}
+:root[data-palette="akira"]{
+  --bg:#090305; --surface:#190A0D; --border:#2D2023;
+  --text:#FFEBEE; --text-dim:#D098A0;
+  --accent:#FF1744; --accent-lt:#FF6684; --accent-dk:#8A0C25;
+  --accent-ink:#FF6684; --accent-rgb:255,23,68;
+  --surface-2:#241C1E; --surface-3:#2D2627; --line-strong:#383435;
+  --text-strong:#FFF2F4; --bg-deep:#030102;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#241C1E; --heat-1:#4C0D19; --heat-2:#871027; --heat-3:#FF1744; --heat-4:#FF6684;
+  --wash-1:rgba(255,23,68,.10); --wash-2:rgba(255,102,132,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#FF6684;
+}
+:root[data-palette="andromeda"]{
+  --bg:#090307; --surface:#190A13; --border:#2D2026;
+  --text:#FCE4EC; --text-dim:#C898B0;
+  --accent:#D81B60; --accent-lt:#E56996; --accent-dk:#750F34;
+  --accent-ink:#E56996; --accent-rgb:216,27,96;
+  --surface-2:#241C20; --surface-3:#2D262A; --line-strong:#383436;
+  --text-strong:#FDEDF3; --bg-deep:#030102;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#241C20; --heat-1:#430E24; --heat-2:#751238; --heat-3:#D81B60; --heat-4:#E56996;
+  --wash-1:rgba(216,27,96,.10); --wash-2:rgba(229,105,150,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#E56996;
+}
+:root[data-palette="arasaka"]{
+  --bg:#090303; --surface:#190A0A; --border:#2D2020;
+  --text:#F0E0E0; --text-dim:#B89898;
+  --accent:#D32F2F; --accent-lt:#E27676; --accent-dk:#721919;
+  --accent-ink:#E27676; --accent-rgb:211,47,47;
+  --surface-2:#241C1C; --surface-3:#2D2626; --line-strong:#383434;
+  --text-strong:#F5EBEB; --bg-deep:#030101;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#241C1C; --heat-1:#421212; --heat-2:#721C1C; --heat-3:#D32F2F; --heat-4:#E27676;
+  --wash-1:rgba(211,47,47,.10); --wash-2:rgba(226,118,118,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#E27676;
+}
+:root[data-palette="basalt"]{
+  --bg:#090503; --surface:#190D08; --border:#2D231F;
+  --text:#FFE0B2; --text-dim:#C8A088;
+  --accent:#FF5722; --accent-lt:#FF906D; --accent-dk:#8A2F12;
+  --accent-ink:#FF906D; --accent-rgb:255,87,34;
+  --surface-2:#241E1B; --surface-3:#2D2725; --line-strong:#383534;
+  --text-strong:#FFEBCD; --bg-deep:#030201;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#241E1B; --heat-1:#4C1D0E; --heat-2:#873114; --heat-3:#FF5722; --heat-4:#FF906D;
+  --wash-1:rgba(255,87,34,.10); --wash-2:rgba(255,144,109,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#FF906D;
+}
+:root[data-palette="bismuth"]{
+  --bg:#030708; --surface:#0A1317; --border:#202D2F;
+  --text:#E0F7FA; --text-dim:#A8B8C8;
+  --accent:#00BCD4; --accent-lt:#57D3E3; --accent-dk:#006672;
+  --accent-ink:#57D3E3; --accent-rgb:0,188,212;
+  --surface-2:#1C2022; --surface-3:#262A2C; --line-strong:#343839;
+  --text-strong:#EBFAFC; --bg-deep:#010203;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C2022; --heat-1:#083841; --heat-2:#056472; --heat-3:#00BCD4; --heat-4:#57D3E3;
+  --wash-1:rgba(0,188,212,.10); --wash-2:rgba(87,211,227,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#57D3E3;
+}
+:root[data-palette="borealis"]{
+  --bg:#030805; --surface:#0A170F; --border:#202D26;
+  --text:#E0F7FA; --text-dim:#98C0B8;
+  --accent:#00E676; --accent-lt:#57EEA5; --accent-dk:#007C40;
+  --accent-ink:#57EEA5; --accent-rgb:0,230,118;
+  --surface-2:#1C221E; --surface-3:#262C28; --line-strong:#343836;
+  --text-strong:#EBFAFC; --bg-deep:#010302;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#57EEA5; --good-rgb:87,238,165;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C221E; --heat-1:#084526; --heat-2:#057A40; --heat-3:#00E676; --heat-4:#57EEA5;
+  --wash-1:rgba(0,230,118,.10); --wash-2:rgba(87,238,165,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#57EEA5;
+}
+:root[data-palette="chernobyl"]{
+  --bg:#050803; --surface:#0D170A; --border:#262D20;
+  --text:#F1F8E9; --text-dim:#A0B898;
+  --accent:#76FF03; --accent-lt:#A5FF59; --accent-dk:#408A02;
+  --accent-ink:#A5FF59; --accent-rgb:118,255,3;
+  --surface-2:#1E221C; --surface-3:#272C26; --line-strong:#363834;
+  --text-strong:#F6FAF1; --bg-deep:#020301;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#A5FF59; --good-rgb:165,255,89;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1E221C; --heat-1:#244A08; --heat-2:#3F8607; --heat-3:#76FF03; --heat-4:#A5FF59;
+  --wash-1:rgba(118,255,3,.10); --wash-2:rgba(165,255,89,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#A5FF59;
+}
+:root[data-palette="cryotube"]{
+  --bg:#030708; --surface:#0A1317; --border:#202D2F;
+  --text:#E0F7FA; --text-dim:#A0B8C0;
+  --accent:#80DEEA; --accent-lt:#ABE9F1; --accent-dk:#45787E;
+  --accent-ink:#ABE9F1; --accent-rgb:128,222,234;
+  --surface-2:#1C2022; --surface-3:#262A2C; --line-strong:#343839;
+  --text-strong:#EBFAFC; --bg-deep:#010203;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C2022; --heat-1:#244045; --heat-2:#43747C; --heat-3:#80DEEA; --heat-4:#ABE9F1;
+  --wash-1:rgba(128,222,234,.10); --wash-2:rgba(171,233,241,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#ABE9F1;
+}
+:root[data-palette="dyson"]{
+  --bg:#090603; --surface:#191108; --border:#2D2820;
+  --text:#FFF8E1; --text-dim:#C8B098;
+  --accent:#FFC107; --accent-lt:#FFD65B; --accent-dk:#8A6804;
+  --accent-ink:#FFD65B; --accent-rgb:255,193,7;
+  --surface-2:#24201B; --surface-3:#2D2925; --line-strong:#383734;
+  --text-strong:#FFFAEC; --bg-deep:#030201;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#24201B; --heat-1:#4C3808; --heat-2:#876508; --heat-3:#FFC107; --heat-4:#FFD65B;
+  --wash-1:rgba(255,193,7,.10); --wash-2:rgba(255,214,91,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#FFD65B;
+}
+:root[data-palette="helios"]{
+  --bg:#090700; --surface:#191300; --border:#2D281C;
+  --text:#FFF8E1; --text-dim:#C8B890;
+  --accent:#FFB300; --accent-lt:#FFCD57; --accent-dk:#8A6100;
+  --accent-ink:#FFCD57; --accent-rgb:255,179,0;
+  --surface-2:#242017; --surface-3:#2D2A22; --line-strong:#383733;
+  --text-strong:#FFFAEC; --bg-deep:#030200;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#242017; --heat-1:#4C3600; --heat-2:#876000; --heat-3:#FFB300; --heat-4:#FFCD57;
+  --wash-1:rgba(255,179,0,.10); --wash-2:rgba(255,205,87,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#FFCD57;
+}
+:root[data-palette="ionstorm"]{
+  --bg:#03070B; --surface:#0A131E; --border:#202D2F;
+  --text:#E0F7FA; --text-dim:#98B8C0;
+  --accent:#00E5FF; --accent-lt:#57EEFF; --accent-dk:#007C8A;
+  --accent-ink:#57EEFF; --accent-rgb:0,229,255;
+  --surface-2:#1C2026; --surface-3:#262A2F; --line-strong:#343839;
+  --text-strong:#EBFAFC; --bg-deep:#010204;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C2026; --heat-1:#084150; --heat-2:#05788A; --heat-3:#00E5FF; --heat-4:#57EEFF;
+  --wash-1:rgba(0,229,255,.10); --wash-2:rgba(87,238,255,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#57EEFF;
+}
+:root[data-palette="mariana"]{
+  --bg:#030708; --surface:#0A1317; --border:#202A2F;
+  --text:#B2EBF2; --text-dim:#8090A8;
+  --accent:#26C6DA; --accent-lt:#70D9E7; --accent-dk:#156B76;
+  --accent-ink:#70D9E7; --accent-rgb:38,198,218;
+  --surface-2:#1C2022; --surface-3:#262A2C; --line-strong:#343739;
+  --text-strong:#CDF2F7; --bg-deep:#010203;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C2022; --heat-1:#103A42; --heat-2:#176975; --heat-3:#26C6DA; --heat-4:#70D9E7;
+  --wash-1:rgba(38,198,218,.10); --wash-2:rgba(112,217,231,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#70D9E7;
+}
+:root[data-palette="monolith"]{
+  --bg:#050608; --surface:#0D1117; --border:#26282B;
+  --text:#ECEFF1; --text-dim:#9098A8;
+  --accent:#9FA8DA; --accent-lt:#C0C6E7; --accent-dk:#565B76;
+  --accent-ink:#C0C6E7; --accent-rgb:159,168,218;
+  --surface-2:#1E2022; --surface-3:#27292C; --line-strong:#363738;
+  --text-strong:#F3F5F6; --bg-deep:#020203;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1E2022; --heat-1:#2D3242; --heat-2:#535975; --heat-3:#9FA8DA; --heat-4:#C0C6E7;
+  --wash-1:rgba(159,168,218,.10); --wash-2:rgba(192,198,231,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#C0C6E7;
+}
+:root[data-palette="nostromo"]{
+  --bg:#050905; --surface:#0D190D; --border:#282C28;
+  --text:#D4F5C8; --text-dim:#A0C098;
+  --accent:#4FBF50; --accent-lt:#8BD58C; --accent-dk:#2B672B;
+  --accent-ink:#8BD58C; --accent-rgb:79,191,80;
+  --surface-2:#1E241E; --surface-3:#272D27; --line-strong:#373837;
+  --text-strong:#E3F8DB; --bg-deep:#020302;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#8BD58C; --good-rgb:139,213,140;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1E241E; --heat-1:#1C3E1C; --heat-2:#2D692D; --heat-3:#4FBF50; --heat-4:#8BD58C;
+  --wash-1:rgba(79,191,80,.10); --wash-2:rgba(139,213,140,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#8BD58C;
+}
+:root[data-palette="quasar"]{
+  --bg:#090307; --surface:#190A13; --border:#2D2028;
+  --text:#FCE4EC; --text-dim:#C898A8;
+  --accent:#FF4081; --accent-lt:#FF81AC; --accent-dk:#8A2346;
+  --accent-ink:#FF81AC; --accent-rgb:255,64,129;
+  --surface-2:#241C20; --surface-3:#2D262A; --line-strong:#383437;
+  --text-strong:#FDEDF3; --bg-deep:#030102;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#241C20; --heat-1:#4C162B; --heat-2:#872448; --heat-3:#FF4081; --heat-4:#FF81AC;
+  --wash-1:rgba(255,64,129,.10); --wash-2:rgba(255,129,172,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#FF81AC;
+}
+:root[data-palette="selene"]{
+  --bg:#050708; --surface:#0D1317; --border:#262B2F;
+  --text:#ECEFF1; --text-dim:#A0B0B8;
+  --accent:#CFD8DC; --accent-lt:#DFE5E8; --accent-dk:#707577;
+  --accent-ink:#DFE5E8; --accent-rgb:207,216,220;
+  --surface-2:#1E2022; --surface-3:#272A2C; --line-strong:#363839;
+  --text-strong:#F3F5F6; --bg-deep:#020203;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#DFE5E8; --good-rgb:223,229,232;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1E2022; --heat-1:#383E42; --heat-2:#6A7276; --heat-3:#CFD8DC; --heat-4:#DFE5E8;
+  --wash-1:rgba(207,216,220,.10); --wash-2:rgba(223,229,232,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#DFE5E8;
+}
+:root[data-palette="solaris"]{
+  --bg:#030709; --surface:#0A1319; --border:#202A2F;
+  --text:#E1F5FE; --text-dim:#90B8C8;
+  --accent:#4FC3F7; --accent-lt:#8BD7FA; --accent-dk:#2B6985;
+  --accent-ink:#8BD7FA; --accent-rgb:79,195,247;
+  --surface-2:#1C2024; --surface-3:#262A2D; --line-strong:#343739;
+  --text-strong:#ECF8FE; --bg-deep:#010203;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1C2024; --heat-1:#193A4A; --heat-2:#2B6784; --heat-3:#4FC3F7; --heat-4:#8BD7FA;
+  --wash-1:rgba(79,195,247,.10); --wash-2:rgba(139,215,250,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#8BD7FA;
+}
+:root[data-palette="tyrell"]{
+  --bg:#090603; --surface:#191108; --border:#2D2820;
+  --text:#F5E6D3; --text-dim:#C0A890;
+  --accent:#E89B25; --accent-lt:#F0BD6F; --accent-dk:#7D5414;
+  --accent-ink:#F0BD6F; --accent-rgb:232,155,37;
+  --surface-2:#24201B; --surface-3:#2D2925; --line-strong:#383734;
+  --text-strong:#F8EFE2; --bg-deep:#030201;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#24201B; --heat-1:#472F0E; --heat-2:#7C5316; --heat-3:#E89B25; --heat-4:#F0BD6F;
+  --wash-1:rgba(232,155,37,.10); --wash-2:rgba(240,189,111,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#F0BD6F;
+}
+:root[data-palette="voidwalker"]{
+  --bg:#060309; --surface:#110A19; --border:#28202D;
+  --text:#EDE7F6; --text-dim:#B098C8;
+  --accent:#9C27B0; --accent-lt:#BE70CB; --accent-dk:#54155F;
+  --accent-ink:#BE70CB; --accent-rgb:156,39,176;
+  --surface-2:#201C24; --surface-3:#29262D; --line-strong:#373438;
+  --text-strong:#F3EFF9; --bg-deep:#020103;
+  --accent-text:#FFFFFF; --on-accent-ink:#FFFFFF;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#201C24; --heat-1:#30103A; --heat-2:#541861; --heat-3:#9C27B0; --heat-4:#BE70CB;
+  --wash-1:rgba(156,39,176,.10); --wash-2:rgba(190,112,203,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#BE70CB;
+}
+:root[data-palette="wraith"]{
+  --bg:#050708; --surface:#0D1317; --border:#262C2F;
+  --text:#ECEFF1; --text-dim:#B8C8D0;
+  --accent:#B2EBF2; --accent-lt:#CCF2F6; --accent-dk:#607F83;
+  --accent-ink:#CCF2F6; --accent-rgb:178,235,242;
+  --surface-2:#1E2022; --surface-3:#272A2C; --line-strong:#363839;
+  --text-strong:#F3F5F6; --bg-deep:#020203;
+  --accent-text:#0B0B0B; --on-accent-ink:#0B0B0B;
+  --good:#46C98F; --good-rgb:70,201,143;
+  --warn:#D9A441; --warn-rgb:217,164,65;
+  --danger:#E5705C; --danger-rgb:229,112,92;
+  --heat-0:#1E2022; --heat-1:#314347; --heat-2:#5C7B80; --heat-3:#B2EBF2; --heat-4:#CCF2F6;
+  --wash-1:rgba(178,235,242,.10); --wash-2:rgba(204,242,246,.05);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 22px -10px rgba(0,0,0,.62); --shadow-lg:0 22px 52px -18px rgba(0,0,0,.8);
+  --ring-focus:#CCF2F6;
+}
+/* --- non-colour tokens: one scale, used everywhere --- */
+:root {
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+          "Noto Sans", Arial, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "Fira Code", SFMono-Regular,
+          "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px;
+  --s6:24px; --s8:32px; --s10:40px; --s12:48px;
+
+  --r-sm:7px; --r:11px; --r-lg:16px; --r-xl:20px; --r-pill:999px;
+
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --fast: .16s var(--ease);
+  --slow: .34s var(--ease);
+
+  --sidebar-w: 236px;
+  --topbar-h: 56px;
+  --bottomnav-h: 62px;
+}
+
+/* ---------------------------------------------------------------------
+   2 · BASE
+   ------------------------------------------------------------------- */
+*,*::before,*::after{box-sizing:border-box}
+/* Components below set `display`, which beats the user-agent rule for
+   [hidden]. Without this the Pause and Stop buttons render next to Start
+   on load, because their hidden attribute loses to `display:inline-flex`. */
+[hidden]{display:none !important}
+html,body{margin:0;padding:0}
+html{background:var(--bg); scroll-behavior:smooth}
+body{
+  font-family:var(--font); font-size:15px; line-height:1.55;
+  color:var(--text); background:var(--bg);
+  min-height:100dvh; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(840px 500px at 4% -10%, var(--wash-1), transparent 62%),
+    radial-gradient(720px 480px at 100% 0%,  var(--wash-2), transparent 58%),
+    linear-gradient(180deg, var(--bg), var(--bg-deep));
+}
+h1,h2,h3{margin:0; line-height:1.25; color:var(--text-strong); font-weight:680;
+  letter-spacing:-.011em}
+h1{font-size:clamp(1.45rem, 1.2rem + 1.1vw, 1.85rem)}
+h2{font-size:.94rem} h3{font-size:.84rem}
+p{margin:0 0 .75em}
+p:last-child{margin-bottom:0}
+/* One token for "the accent, as text on a card". Each palette points it at
+   its dark shade or its light shade, so no rule below needs to branch. */
+a{color:var(--accent-ink); text-underline-offset:2px}
+button{font:inherit; cursor:pointer; color:inherit}
+strong{color:var(--text-strong); font-weight:650}
+::selection{background:rgba(var(--accent-rgb),.26); color:var(--text-strong)}
+
+:focus-visible{outline:2px solid var(--ring-focus); outline-offset:2px;
+  border-radius:var(--r-sm)}
+
+*{scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:99px;
+  border:3px solid transparent; background-clip:content-box}
+
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:fixed; top:-70px; left:var(--s4); z-index:200;
+  background:var(--surface); color:var(--text-strong); padding:var(--s2) var(--s4);
+  border:1px solid var(--line-strong); border-radius:var(--r);
+  box-shadow:var(--shadow); transition:top var(--fast)}
+.skip:focus{top:var(--s4)}
+svg.i{display:inline-block; vertical-align:middle; flex:0 0 auto;
+  width:16px; height:16px}
+
+/* ---------------------------------------------------------------------
+   3 · SHELL
+   Desktop is a fixed sidebar; below 960px it becomes a translucent top
+   bar plus a bottom nav, which is where a phone actually wants it.
+   ------------------------------------------------------------------- */
+.side{
+  position:fixed; inset:0 auto 0 0; width:var(--sidebar-w); z-index:70;
+  display:flex; flex-direction:column;
+  padding:var(--s5) var(--s3) var(--s4);
+  background:var(--surface); border-right:1px solid var(--border);
+}
+.side__brand{display:flex; align-items:center; gap:var(--s3);
+  padding:0 var(--s2) var(--s5)}
+.logo{
+  width:34px; height:34px; flex:0 0 auto; display:grid; place-items:center;
+  border-radius:10px; background:rgba(var(--accent-rgb),.14);
+  border:1px solid rgba(var(--accent-rgb),.34); color:var(--accent-ink);
+}
+.logo svg{width:19px;height:19px}
+.side__name{font-weight:700; font-size:14.5px; color:var(--text-strong);
+  letter-spacing:-.01em; line-height:1.2}
+.side__name span{display:block; font-family:var(--mono); font-size:10.5px;
+  font-weight:500; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-dim); margin-top:1px}
+
+.nav{display:flex; flex-direction:column; gap:2px; flex:1 1 auto; overflow-y:auto}
+.navbtn{
+  position:relative; display:flex; align-items:center; gap:var(--s3);
+  width:100%; text-align:left; padding:10px var(--s3);
+  border:1px solid transparent; border-radius:var(--r);
+  background:transparent; color:var(--text-dim);
+  font-size:13.5px; font-weight:550;
+  transition:background var(--fast), color var(--fast), border-color var(--fast);
+}
+.navbtn svg{width:18px;height:18px;stroke-width:1.9}
+.navbtn:hover{background:var(--surface-2); color:var(--text)}
+.navbtn[aria-current="page"]{
+  background:var(--surface-2); color:var(--text-strong); font-weight:650;
+  border-color:var(--border);
+}
+.navbtn[aria-current="page"] svg{color:var(--accent)}
+.navbtn[aria-current="page"]::before{
+  content:""; position:absolute; left:-1px; top:50%; translate:0 -50%;
+  width:3px; height:20px; border-radius:0 3px 3px 0; background:var(--accent);
+}
+.navbtn__dot{margin-left:auto; width:7px; height:7px; border-radius:50%;
+  background:var(--good); flex:0 0 auto}
+
+.side__foot{border-top:1px solid var(--border); margin-top:var(--s3);
+  padding-top:var(--s3); display:flex; flex-direction:column; gap:var(--s3)}
+.side__date{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--text-dim); padding:0 var(--s2)}
+
+.topbar{
+  display:none; position:sticky; top:0; z-index:65; height:var(--topbar-h);
+  align-items:center; gap:var(--s3); padding-inline:var(--s4);
+  background:color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .logo{width:30px;height:30px;border-radius:9px}
+.topbar .logo svg{width:17px;height:17px}
+.topbar__title{font-weight:680; font-size:14.5px; color:var(--text-strong);
+  margin-right:auto}
+
+.bottomnav{
+  display:none; position:fixed; inset:auto 0 0 0; z-index:70;
+  height:calc(var(--bottomnav-h) + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+}
+.bottomnav .navbtn{
+  flex-direction:column; gap:3px; justify-content:center; align-items:center;
+  width:auto; flex:1 1 0; min-width:0; padding:var(--s2) 2px;
+  border:0; border-radius:0; font-size:10px; letter-spacing:.01em;
+}
+.bottomnav .navbtn::before{display:none}
+.bottomnav .navbtn[aria-current="page"]{background:transparent}
+.bottomnav .navbtn[aria-current="page"] span{color:var(--text-strong)}
+.bottomnav .navbtn__dot{position:absolute; top:5px; left:50%; margin-left:9px}
+
+main.main{margin-left:var(--sidebar-w); padding:var(--s8) var(--s8) var(--s12);
+  max-width:1120px}
+
+.view{display:none}
+.view.active{display:block; animation:viewin .28s var(--ease)}
+@keyframes viewin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* --- page head, one per view --- */
+.head{margin-bottom:var(--s6)}
+.head__eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent-ink); margin-bottom:5px}
+.head p{color:var(--text-dim); font-size:13.5px; margin-top:var(--s2);
+  max-width:70ch}
+
+/* ---------------------------------------------------------------------
+   4 · PRIMITIVES
+   ------------------------------------------------------------------- */
+.card{background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:var(--s5); box-shadow:var(--shadow)}
+.card--flush{padding:var(--s4)}
+.card--accent{border-color:rgba(var(--accent-rgb),.4)}
+.card__head{display:flex; align-items:center; justify-content:space-between;
+  gap:var(--s3); margin-bottom:var(--s4)}
+.card__title{display:flex; align-items:center; gap:var(--s2);
+  font-size:13.5px; font-weight:680; color:var(--text-strong)}
+.card__title svg{width:16px;height:16px;stroke-width:2;color:var(--accent)}
+.card__note{font-size:12.5px; color:var(--text-dim); line-height:1.6}
+
+.grid{display:grid; gap:var(--s4)}
+.grid--2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid--3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+/* Six tiles, sized to land on one row at full width instead of 5 + orphan. */
+.grid--stats{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
+.grid--auto{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.grid--top{align-items:start}
+.stack{display:flex; flex-direction:column; gap:var(--s4)}
+.row{display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap}
+.row--between{justify-content:space-between}
+.grow{flex:1 1 auto; min-width:0}
+.muted{color:var(--text-dim)}
+.sm{font-size:13px} .xs{font-size:11.5px}
+hr.sep{border:none; border-top:1px solid var(--border); margin:var(--s5) 0}
+
+/* --- buttons --- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
+  padding:9px var(--s4); font-size:13.5px; font-weight:600; line-height:1.2;
+  border:1px solid var(--border); border-radius:var(--r);
+  background:var(--surface-2); color:var(--text); white-space:nowrap;
+  transition:background var(--fast), border-color var(--fast),
+             color var(--fast), transform var(--fast);
+}
+.btn svg{width:16px;height:16px;stroke-width:2;flex:0 0 auto}
+.btn:hover{background:var(--surface-3); border-color:var(--line-strong);
+  color:var(--text-strong)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45; cursor:not-allowed; transform:none}
+.btn--primary{background:var(--accent); border-color:transparent;
+  color:var(--on-accent-ink); box-shadow:0 4px 14px -6px rgba(var(--accent-rgb),.7)}
+.btn--primary:hover{background:var(--accent); color:var(--on-accent-ink);
+  filter:brightness(1.07)}
+.btn--soft{background:rgba(var(--accent-rgb),.13);
+  border-color:rgba(var(--accent-rgb),.4); color:var(--accent-ink)}
+.btn--soft:hover{background:rgba(var(--accent-rgb),.22)}
+.btn--ghost{background:transparent; border-color:var(--border);
+  color:var(--text-dim)}
+.btn--ghost:hover{background:var(--surface-2); color:var(--text)}
+.btn--danger{background:rgba(var(--danger-rgb),.1);
+  border-color:rgba(var(--danger-rgb),.4); color:var(--danger)}
+.btn--danger:hover{background:rgba(var(--danger-rgb),.2); color:var(--danger);
+  border-color:var(--danger)}
+.btn--sm{padding:5px var(--s3); font-size:12px}
+.btn--lg{padding:13px var(--s6); font-size:15px; border-radius:var(--r)}
+.btn--icon{padding:7px; border-radius:var(--r-sm)}
+.btn--block{width:100%}
+
+/* --- chips --- */
+.chip{display:inline-flex; align-items:center; gap:6px; padding:3px 10px;
+  border-radius:var(--r-pill); font-family:var(--mono); font-size:11px;
+  letter-spacing:.03em; background:var(--surface-2); color:var(--text-dim);
+  border:1px solid var(--border); white-space:nowrap}
+.chip--accent{background:rgba(var(--accent-rgb),.14); color:var(--accent-ink);
+  border-color:rgba(var(--accent-rgb),.38)}
+.chip--good{background:rgba(var(--good-rgb),.13); color:var(--good);
+  border-color:rgba(var(--good-rgb),.36)}
+.chip--warn{background:rgba(var(--warn-rgb),.13); color:var(--warn);
+  border-color:rgba(var(--warn-rgb),.36)}
+.chip__dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* --- fields --- */
+.field{display:flex; flex-direction:column; gap:6px}
+.field__label{font-size:10.5px; font-weight:650; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--text-dim)}
+input,select,textarea{
+  width:100%; padding:9px var(--s3); font:inherit; font-size:14px;
+  color:var(--text); background:var(--surface-2);
+  border:1px solid var(--border); border-radius:var(--r);
+  transition:border-color var(--fast), background var(--fast);
+}
+input[type=number],input[type=time],input[type=date]{font-family:var(--mono)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);
+  background:var(--surface); outline:none;
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.16)}
+input[type=checkbox]{width:auto}
+select{appearance:none; cursor:pointer; padding-right:var(--s8);
+  /* The chevron is a data: URI and cannot read a token, so it is one neutral
+     grey chosen to clear 3:1 on the lightest and the darkest card in the set. */
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C8C8C' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+  background-size:15px}
+.help{font-size:11.5px; color:var(--text-dim); line-height:1.55}
+
+/* --- toggle switch --- */
+.switch{display:inline-flex; align-items:center; gap:var(--s3); cursor:pointer}
+.switch input{position:absolute; opacity:0; width:0; height:0}
+.switch__track{position:relative; flex:0 0 auto; width:40px; height:22px;
+  border-radius:var(--r-pill); background:var(--surface-3);
+  border:1px solid var(--line-strong);
+  transition:background var(--fast), border-color var(--fast)}
+.switch__track::after{content:""; position:absolute; top:2px; left:2px;
+  width:16px; height:16px; border-radius:50%; background:var(--text-dim);
+  transition:transform var(--fast), background var(--fast)}
+.switch input:checked + .switch__track{background:rgba(var(--accent-rgb),.34);
+  border-color:var(--accent)}
+.switch input:checked + .switch__track::after{transform:translateX(18px);
+  background:var(--accent)}
+.switch input:focus-visible + .switch__track{outline:2px solid var(--ring-focus);
+  outline-offset:2px}
+.switch__label{font-size:13.5px}
+
+/* --- segmented control (the theme switch lives in this) --- */
+.seg{display:inline-flex; gap:2px; padding:3px; background:var(--surface-2);
+  border:1px solid var(--border); border-radius:var(--r-pill);
+  width:fit-content; max-width:100%}
+.side .seg{width:100%}
+.seg button{flex:0 1 auto; display:inline-flex; align-items:center;
+  justify-content:center; gap:6px; padding:6px 10px; border:0;
+  border-radius:var(--r-pill); background:transparent; color:var(--text-dim);
+  font-size:12px; font-weight:600; transition:background var(--fast),
+  color var(--fast), box-shadow var(--fast)}
+.seg button svg{width:14px;height:14px;stroke-width:2}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--surface);
+  color:var(--text-strong); box-shadow:var(--shadow)}
+.seg button[aria-pressed="true"] svg{color:var(--accent)}
+.side .seg button{flex:1 1 0; padding:6px 4px}
+.swatch{display:inline-flex; gap:3px; align-items:center}
+.swatch i{width:9px;height:9px;border-radius:50%;display:block;
+  border:1px solid rgba(0,0,0,.14)}
+
+/* --- palette picker --- */
+.palettes{display:grid; gap:var(--s3);
+  grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
+.pal{display:flex; flex-direction:column; gap:7px; padding:9px;
+  border:1px solid var(--border); border-radius:var(--r);
+  background:var(--surface-2); text-align:left; font:inherit;
+  transition:border-color var(--fast), background var(--fast), transform var(--fast)}
+.pal:hover{border-color:var(--line-strong); transform:translateY(-1px)}
+.pal[aria-pressed="true"]{border-color:var(--accent);
+  background:rgba(var(--accent-rgb),.12)}
+/* The preview is a miniature of the real thing -- ground, a card on it, an
+   accent pill and two text bars. Dots cannot show you that a card will vanish
+   into its own background; this can. */
+.pal__prev{display:block; height:52px; border-radius:8px; padding:7px;
+  border:1px solid rgba(128,128,128,.22); overflow:hidden}
+.pal__card{display:flex; flex-direction:column; gap:4px; height:100%;
+  border-radius:5px; border:1px solid; padding:5px 6px}
+.pal__card i{display:block; width:26px; height:5px; border-radius:99px; flex:0 0 auto}
+.pal__card b{display:block; width:82%; height:3px; border-radius:99px; opacity:.85}
+.pal__n{font-size:12.5px; font-weight:650; color:var(--text-strong); line-height:1.2}
+.pal[aria-pressed="true"] .pal__n{color:var(--accent-ink)}
+.pal__d{font-size:10.5px; color:var(--text-dim); line-height:1.35}
+/* The help line under the mode switch names the live palette, so its text
+   changes length on every pick and wraps to a second line for the longer
+   names. Reserving both lines stops the grid below jumping a row under the
+   cursor mid-choice -- which is how a click lands on the tile you did not
+   want. Same reason the count chip never wraps. */
+#themeHelp{min-height:3.2em}
+
+/* --- stat tile --- */
+.stat{background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:var(--s4); display:flex;
+  flex-direction:column; gap:3px}
+.stat__label{font-size:10.5px; font-weight:650; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--text-dim)}
+.stat__value{font-family:var(--mono); font-size:26px; font-weight:700;
+  color:var(--text-strong); line-height:1.15; letter-spacing:-.02em}
+.stat__value small{font-size:13px; color:var(--text-dim); font-weight:500;
+  margin-left:3px; letter-spacing:0}
+.stat__sub{font-size:11.5px; color:var(--text-dim); line-height:1.5}
+
+/* --- progress bar --- */
+.bar{height:8px; border-radius:99px; background:var(--surface-2);
+  overflow:hidden; border:1px solid var(--border)}
+.bar__fill{height:100%; border-radius:99px; background:var(--accent);
+  transition:width .5s var(--ease)}
+.bar__fill.done{background:var(--good)}
+
+/* --- progress ring --- */
+.ring{display:flex; align-items:center; gap:var(--s4)}
+.ring svg{flex:0 0 auto}
+.ring .track{fill:none; stroke:var(--line-strong); opacity:.5}
+.ring .fill{fill:none; stroke:var(--accent); stroke-linecap:round;
+  transition:stroke-dasharray .55s var(--ease), stroke var(--slow)}
+.ring .fill.done{stroke:var(--good)}
+
+/* --- empty state --- */
+.empty{border:1px dashed var(--line-strong); border-radius:var(--r-lg);
+  padding:var(--s8) var(--s5); text-align:center; color:var(--text-dim);
+  font-size:13px; line-height:1.6}
+
+/* ---------------------------------------------------------------------
+   5 · MODULES
+   ------------------------------------------------------------------- */
+
+/* --- timer --- */
+.timer{display:flex; flex-direction:column; align-items:center;
+  padding:var(--s4) var(--s5) var(--s4)}
+.timer__phase{display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; font-weight:600; color:var(--accent-ink);
+  background:rgba(var(--accent-rgb),.13); border:1px solid rgba(var(--accent-rgb),.34);
+  border-radius:var(--r-pill); padding:4px 13px}
+.timer__phase.break{color:var(--good); background:rgba(var(--good-rgb),.13);
+  border-color:rgba(var(--good-rgb),.34)}
+/* The clock sits inside a ring that empties as the block runs. A bare numeral
+   tells you the time left; the ring tells you the shape of it without reading. */
+.timer__dial{position:relative; display:grid; place-items:center;
+  margin:var(--s3) 0}
+.timer__ring{display:block; grid-area:1/1}
+.timer__ring .trk{fill:none; stroke:var(--line-strong); opacity:.55}
+.timer__ring .arc{fill:none; stroke:var(--accent); stroke-linecap:round;
+  transition:stroke-dasharray .2s linear, stroke var(--slow)}
+.timer__ring .arc.break{stroke:var(--good)}
+.timer__ring .arc.paused{stroke:var(--line-strong)}
+.timer__mid{grid-area:1/1; display:flex; flex-direction:column;
+  align-items:center; gap:4px; pointer-events:none}
+.timer__face{font-family:var(--mono); font-variant-numeric:tabular-nums;
+  font-size:clamp(2.6rem, 1.9rem + 3.4vw, 3.9rem); font-weight:700;
+  letter-spacing:-.045em; line-height:1; color:var(--text-strong)}
+.timer__face.paused{color:var(--text-dim)}
+.timer__sub{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--text-dim); text-align:center}
+.roundchips{display:flex; gap:6px; justify-content:center}
+.roundchips i{width:26px; height:5px; border-radius:99px;
+  background:var(--line-strong); display:block;
+  transition:background var(--fast)}
+.roundchips i.on{background:var(--accent)}
+.roundchips i.now{background:var(--accent); opacity:.45}
+.timer__actions{display:flex; gap:var(--s3); justify-content:center;
+  margin-top:var(--s5); flex-wrap:wrap}
+
+/* --- week strip --- */
+.week{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;
+  position:relative; padding-top:var(--s2)}
+.week__col{display:flex; flex-direction:column; justify-content:flex-end;
+  gap:5px; min-width:0}
+.week__track{height:96px; display:flex; align-items:flex-end;
+  background:linear-gradient(var(--surface-2),var(--surface-2)) center/100% 1px no-repeat;
+  border-radius:6px}
+.week__bar{width:100%; border-radius:5px 5px 3px 3px; background:var(--surface-3);
+  min-height:3px; transition:height .45s var(--ease)}
+.week__col.has .week__bar{background:var(--accent)}
+.week__col.today .week__bar{box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--accent-ink)}
+.week__col.future .week__bar{background:transparent;
+  border:1px dashed var(--border); min-height:10px}
+.week__d{font-family:var(--mono); font-size:10px; text-align:center;
+  letter-spacing:.06em; color:var(--text-dim)}
+.week__col.today .week__d{color:var(--accent-ink); font-weight:700}
+.week__m{font-family:var(--mono); font-size:10px; text-align:center;
+  color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+/* The daily-goal line is drawn across the whole strip, not per bar, so "did I
+   clear it" is one horizontal read rather than seven comparisons. */
+.week__goal{position:absolute; left:0; right:0; pointer-events:none;
+  border-top:1px dashed var(--accent-ink); opacity:.55}
+.week__goal span{position:absolute; right:0; top:-15px; font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.06em; color:var(--accent-ink)}
+
+/* --- subject split --- */
+.split{display:flex; height:15px; border-radius:99px; overflow:hidden;
+  background:var(--surface-2); border:1px solid var(--border)}
+.split i{display:block; height:100%; min-width:2px}
+.split-legend{display:grid; gap:5px var(--s4); margin-top:var(--s3);
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.split-legend span{display:flex; align-items:center; gap:8px; font-size:12.5px;
+  min-width:0}
+.split-legend i{width:10px; height:10px; border-radius:3px; flex:0 0 auto}
+.split-legend b{font-weight:550; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap}
+.split-legend em{margin-left:auto; font-family:var(--mono); font-size:11px;
+  font-style:normal; color:var(--text-dim); flex:0 0 auto}
+
+/* --- sidebar today readout --- */
+.side__today{display:flex; align-items:center; gap:var(--s3);
+  padding:var(--s3) var(--s2); border-radius:var(--r);
+  background:var(--surface-2); border:1px solid var(--border)}
+.side__today svg{flex:0 0 auto}
+.side__today .trk{fill:none; stroke:var(--line-strong); opacity:.55}
+.side__today .arc{fill:none; stroke:var(--accent); stroke-linecap:round;
+  transition:stroke-dasharray .5s var(--ease)}
+.side__today .arc.done{stroke:var(--good)}
+.side__today-v{display:block; font-family:var(--mono); font-size:15px;
+  font-weight:700; color:var(--text-strong); line-height:1.15}
+.side__today-l{display:block; font-size:10.5px; color:var(--text-dim); line-height:1.3}
+
+/* --- badge groups --- */
+.badge-group{margin-top:var(--s5)}
+.badge-group:first-of-type{margin-top:0}
+.badge-group__h{display:flex; align-items:center; gap:var(--s3);
+  margin-bottom:var(--s3)}
+.badge-group__h h3{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--text-dim); font-weight:650}
+.badge-group__h hr{flex:1 1 auto; border:none; border-top:1px solid var(--border);
+  margin:0}
+.badge-group__h span{font-family:var(--mono); font-size:10.5px; color:var(--text-dim)}
+
+/* --- heatmap --- */
+.heat-scroll{overflow-x:auto; padding-bottom:var(--s2)}
+/* Two gutters around the grid: months along the top, weekday initials down the
+   left. A bare grid of squares does not tell you which end is January. */
+.heat-grid{display:grid; grid-template-columns:auto auto;
+  grid-template-rows:auto auto; gap:5px 7px; width:max-content}
+.heat-months{grid-area:1/2; display:flex; font-family:var(--mono); font-size:10px;
+  letter-spacing:.05em; color:var(--text-dim); height:12px}
+.heat-months span{flex:0 0 auto; overflow:hidden; white-space:nowrap}
+.heat-wdays{grid-area:2/1; display:grid; grid-template-rows:repeat(7,13px);
+  gap:3px; font-family:var(--mono); font-size:9.5px; color:var(--text-dim);
+  align-items:center; justify-items:end}
+.heat{grid-area:2/2; display:grid; grid-auto-flow:column;
+  grid-template-rows:repeat(7,13px); gap:3px; min-width:max-content}
+.heat i{width:13px; height:13px; border-radius:3px; background:var(--heat-0);
+  display:block; cursor:pointer; border:1.5px solid transparent;
+  transition:outline-color var(--fast)}
+.heat i:hover{outline:1.5px solid var(--text-dim); outline-offset:1px}
+.heat i.l1{background:var(--heat-1)} .heat i.l2{background:var(--heat-2)}
+.heat i.l3{background:var(--heat-3)} .heat i.l4{background:var(--heat-4)}
+.heat i.sel{outline:2px solid var(--text-strong); outline-offset:1px}
+.heat i.future{background:transparent; cursor:default; border-color:transparent}
+.heat i.future:hover{outline:none}
+.heat-legend{display:flex; align-items:center; gap:4px; font-size:11px;
+  font-family:var(--mono); letter-spacing:.05em; color:var(--text-dim)}
+.heat-legend i{width:11px; height:11px; border-radius:3px; display:block}
+.heat-detail{margin-top:var(--s4); padding:var(--s3) var(--s4);
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--r); font-size:13px; min-height:3em;
+  display:flex; align-items:center}
+
+/* --- badges --- */
+.badges{display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr));
+  gap:var(--s3)}
+.badge{border:1px solid var(--border); border-radius:var(--r);
+  padding:var(--s3); background:var(--surface-2); position:relative;
+  transition:border-color var(--fast), background var(--fast)}
+.badge__n{font-weight:650; font-size:13px; color:var(--text)}
+.badge__t{font-size:11px; color:var(--text-dim); margin-top:1px}
+.badge__p{font-family:var(--mono); font-size:10.5px; color:var(--text-dim);
+  margin-top:var(--s2); letter-spacing:.04em}
+.badge__bar{height:3px; border-radius:99px; background:var(--surface-3);
+  overflow:hidden; margin-top:5px}
+.badge__bar i{display:block; height:100%; background:var(--text-dim);
+  border-radius:99px}
+.badge.earned{background:rgba(var(--accent-rgb),.12);
+  border-color:rgba(var(--accent-rgb),.42)}
+.badge.earned .badge__n,
+.badge.earned .badge__p{color:var(--accent-ink)}
+
+/* --- log table --- */
+.log-scroll{overflow-x:auto; margin:0 calc(var(--s5) * -1) calc(var(--s5) * -1);
+  padding:0 var(--s5) var(--s5)}
+.log{width:100%; border-collapse:collapse; font-size:13px; min-width:520px}
+.log th{text-align:left; font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.09em; font-weight:650; color:var(--text-dim);
+  padding:0 var(--s2) var(--s2); border-bottom:1px solid var(--border);
+  white-space:nowrap}
+.log td{padding:var(--s2); border-bottom:1px solid var(--border);
+  vertical-align:middle}
+.log tbody tr{transition:background var(--fast)}
+.log tbody tr:hover{background:var(--surface-2)}
+.log tr:last-child td{border-bottom:none}
+.log td.t{font-family:var(--mono); color:var(--text-dim); white-space:nowrap}
+.log td.subj{font-weight:550; color:var(--text-strong)}
+.log input[type=number]{width:76px; padding:5px var(--s2); font-size:12.5px}
+.log .btn{opacity:.55; transition:opacity var(--fast)}
+.log tr:hover .btn, .log .btn:focus-visible{opacity:1}
+
+/* --- banners, inline messages, toast --- */
+.banner{border-radius:var(--r-lg); padding:var(--s4);
+  margin-bottom:var(--s5); font-size:13.5px; line-height:1.6;
+  border:1px solid rgba(var(--warn-rgb),.5);
+  background:rgba(var(--warn-rgb),.1); color:var(--text)}
+.banner.info{border-color:rgba(var(--accent-rgb),.45);
+  background:rgba(var(--accent-rgb),.1)}
+.banner .row{margin-top:var(--s3)}
+.inline-msg{font-size:12.5px; margin-top:var(--s2); min-height:1.3em;
+  color:var(--text-dim); line-height:1.55}
+.inline-msg.err{color:var(--danger)}
+.inline-msg.ok{color:var(--good)}
+/* Hidden by visibility rather than by sliding a percentage of its own height:
+   a percentage translate depends on how tall the message happens to be, and on
+   a phone a two-line toast stayed half on screen above the bottom nav. */
+#toast{position:fixed; left:50%; bottom:calc(var(--s5) + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%) translateY(18px);
+  opacity:0; visibility:hidden;
+  background:var(--surface); border:1px solid var(--line-strong);
+  box-shadow:var(--shadow-lg); border-radius:var(--r); padding:11px var(--s4);
+  font-size:13px; z-index:90;
+  transition:transform .24s var(--ease), opacity .24s var(--ease),
+             visibility 0s linear .24s;
+  display:flex; align-items:center; gap:var(--s4); max-width:min(92vw,460px)}
+#toast.show{transform:translateX(-50%) translateY(0); opacity:1; visibility:visible;
+  transition-delay:0s, 0s, 0s}
+
+/* --- today dashboard --- */
+/* Above 1180px the timer and the day's numbers sit side by side, so starting a
+   block and checking where the day stands is one screen with no scrolling. */
+.dash{display:grid; gap:var(--s4); align-items:start}
+/* Grid items are min-width:auto by default, so the 520px-wide session table
+   would widen the whole column instead of scrolling inside its own box. */
+.dash > *{min-width:0}
+.stack{min-width:0}
+@media (min-width:1180px){
+  .dash{grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr)}
+  .dash__side{display:flex; flex-direction:column; gap:var(--s4)}
+}
+
+/* ---------------------------------------------------------------------
+   6 · RESPONSIVE / MOTION / PRINT
+   ------------------------------------------------------------------- */
+@media (max-width:959px){
+  .side{display:none}
+  .topbar{display:flex}
+  .bottomnav{display:flex}
+  main.main{margin-left:0; padding:var(--s5) var(--s4)
+    calc(var(--bottomnav-h) + var(--s10))}
+  #toast{bottom:calc(var(--bottomnav-h) + var(--s3) + env(safe-area-inset-bottom,0px))}
+  .head{margin-bottom:var(--s5)}
+  .log-scroll{margin:0 calc(var(--s4) * -1) calc(var(--s4) * -1);
+    padding:0 var(--s4) var(--s4)}
+  .card{padding:var(--s4)}
+}
+@media (max-width:460px){
+  .timer{padding:var(--s5) var(--s2) var(--s3)}
+  .timer__actions .btn{flex:1 1 auto}
+  .week__track{height:74px}
+  .week__m{font-size:9px}
+  .palettes{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important}
+}
+@media print{
+  .side,.topbar,.bottomnav,#toast,.timer__actions{display:none !important}
+  main.main{margin:0; padding:0}
+  body::before{display:none}
+  .card{box-shadow:none; break-inside:avoid}
+}
+</style>
+<script>
+/* Palette bootstrap. This runs before the body parses so the chosen palette is
+   on <html> for the first paint — stamping it from init() instead would show a
+   frame of Paper before repainting in, say, Arasaka. It reads the same key and
+   the same three settings the app does, and falls back silently: a corrupt or
+   absent blob just leaves the CSS defaults in place. */
+(function () {
+  try {
+    var s = (JSON.parse(localStorage.getItem("studyTracker.v1") || "null") || {}).settings || {};
+    var mode = s.themeMode || (s.theme === "light" || s.theme === "dark" ? s.theme : "auto");
+    var dark = mode === "dark" || (mode === "auto" && window.matchMedia &&
+               window.matchMedia("(prefers-color-scheme: dark)").matches);
+    var id = dark ? (s.darkPalette || "pine") : (s.lightPalette || "paper");
+    document.documentElement.setAttribute("data-palette", id);
+    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+  } catch (e) { /* defaults in CSS already cover this */ }
+})();
+</script>
+</head>
+<body>
+
+<!-- Icon sprite. Inline so it works from file:// with no network and no
+     second request; every icon is stroke-only and inherits currentColor. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+<defs>
+<symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.6A2.6 2.6 0 0 1 6.6 2H20v20H6.6A2.6 2.6 0 0 1 4 19.4Z"/><path d="M4 17.4A2.6 2.6 0 0 1 6.6 15H20"/><path d="M8.5 6.5h7"/></symbol>
+<symbol id="i-today" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.6 2.1"/><path d="M9 2h6"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 17h2M11 17h2"/></symbol>
+<symbol id="i-progress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3h9v6a4.5 4.5 0 0 1-9 0Z"/><path d="M16.5 4.5H20V7a3.5 3.5 0 0 1-3.5 3.5M7.5 4.5H4V7a3.5 3.5 0 0 0 3.5 3.5"/><path d="M12 13.5V17M8.5 21h7l-1-4h-5Z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7h9M17.5 7H20.5M3.5 12h3.5M12 12h8.5M3.5 17h9M17.5 17h3"/><circle cx="15" cy="7" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="15" cy="17" r="2.2"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s5 4.6 5 9.2a5 5 0 0 1-10 0c0-1.4.6-2.6 1.4-3.4 0 1.7 1 2.6 1.9 2.6 1.2 0 1.9-1 1.9-2.6 0-2.3-.2-4.1-.2-5.8Z"/><path d="M12 21.5a6.6 6.6 0 0 0 6.6-6.6"/></symbol>
+<symbol id="i-break" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h13v6a4.5 4.5 0 0 1-4.5 4.5H8a4.5 4.5 0 0 1-4.5-4.5Z"/><path d="M16.5 10h1.6a2.5 2.5 0 0 1 0 5h-1.6"/><path d="M7.5 2.5v2.6M11.5 2.5v2.6"/></symbol>
+<symbol id="i-week" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V13M9.3 20V8M14.7 20v-9M20 20V4"/></symbol>
+<symbol id="i-split" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="9" width="19" height="6" rx="3"/><path d="M9 9v6M14.5 9v6"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-level" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9.5M10 20V4M16 20v-8M22 20H2"/></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="6"/><path d="m8.2 9.6-2.8-6M15.8 9.6l2.8-6M9 3.6h6"/><path d="m12 12.8.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L9 14.9l2-.3Z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.4 2"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5Z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M20 12c0 1.7-3.6 3-8 3s-8-1.3-8-3"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.4A8.6 8.6 0 1 1 9.6 3.5a6.9 6.9 0 0 0 10.9 10.9Z"/></symbol>
+<symbol id="i-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2.2"/><path d="M8.5 21h7M12 17v4"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.8 19 12 7 19.2Z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5v15M15 4.5v15"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="13" height="13" rx="2"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v12M7.5 11l4.5 4.5L16.5 11"/><path d="M4 19.5h16"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5v-12M7.5 8 12 3.5 16.5 8"/><path d="M4 19.5h16"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6h17M8.5 6V4.2A1.7 1.7 0 0 1 10.2 2.5h3.6A1.7 1.7 0 0 1 15.5 4.2V6"/><path d="M5.8 6l.9 13.4A2.2 2.2 0 0 0 8.9 21.5h6.2a2.2 2.2 0 0 0 2.2-2.1L18.2 6"/></symbol>
+</defs>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ================= SHELL: SIDEBAR (>=960px) ================= -->
+<aside class="side">
+  <div class="side__brand">
+    <span class="logo"><svg class="i"><use href="#i-book"/></svg></span>
+    <span class="side__name">Study Tracker<span id="sideTerm">Monsoon 2026</span></span>
+  </div>
+
+  <nav class="nav" aria-label="Sections">
+    <button class="navbtn" data-view="today" aria-current="page">
+      <svg class="i"><use href="#i-today"/></svg><span>Today</span>
+      <i class="navbtn__dot" id="dotToday" hidden></i></button>
+    <button class="navbtn" data-view="history">
+      <svg class="i"><use href="#i-history"/></svg><span>History</span></button>
+    <button class="navbtn" data-view="progress">
+      <svg class="i"><use href="#i-progress"/></svg><span>Progress</span></button>
+    <button class="navbtn" data-view="settings">
+      <svg class="i"><use href="#i-settings"/></svg><span>Settings</span></button>
+  </nav>
+
+  <div class="side__foot">
+    <div class="side__date" id="sideDate"></div>
+    <div class="side__today" id="sideToday"></div>
+    <div class="row" style="padding:0 var(--s2); gap:var(--s2)">
+      <span class="chip chip--accent" id="levelPill">Level 1</span>
+      <span class="chip" id="streakChip"><span class="chip__dot"></span>0d</span>
+    </div>
+    <div class="seg js-themeSeg" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false"
+              title="Light palette"><svg class="i"><use href="#i-sun"/></svg>Light</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false"
+              title="Dark palette"><svg class="i"><use href="#i-moon"/></svg>Dark</button>
+      <button type="button" data-theme-set="auto" aria-pressed="false"
+              title="Follow the system"><svg class="i"><use href="#i-auto"/></svg>Auto</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ================= SHELL: TOP BAR (<960px) ================= -->
+<header class="topbar">
+  <span class="logo"><svg class="i"><use href="#i-book"/></svg></span>
+  <span class="topbar__title">Study Tracker</span>
+  <span class="chip chip--accent" id="levelPillM">Level 1</span>
+  <button class="btn btn--ghost btn--icon" id="themeBtn" title="Switch theme"
+          aria-label="Switch theme"><svg class="i"><use href="#i-auto"/></svg></button>
+</header>
+
+<main class="main" id="main" tabindex="-1">
+  <div id="recoveryHost"></div>
+
+  <!-- ================= TODAY ================= -->
+  <section class="view active" id="view-today">
+    <div class="head">
+      <div class="head__eyebrow" id="todayEyebrow">Today</div>
+      <h1>What are you working on?</h1>
+      <p>A block only counts the time it was actually running. Pauses, breaks and
+        anything under a minute are never logged as study time.</p>
+    </div>
+
+    <div class="dash">
+      <div class="stack">
+        <div class="card card--accent">
+          <div class="field" style="margin-bottom:var(--s4)">
+            <label class="field__label" for="subjInput">Subject</label>
+            <input id="subjInput" type="text" autocomplete="off" spellcheck="false"
+                   list="subjSeen" placeholder="What are you studying?">
+            <div class="help" id="subjHint">Leave it blank and it logs as General study.</div>
+          </div>
+          <datalist id="subjSeen"></datalist>
+
+          <div class="timer">
+            <div class="timer__phase" id="phaseLabel">
+              <svg class="i" style="width:13px;height:13px"><use href="#i-clock"/></svg>Focus</div>
+            <div class="timer__dial">
+              <svg class="timer__ring" width="228" height="228" viewBox="0 0 228 228"
+                   aria-hidden="true">
+                <circle class="trk" cx="114" cy="114" r="103" stroke-width="8"/>
+                <circle class="arc" id="timerArc" cx="114" cy="114" r="103"
+                        stroke-width="8" transform="rotate(-90 114 114)"
+                        stroke-dasharray="0 647.2"/>
+              </svg>
+              <div class="timer__mid">
+                <div class="timer__face" id="timerFace">25:00</div>
+                <div class="timer__sub" id="timerSub"></div>
+              </div>
+            </div>
+            <div class="roundchips" id="roundChips"></div>
+            <div class="timer__actions">
+              <button class="btn btn--primary btn--lg" id="startBtn">
+                <svg class="i"><use href="#i-play"/></svg>Start</button>
+              <button class="btn btn--lg" id="pauseBtn" hidden>
+                <svg class="i"><use href="#i-pause"/></svg>Pause</button>
+              <button class="btn btn--lg" id="stopBtn" hidden>
+                <svg class="i"><use href="#i-stop"/></svg>Stop</button>
+            </div>
+          </div>
+          <div class="inline-msg" id="timerMsg"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-list"/></svg>Today's sessions</span>
+            <span class="chip" id="todayTotal"></span>
+          </div>
+          <div id="todayLog"></div>
+        </div>
+      </div>
+
+      <div class="dash__side">
+        <div class="grid grid--2 grid--top">
+          <div class="card" id="streakTile"></div>
+          <div class="card" id="goalTile"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-week"/></svg>This week</span>
+            <span class="chip" id="weekTotal"></span>
+          </div>
+          <div class="week" id="weekStrip"></div>
+          <div id="weekGoal" style="margin-top:var(--s4)"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-split"/></svg>Where the time went</span>
+            <select id="splitRange" aria-label="Range" style="width:auto">
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="0">All time</option>
+            </select>
+          </div>
+          <div id="splitHost"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section class="view" id="view-history">
+    <div class="head">
+      <div class="head__eyebrow">Record</div>
+      <h1>History</h1>
+      <p>Every logged minute, and what the shading actually means. Click any day
+        to see what you studied on it.</p>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-grid"/></svg>Study heatmap</span>
+          <select id="heatFilter" aria-label="Filter by subject" style="width:auto;max-width:220px"></select>
+        </div>
+        <div class="heat-scroll">
+          <div class="heat-grid">
+            <div class="heat-months" id="heatMonths"></div>
+            <div class="heat-wdays"><i>M</i><i></i><i>W</i><i></i><i>F</i><i></i><i></i></div>
+            <div class="heat" id="heat"></div>
+          </div>
+        </div>
+        <div class="row row--between" style="margin-top:var(--s3)">
+          <span class="xs muted" id="heatMode"></span>
+          <span class="heat-legend">Less
+            <i style="background:var(--heat-0)"></i>
+            <i style="background:var(--heat-1)"></i>
+            <i style="background:var(--heat-2)"></i>
+            <i style="background:var(--heat-3)"></i>
+            <i style="background:var(--heat-4)"></i>More</span>
+        </div>
+        <div class="heat-detail" id="heatDetail">Pick a day to see what you studied.</div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-plus"/></svg>Log time you didn't run a timer for</span>
+        </div>
+        <div class="grid grid--3" style="margin-bottom:var(--s4)">
+          <div class="field"><label class="field__label" for="mDate">Date</label>
+            <input type="date" id="mDate"></div>
+          <div class="field"><label class="field__label" for="mStart">Start</label>
+            <input type="time" id="mStart"></div>
+          <div class="field"><label class="field__label" for="mEnd">End</label>
+            <input type="time" id="mEnd"></div>
+        </div>
+        <div class="field" style="margin-bottom:var(--s4)">
+          <label class="field__label" for="mSubj">Subject</label>
+          <input id="mSubj" type="text" autocomplete="off" spellcheck="false"
+                 list="subjSeen" placeholder="What were you studying?">
+        </div>
+        <div class="row">
+          <button class="btn btn--soft" id="mAdd">
+            <svg class="i"><use href="#i-plus"/></svg>Add entry</button>
+          <span class="inline-msg" id="mMsg" style="margin-top:0"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-list"/></svg>All sessions</span>
+          <span class="chip" id="logCount"></span>
+        </div>
+        <div id="fullLog"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROGRESS ================= -->
+  <section class="view" id="view-progress">
+    <div class="head">
+      <div class="head__eyebrow">Standing</div>
+      <h1>Progress</h1>
+      <p>One XP is one focused minute — no multipliers, no hidden weighting.
+        The number below is your minutes, read a different way.</p>
+    </div>
+
+    <div class="stack">
+      <div class="card" id="levelCard"></div>
+      <div class="grid grid--stats" id="statTiles"></div>
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-medal"/></svg>Badges</span>
+          <span class="chip" id="badgeCount"></span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">Locked badges show what
+          they need. Nothing here is ever taken away — a quiet week pauses a streak,
+          it doesn't undo anything.</p>
+        <div id="badgeGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="view" id="view-settings">
+    <div class="head">
+      <div class="head__eyebrow">Configuration</div>
+      <h1>Settings</h1>
+      <p>Nothing here is switched on for you. Everything is stored in this browser
+        under a single key, and the export below is the only copy that outlives it.</p>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-sun"/></svg>Appearance</span>
+          <span class="chip chip--accent" id="paletteCount"></span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">Mode and palette are two
+          separate choices. <strong>Auto</strong> follows the system and keeps following
+          it; Light and Dark override it in both directions. Whichever mode is active
+          wears that mode's palette, so Porcelain by day and Voidwalker by night needs
+          no switching at the boundary.</p>
+
+        <div class="seg js-themeSeg" role="group" aria-label="Theme mode">
+          <button type="button" data-theme-set="light" aria-pressed="false">
+            <svg class="i"><use href="#i-sun"/></svg>Light</button>
+          <button type="button" data-theme-set="dark" aria-pressed="false">
+            <svg class="i"><use href="#i-moon"/></svg>Dark</button>
+          <button type="button" data-theme-set="auto" aria-pressed="false">
+            <svg class="i"><use href="#i-auto"/></svg>Auto</button>
+        </div>
+        <div class="help" style="margin-top:var(--s3)" id="themeHelp"></div>
+
+        <hr class="sep">
+        <div class="row row--between" style="margin-bottom:var(--s3)">
+          <h3>Light palette</h3>
+          <span class="xs muted">worn in Light, and in Auto while the system is light</span>
+        </div>
+        <div class="palettes" id="lightPalettes"></div>
+
+        <hr class="sep">
+        <div class="row row--between" style="margin-bottom:var(--s3)">
+          <h3>Dark palette</h3>
+          <span class="xs muted">the 20 named ones are your own terminal schemes</span>
+        </div>
+        <div class="palettes" id="darkPalettes"></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-clock"/></svg>Pomodoro</span>
+        </div>
+        <div class="grid grid--3">
+          <div class="field"><label class="field__label" for="sWork">Focus (min)</label>
+            <input type="number" id="sWork" min="1" max="180"></div>
+          <div class="field"><label class="field__label" for="sShort">Short break (min)</label>
+            <input type="number" id="sShort" min="1" max="60"></div>
+          <div class="field"><label class="field__label" for="sLong">Long break (min)</label>
+            <input type="number" id="sLong" min="1" max="120"></div>
+          <div class="field"><label class="field__label" for="sRounds">Rounds before long break</label>
+            <input type="number" id="sRounds" min="1" max="12"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-flame"/></svg>Day and streak</span>
+        </div>
+        <div class="field" style="margin-bottom:var(--s4)">
+          <label class="field__label" for="sBoundary">Day starts at</label>
+          <select id="sBoundary"></select>
+          <div class="help">Study past midnight and it still lands on the day it
+            belongs to. Every date in this app derives from this one setting.</div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="sGrace">Grace days per month</label>
+          <input type="number" id="sGrace" min="0" max="10">
+          <div class="help">A missed day doesn't count as studied, but this many per
+            month can bridge a gap without resetting the streak. Grace can bridge a
+            streak, never start one.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-target"/></svg>Goals</span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">Your own target, not a
+          prediction. Off by default. The streak and the goal stay separate: the
+          streak says whether you showed up, the goal says how much. Missing a goal
+          never touches a streak.</p>
+        <div class="grid grid--2">
+          <div class="field"><label class="field__label" for="sGoalDay">Daily target (min, blank = off)</label>
+            <input type="number" id="sGoalDay" min="0" max="1440" placeholder="off"></div>
+          <div class="field"><label class="field__label" for="sGoalWeek">Weekly target (min, blank = off)</label>
+            <input type="number" id="sGoalWeek" min="0" max="10080" placeholder="off"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-bell"/></svg>Cues</span>
+          <button class="btn btn--sm btn--ghost" id="testCue">Test</button>
+        </div>
+        <div class="stack" style="gap:var(--s3)">
+          <label class="switch"><input type="checkbox" id="sBeep">
+            <span class="switch__track"></span><span class="switch__label">Beep</span></label>
+          <label class="switch"><input type="checkbox" id="sVib">
+            <span class="switch__track"></span><span class="switch__label">Vibrate</span></label>
+          <label class="switch"><input type="checkbox" id="sNotify">
+            <span class="switch__track"></span><span class="switch__label">Notification</span></label>
+        </div>
+        <div class="grid grid--2" style="margin-top:var(--s4)">
+          <div class="field"><label class="field__label" for="sQFrom">Quiet from</label>
+            <select id="sQFrom"></select></div>
+          <div class="field"><label class="field__label" for="sQTo">Quiet to</label>
+            <select id="sQTo"></select></div>
+        </div>
+        <div class="inline-msg" id="cueMsg"></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-db"/></svg>Your data</span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">It lives in this browser
+          only. Export it before clearing site data, switching machines, or anything
+          else that could take it away.</p>
+        <div class="row">
+          <button class="btn" id="expJson"><svg class="i"><use href="#i-down"/></svg>Download backup (JSON)</button>
+          <button class="btn" id="expCsv"><svg class="i"><use href="#i-down"/></svg>Export sessions (CSV)</button>
+          <button class="btn" id="impBtn"><svg class="i"><use href="#i-up"/></svg>Restore from backup</button>
+          <input type="file" id="impFile" accept="application/json" hidden>
+        </div>
+        <div class="inline-msg" id="dataMsg"></div>
+        <hr class="sep">
+        <div class="row">
+          <button class="btn btn--danger" id="wipeBtn"><svg class="i"><use href="#i-trash"/></svg>Delete everything</button>
+          <span class="inline-msg" id="wipeMsg" style="margin-top:0"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-info"/></svg>About</span>
+        </div>
+        <p class="card__note" id="aboutTxt"></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= SHELL: BOTTOM NAV (<960px) ================= -->
+<nav class="bottomnav" aria-label="Sections">
+  <button class="navbtn" data-view="today" aria-current="page">
+    <svg class="i"><use href="#i-today"/></svg><span>Today</span></button>
+  <button class="navbtn" data-view="history">
+    <svg class="i"><use href="#i-history"/></svg><span>History</span></button>
+  <button class="navbtn" data-view="progress">
+    <svg class="i"><use href="#i-progress"/></svg><span>Progress</span></button>
+  <button class="navbtn" data-view="settings">
+    <svg class="i"><use href="#i-settings"/></svg><span>Settings</span></button>
+</nav>
+
+<div id="toast"><span id="toastMsg" class="grow"></span>
+  <button class="btn btn--sm" id="toastAct" hidden></button></div>
+
+<script>
+/* ======================================================================
+   STUDY TRACKER · CORE
+   · CONSTANTS   pomodoro defaults, XP curve, badge table
+   · STORAGE     studyTracker.v1, one key, integer SCHEMA_VERSION
+   · DATES       local day keys derived from a configurable day boundary
+   · TIMER       wall-clock countdown, pause, crash recovery
+   · STATS       streak, XP, badges, heatmap buckets
+   · VIEWS       today, history, progress, settings
+   ====================================================================== */
+"use strict";
+(function () {
+
+  /* ---- CONSTANTS ------------------------------------------------------ */
+
+  var KEY = "studyTracker.v1";
+  var SCHEMA_VERSION = 2;   // v2 split one `theme` field into mode + a palette per mode
+
+  /* Recovery is capped at the planned interval so a tab that died at 14:05
+     and reopens at 22:00 can never credit eight hours it did not earn. */
+  var HEARTBEAT_MS = 15000;
+  var MIN_SESSION_SEC = 60;      // below this nothing is written: log spam
+  var PAUSE_ABANDON_MS = 30 * 60 * 1000;
+
+  /* Heatmap shading is relative to your own history, GitHub-style. Below
+     MIN_ACTIVE_DAYS the percentiles are noise, so fixed cuts are used and
+     the caption says so rather than pretending the colours mean something. */
+  var HEAT_WINDOW_DAYS = 90;
+  var MIN_ACTIVE_DAYS = 15;
+  var HEAT_DAYS = 364;
+
+  /* 1 XP per focused minute, nothing else. That keeps XP readable as
+     "minutes studied, ever" instead of a score with hidden multipliers. */
+  var XP_PER_MIN = 1;
+  var LEVEL_STEP = 300;          // level N at LEVEL_STEP * N(N-1)/2
+
+  var DEFAULTS = {
+    dayBoundaryHour: 0,
+    workMin: 25, shortBreakMin: 5, longBreakMin: 15, roundsBeforeLong: 4,
+    graceDaysPerMonth: 1,
+    goalMinutesPerDay: null, goalMinutesPerWeek: null,
+    themeMode: "auto",              // light | dark | auto
+    lightPalette: "paper",          // worn when the resolved mode is light
+    darkPalette: "pine",            // worn when it is dark
+    cues: { beep: true, vibrate: true, notify: false },
+    quietHours: { from: 22, to: 7 }
+  };
+
+  /* Every palette the app can wear. `sw` is [ground, card, border, accent,
+     text, dim] -- enough for the picker to paint a real miniature of a card
+     on the page ground rather than three abstract dots. Order is display
+     order: Paper and Pine first because they are the defaults. */
+  var PALETTES = [
+    { id:"paper", n:"Paper", d:"Warm cream and amber, the original", m:"light", sw:["#F5F1E8","#FBF9F4","#E4DCCB","#EF9F27","#2C2C2A","#6B6862"] },
+    { id:"porcelain", n:"Porcelain", d:"Cool white, slate blue, high contrast", m:"light", sw:["#F2F4F7","#FFFFFF","#DCE1E8","#2563A8","#1E2430","#5C6675"] },
+    { id:"linen", n:"Linen", d:"Oat and rust, soft under a lamp", m:"light", sw:["#F3EDE3","#FAF6EF","#E2D8C8","#A6522B","#332C24","#6E6353"] },
+    { id:"meadow", n:"Meadow", d:"Pale green, the light half of Pine", m:"light", sw:["#F1F5F0","#FCFDFB","#D9E3D6","#166B4A","#1F2A22","#5A685C"] },
+    { id:"ink", n:"Ink", d:"Notebook white with indigo", m:"light", sw:["#F4F4F7","#FDFDFF","#DEDEE6","#3B3F8F","#1B1B26","#5B5B6B"] },
+    { id:"pine", n:"Pine", d:"Cool green on charcoal, the original dark", m:"dark", sw:["#17181A","#23252A","#31343A","#1D9E75","#E8E6E1","#9C9A92"] },
+    { id:"akira", n:"Akira", d:"Neon red on absolute black", m:"dark", sw:["#090305","#190A0D","#2D2023","#FF1744","#FFEBEE","#D098A0"] },
+    { id:"andromeda", n:"Andromeda", d:"Deep magenta, spiral-arm pink", m:"dark", sw:["#090307","#190A13","#2D2026","#D81B60","#FCE4EC","#C898B0"] },
+    { id:"arasaka", n:"Arasaka", d:"Corporate red, matte black", m:"dark", sw:["#090303","#190A0A","#2D2020","#D32F2F","#F0E0E0","#B89898"] },
+    { id:"basalt", n:"Basalt", d:"Molten orange over cooled rock", m:"dark", sw:["#090503","#190D08","#2D231F","#FF5722","#FFE0B2","#C8A088"] },
+    { id:"bismuth", n:"Bismuth", d:"Iridescent cyan crystal", m:"dark", sw:["#030708","#0A1317","#202D2F","#00BCD4","#E0F7FA","#A8B8C8"] },
+    { id:"borealis", n:"Borealis", d:"Aurora green on a polar night", m:"dark", sw:["#030805","#0A170F","#202D26","#00E676","#E0F7FA","#98C0B8"] },
+    { id:"chernobyl", n:"Chernobyl", d:"Acid green, dosimeter glow", m:"dark", sw:["#050803","#0D170A","#262D20","#76FF03","#F1F8E9","#A0B898"] },
+    { id:"cryotube", n:"Cryotube", d:"Pale ice blue, cold storage", m:"dark", sw:["#030708","#0A1317","#202D2F","#80DEEA","#E0F7FA","#A0B8C0"] },
+    { id:"dyson", n:"Dyson", d:"Captured starlight amber", m:"dark", sw:["#090603","#191108","#2D2820","#FFC107","#FFF8E1","#C8B098"] },
+    { id:"helios", n:"Helios", d:"Solar gold, high noon", m:"dark", sw:["#090700","#191300","#2D281C","#FFB300","#FFF8E1","#C8B890"] },
+    { id:"ionstorm", n:"Ionstorm", d:"Electric cyan discharge", m:"dark", sw:["#03070B","#0A131E","#202D2F","#00E5FF","#E0F7FA","#98B8C0"] },
+    { id:"mariana", n:"Mariana", d:"Trench teal, no sunlight", m:"dark", sw:["#030708","#0A1317","#202A2F","#26C6DA","#B2EBF2","#8090A8"] },
+    { id:"monolith", n:"Monolith", d:"Indigo slab, perfectly smooth", m:"dark", sw:["#050608","#0D1117","#26282B","#9FA8DA","#ECEFF1","#9098A8"] },
+    { id:"nostromo", n:"Nostromo", d:"Green phosphor terminal", m:"dark", sw:["#050905","#0D190D","#282C28","#4FBF50","#D4F5C8","#A0C098"] },
+    { id:"quasar", n:"Quasar", d:"Hot pink, absurd luminosity", m:"dark", sw:["#090307","#190A13","#2D2028","#FF4081","#FCE4EC","#C898A8"] },
+    { id:"selene", n:"Selene", d:"Moonlit silver-grey", m:"dark", sw:["#050708","#0D1317","#262B2F","#CFD8DC","#ECEFF1","#A0B0B8"] },
+    { id:"solaris", n:"Solaris", d:"Ocean blue, thinking planet", m:"dark", sw:["#030709","#0A1319","#202A2F","#4FC3F7","#E1F5FE","#90B8C8"] },
+    { id:"tyrell", n:"Tyrell", d:"Amber pyramid, more human", m:"dark", sw:["#090603","#191108","#2D2820","#E89B25","#F5E6D3","#C0A890"] },
+    { id:"voidwalker", n:"Voidwalker", d:"Violet, between the stars", m:"dark", sw:["#060309","#110A19","#28202D","#9C27B0","#EDE7F6","#B098C8"] },
+    { id:"wraith", n:"Wraith", d:"Pale spectral cyan", m:"dark", sw:["#050708","#0D1317","#262C2F","#B2EBF2","#ECEFF1","#B8C8D0"] },
+  ];
+
+  function paletteById(id) {
+    for (var i = 0; i < PALETTES.length; i++) if (PALETTES[i].id === id) return PALETTES[i];
+    return null;
+  }
+
+  var BADGES = [
+    { id:"streak_3",   fam:"Streak",  n:"Three in a row",   need:3,   unit:"day streak" },
+    { id:"streak_7",   fam:"Streak",  n:"A full week",      need:7,   unit:"day streak" },
+    { id:"streak_14",  fam:"Streak",  n:"Fortnight",        need:14,  unit:"day streak" },
+    { id:"streak_30",  fam:"Streak",  n:"A month of it",    need:30,  unit:"day streak" },
+    { id:"streak_60",  fam:"Streak",  n:"Sixty",            need:60,  unit:"day streak" },
+    { id:"streak_100", fam:"Streak",  n:"Hundred days",     need:100, unit:"day streak" },
+    { id:"hours_1",    fam:"Hours",   n:"First hour",       need:60,   unit:"min total" },
+    { id:"hours_10",   fam:"Hours",   n:"Ten hours",        need:600,  unit:"min total" },
+    { id:"hours_25",   fam:"Hours",   n:"Twenty-five",      need:1500, unit:"min total" },
+    { id:"hours_50",   fam:"Hours",   n:"Fifty hours",      need:3000, unit:"min total" },
+    { id:"hours_100",  fam:"Hours",   n:"Century",          need:6000, unit:"min total" },
+    { id:"hours_250",  fam:"Hours",   n:"Two-fifty",        need:15000,unit:"min total" },
+    { id:"subj_10",    fam:"Subject", n:"Ten in one",       need:600,  unit:"min in one subject" },
+    { id:"subj_25",    fam:"Subject", n:"Twenty-five in one",need:1500,unit:"min in one subject" },
+    { id:"subj_50",    fam:"Subject", n:"Fifty in one",     need:3000, unit:"min in one subject" },
+    { id:"subj_100",   fam:"Subject", n:"Specialist",       need:6000, unit:"min in one subject" },
+    { id:"sess_1",     fam:"Sessions",n:"Started",          need:1,   unit:"session" },
+    { id:"sess_50",    fam:"Sessions",n:"Fifty sessions",   need:50,  unit:"sessions" },
+    { id:"sess_200",   fam:"Sessions",n:"Two hundred",      need:200, unit:"sessions" },
+    { id:"sess_500",   fam:"Sessions",n:"Five hundred",     need:500, unit:"sessions" },
+    { id:"day_4",      fam:"Day",     n:"Four in a day",    need:4,   unit:"focus blocks in one day" },
+    { id:"day_8",      fam:"Day",     n:"Eight in a day",   need:8,   unit:"focus blocks in one day" },
+    { id:"early",      fam:"Day",     n:"Early start",      need:1,   unit:"session before 08:00" },
+    { id:"night",      fam:"Day",     n:"Night owl",        need:1,   unit:"session after midnight" },
+    { id:"three_subj", fam:"Day",     n:"Three subjects",   need:3,   unit:"subjects in one day" },
+    { id:"clean_week", fam:"Day",     n:"Clean week",       need:7,   unit:"days, no grace used" }
+  ];
+
+  /* ---- STATE / STORAGE ------------------------------------------------ */
+
+  var S = null;                  // the one state object
+
+  function blank() {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      settings: JSON.parse(JSON.stringify(DEFAULTS)),
+      sessions: [],
+      badges: {},
+      activeSession: null
+    };
+  }
+
+  /* Migration runs on every load, not only on a version bump: a blob that
+     predates a setting is the same problem as a blob from an older schema,
+     and both must survive without losing a single logged session. */
+  function migrate(raw) {
+    var s = blank();
+    if (!raw || typeof raw !== "object") return s;
+
+    if (raw.settings && typeof raw.settings === "object") {
+      Object.keys(DEFAULTS).forEach(function (k) {
+        if (raw.settings[k] === undefined || raw.settings[k] === null) {
+          if (k === "goalMinutesPerDay" || k === "goalMinutesPerWeek") s.settings[k] = null;
+          return;
+        }
+        if (k === "cues" || k === "quietHours") {
+          Object.keys(DEFAULTS[k]).forEach(function (j) {
+            if (raw.settings[k] && raw.settings[k][j] !== undefined)
+              s.settings[k][j] = raw.settings[k][j];
+          });
+        } else s.settings[k] = raw.settings[k];
+      });
+    }
+    if (Array.isArray(raw.sessions)) {
+      s.sessions = raw.sessions.map(function (x) {
+        return {
+          id: x.id || newId(),
+          dayKey: x.dayKey || (x.startedAt ? dayKeyFor(x.startedAt, s.settings.dayBoundaryHour) : null),
+          code: x.code === undefined ? null : x.code,
+          label: x.label || x.subject || "General study",
+          startedAt: x.startedAt || Date.now(),
+          endedAt: x.endedAt || x.startedAt || Date.now(),
+          minutes: Math.max(0, Math.round(Number(x.minutes) || 0)),
+          source: x.source === "manual" ? "manual" : "pomodoro",
+          interrupted: !!x.interrupted,
+          note: x.note || ""
+        };
+      }).filter(function (x) { return x.minutes > 0; });
+      s.sessions.forEach(function (x) {
+        if (!x.dayKey) x.dayKey = dayKeyFor(x.startedAt, s.settings.dayBoundaryHour);
+      });
+      /* Sort on load, not only on insert. A restored backup or a hand-edited
+         file arrives in whatever order it was written, and every view here
+         assumes chronological order. */
+      s.sessions.sort(function (a, b) { return a.startedAt - b.startedAt; });
+    }
+    /* v1 kept a single `theme` of "auto" | "light" | "dark". That value is a
+       mode, not a palette, so it maps straight across and the two palette
+       choices take the colours v1 actually shipped -- a v1 blob reopens
+       looking exactly as it did, which is the only acceptable outcome for a
+       settings migration. */
+    if (raw.settings && typeof raw.settings === "object") {
+      if (!raw.settings.themeMode && typeof raw.settings.theme === "string") {
+        s.settings.themeMode =
+          (raw.settings.theme === "light" || raw.settings.theme === "dark")
+            ? raw.settings.theme : "auto";
+      }
+      /* A palette id from a future version, or a hand-edited typo, would leave
+         [data-palette] pointing at a block that does not exist and the page
+         would render with the bare :root defaults and no way to tell why.
+         Unknown ids fall back to the shipped default instead. */
+      if (!paletteById(s.settings.lightPalette)) s.settings.lightPalette = DEFAULTS.lightPalette;
+      if (!paletteById(s.settings.darkPalette))  s.settings.darkPalette  = DEFAULTS.darkPalette;
+      if (["light", "dark", "auto"].indexOf(s.settings.themeMode) < 0)
+        s.settings.themeMode = DEFAULTS.themeMode;
+    }
+    if (raw.badges && typeof raw.badges === "object") s.badges = raw.badges;
+    if (raw.activeSession && typeof raw.activeSession === "object") s.activeSession = raw.activeSession;
+    s.schemaVersion = SCHEMA_VERSION;
+    return s;
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(KEY) || "null"); }
+    catch (e) { raw = null; }
+    S = migrate(raw);
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); }
+    catch (e) { toast("Could not save — storage may be full."); }
+  }
+  function newId() {
+    return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  }
+
+  /* ---- DATES ---------------------------------------------------------- */
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  /* Every date key in the app comes through here. Local time, never UTC:
+     a boundary that disagrees with your own clock silently breaks streaks. */
+  function dayKeyFor(ts, boundaryHour) {
+    var d = new Date(ts);
+    d.setHours(d.getHours() - (boundaryHour || 0));
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function todayKey() { return dayKeyFor(Date.now(), S.settings.dayBoundaryHour); }
+  function parseKey(k) {
+    var p = k.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function shiftDay(k, n) {
+    var d = parseKey(k); d.setDate(d.getDate() + n);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function daysBetween(a, b) {
+    return Math.round((parseKey(b) - parseKey(a)) / 86400000);
+  }
+  function fmtDate(k) {
+    var d = parseKey(k);
+    return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  }
+  function fmtClock(ts) {
+    var d = new Date(ts);
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function fmtMins(m) {
+    if (!m) return "0m";
+    var h = Math.floor(m / 60), r = m % 60;
+    return h ? (r ? h + "h " + r + "m" : h + "h") : r + "m";
+  }
+
+  /* ---- SESSIONS ------------------------------------------------------- */
+
+  function addSession(rec) {
+    S.sessions.push(rec);
+    S.sessions.sort(function (a, b) { return a.startedAt - b.startedAt; });
+    awardBadges();
+    save();
+  }
+  function removeSession(id) {
+    var i = S.sessions.findIndex(function (s) { return s.id === id; });
+    if (i < 0) return null;
+    var gone = S.sessions.splice(i, 1)[0];
+    save();
+    return gone;
+  }
+  function minutesOn(key, subj) {
+    var t = 0;
+    for (var i = 0; i < S.sessions.length; i++) {
+      var s = S.sessions[i];
+      if (s.dayKey !== key) continue;
+      if (subj && subjKey(s) !== subj) continue;
+      t += s.minutes;
+    }
+    return t;
+  }
+  function subjKey(s) { return s.code || s.label; }
+  function doneOn(key) { return minutesOn(key) > 0; }
+
+  function totalsByDay(subj) {
+    var m = {};
+    for (var i = 0; i < S.sessions.length; i++) {
+      var s = S.sessions[i];
+      if (subj && subjKey(s) !== subj) continue;
+      m[s.dayKey] = (m[s.dayKey] || 0) + s.minutes;
+    }
+    return m;
+  }
+
+  /* ---- STREAK --------------------------------------------------------- */
+
+  /* Ported from the Wellness Hub rule, including the part that is easy to
+     miss: a grace day can bridge a streak but must never start one. Without
+     the trim at the end, a run would begin on a day you did not study. */
+  function streakInfo() {
+    var allowance = Math.max(0, Number(S.settings.graceDaysPerMonth) || 0);
+    var cursor = todayKey();
+    var spentByMonth = {};
+    if (!doneOn(cursor)) {
+      cursor = shiftDay(cursor, -1);
+      if (!doneOn(cursor)) {
+        return { current: 0, graceUsed: 0, graceLeft: allowance };
+      }
+    }
+    var run = [], guard = 0;
+    while (guard++ < 3000) {
+      if (doneOn(cursor)) run.push({ key: cursor, grace: false });
+      else {
+        var mk = cursor.slice(0, 7);
+        if ((spentByMonth[mk] || 0) >= allowance) break;
+        spentByMonth[mk] = (spentByMonth[mk] || 0) + 1;
+        run.push({ key: cursor, grace: true });
+      }
+      cursor = shiftDay(cursor, -1);
+    }
+    while (run.length && run[run.length - 1].grace) {
+      var t = run.pop();
+      spentByMonth[t.key.slice(0, 7)]--;
+    }
+    var graceUsed = run.filter(function (r) { return r.grace; }).length;
+    var thisMonth = todayKey().slice(0, 7);
+    return {
+      current: run.length,
+      graceUsed: graceUsed,
+      graceLeft: Math.max(0, allowance - (spentByMonth[thisMonth] || 0))
+    };
+  }
+
+  function longestStreak() {
+    var days = Object.keys(totalsByDay()).sort();
+    if (!days.length) return 0;
+    var allowance = Math.max(0, Number(S.settings.graceDaysPerMonth) || 0);
+    var best = 0, run = 0, prev = null, spentByMonth = {};
+    for (var i = 0; i < days.length; i++) {
+      var k = days[i];
+      if (prev === null) run = 1;
+      else {
+        var gap = daysBetween(prev, k) - 1;
+        if (gap === 0) run += 1;
+        else {
+          var ok = true, trial = {};
+          for (var g = 1; g <= gap; g++) {
+            var mk = shiftDay(prev, g).slice(0, 7);
+            trial[mk] = (trial[mk] || 0) + 1;
+            if ((spentByMonth[mk] || 0) + trial[mk] > allowance) { ok = false; break; }
+          }
+          if (ok) {
+            Object.keys(trial).forEach(function (m) {
+              spentByMonth[m] = (spentByMonth[m] || 0) + trial[m];
+            });
+            run += gap + 1;
+          } else { run = 1; spentByMonth = {}; }
+        }
+      }
+      if (run > best) best = run;
+      prev = k;
+    }
+    return best;
+  }
+
+  /* ---- XP / LEVELS ---------------------------------------------------- */
+
+  function totalMinutes() {
+    return S.sessions.reduce(function (a, s) { return a + s.minutes; }, 0);
+  }
+  function xpForLevel(n) { return LEVEL_STEP * n * (n - 1) / 2; }
+  function levelFor(xp) {
+    var n = 1;
+    while (xpForLevel(n + 1) <= xp && n < 200) n++;
+    return n;
+  }
+
+  /* ---- BADGES --------------------------------------------------------- */
+
+  function subjectTotals() {
+    var m = {};
+    S.sessions.forEach(function (s) {
+      var k = subjKey(s);
+      m[k] = (m[k] || 0) + s.minutes;
+    });
+    return m;
+  }
+  function bestPerDay(fn) {
+    var m = {};
+    S.sessions.forEach(function (s) { (m[s.dayKey] = m[s.dayKey] || []).push(s); });
+    var best = 0;
+    Object.keys(m).forEach(function (k) { best = Math.max(best, fn(m[k])); });
+    return best;
+  }
+  function cleanWeekRun() {
+    var days = Object.keys(totalsByDay()).sort();
+    var best = 0, run = 0, prev = null;
+    days.forEach(function (k) {
+      run = (prev !== null && daysBetween(prev, k) === 1) ? run + 1 : 1;
+      if (run > best) best = run;
+      prev = k;
+    });
+    return best;
+  }
+
+  function badgeProgress() {
+    var st = streakInfo(), mins = totalMinutes(), subj = subjectTotals();
+    var maxSubj = Object.keys(subj).reduce(function (a, k) { return Math.max(a, subj[k]); }, 0);
+    var longest = Math.max(st.current, longestStreak());
+    var out = {};
+    BADGES.forEach(function (b) {
+      var have = 0;
+      if (b.fam === "Streak") have = longest;
+      else if (b.fam === "Hours") have = mins;
+      else if (b.fam === "Subject") have = maxSubj;
+      else if (b.fam === "Sessions") have = S.sessions.length;
+      else if (b.id === "day_4" || b.id === "day_8")
+        have = bestPerDay(function (list) {
+          return list.filter(function (s) { return s.source === "pomodoro"; }).length;
+        });
+      else if (b.id === "early")
+        have = S.sessions.some(function (s) {
+          var h = new Date(s.startedAt).getHours();
+          return h >= 4 && h < 8;
+        }) ? 1 : 0;
+      else if (b.id === "night")
+        have = S.sessions.some(function (s) {
+          var h = new Date(s.startedAt).getHours();
+          return h >= 0 && h < 4;
+        }) ? 1 : 0;
+      else if (b.id === "three_subj")
+        have = bestPerDay(function (list) {
+          var seen = {}; list.forEach(function (s) { seen[subjKey(s)] = 1; });
+          return Object.keys(seen).length;
+        });
+      else if (b.id === "clean_week") have = cleanWeekRun();
+      out[b.id] = have;
+    });
+    return out;
+  }
+
+  /* `silent` is for the load path: a restored backup can qualify for fifteen
+     badges at once, and those were earned back then, not just now. They still
+     have to be evaluated on load -- awarding only on insert is why a restore
+     used to show "0 of 26" next to seven completed rows. */
+  function awardBadges(silent) {
+    var prog = badgeProgress(), fresh = [];
+    BADGES.forEach(function (b) {
+      if (!S.badges[b.id] && prog[b.id] >= b.need) {
+        S.badges[b.id] = Date.now();
+        fresh.push(b);
+      }
+    });
+    if (silent) return fresh;
+    if (fresh.length) {
+      toast(fresh.length === 1 ? "Badge earned: " + fresh[0].n
+        : fresh.length + " badges earned");
+      cue("badge");
+    }
+    return fresh;
+  }
+
+  /* ---- HEATMAP BUCKETS ------------------------------------------------ */
+
+  /* GitHub shades relative to your own history. That means a shade's meaning
+     drifts as your habits change, so the caption names the mode and every
+     cell prints its real minutes on click. Below MIN_ACTIVE_DAYS there is
+     not enough history for percentiles to mean anything, so fixed cuts at
+     1x / 2x / 4x the focus length are used and said out loud. */
+  function heatBuckets(byDay) {
+    var end = todayKey(), vals = [];
+    for (var i = 0; i < HEAT_WINDOW_DAYS; i++) {
+      var v = byDay[shiftDay(end, -i)] || 0;
+      if (v > 0) vals.push(v);
+    }
+    var w = Math.max(1, Number(S.settings.workMin) || 25);
+    if (vals.length < MIN_ACTIVE_DAYS) {
+      return {
+        cuts: [w, w * 2, w * 4], mode: "fixed", active: vals.length,
+        note: "Shading is fixed until you have " + MIN_ACTIVE_DAYS +
+              " active days (" + vals.length + " so far)."
+      };
+    }
+    vals.sort(function (a, b) { return a - b; });
+    function pct(p) {
+      var idx = Math.min(vals.length - 1, Math.max(0, Math.round((vals.length - 1) * p)));
+      return vals[idx];
+    }
+    return {
+      cuts: [pct(0.25), pct(0.5), pct(0.75)], mode: "relative", active: vals.length,
+      note: "Shading is relative to your last " + HEAT_WINDOW_DAYS + " days (" +
+            vals.length + " active)."
+    };
+  }
+  function heatLevel(mins, cuts) {
+    if (!mins) return 0;
+    if (mins <= cuts[0]) return 1;
+    if (mins <= cuts[1]) return 2;
+    if (mins <= cuts[2]) return 3;
+    return 4;
+  }
+
+  /* ---- CUES ----------------------------------------------------------- */
+
+  var actx = null, gestured = false;
+  ["pointerdown", "keydown"].forEach(function (ev) {
+    window.addEventListener(ev, function () { gestured = true; }, { once: true });
+  });
+  function inQuiet() {
+    var h = new Date().getHours(), q = S.settings.quietHours;
+    if (q.from === q.to) return false;
+    return q.from < q.to ? (h >= q.from && h < q.to) : (h >= q.from || h < q.to);
+  }
+  function beep(freq, ms) {
+    if (!S.settings.cues.beep || inQuiet()) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.22, actx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + ms / 1000);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + ms / 1000 + 0.02);
+    } catch (e) { /* no audio device is not an error worth showing */ }
+  }
+  function cue(kind) {
+    if (kind === "work") beep(880, 260);
+    else if (kind === "break") beep(560, 260);
+    else if (kind === "badge") { beep(1040, 160); setTimeout(function () { beep(1320, 200); }, 170); }
+    /* Chrome drops vibrate() with a console warning until the page has seen a
+       real gesture. Checking first keeps the console clean rather than
+       logging an error on every badge earned during a restored session. */
+    if (S.settings.cues.vibrate && navigator.vibrate && gestured && !inQuiet()) {
+      try { navigator.vibrate(kind === "badge" ? [40, 60, 40] : [90]); } catch (e) {}
+    }
+    if (S.settings.cues.notify && !inQuiet() && window.Notification
+        && Notification.permission === "granted") {
+      try {
+        new Notification(kind === "break" ? "Break over" : "Focus block done", {
+          body: kind === "break" ? "Back to it." : "Time for a break.", silent: true
+        });
+      } catch (e) {}
+    }
+  }
+
+  /* ---- TIMER ---------------------------------------------------------- */
+
+  /* Counts from wall clock rather than by decrementing, so a backgrounded
+     and throttled tab does not drift minutes behind. Pause, resume and
+     crash recovery are built on top of that. */
+  var T = {
+    running: false, paused: false, phase: "work", round: 1,
+    endAt: 0, remainAtPause: 0, tick: null, beat: null,
+    startedAt: 0, pausedAt: 0, workedMs: 0, lastResume: 0, subject: null
+  };
+
+  function phaseSeconds(phase) {
+    var s = S.settings;
+    if (phase === "work") return Math.max(1, s.workMin) * 60;
+    if (phase === "long") return Math.max(1, s.longBreakMin) * 60;
+    return Math.max(1, s.shortBreakMin) * 60;
+  }
+  function remainingSec() {
+    if (!T.running) return phaseSeconds(T.phase);
+    if (T.paused) return T.remainAtPause;
+    return Math.max(0, (T.endAt - Date.now()) / 1000);
+  }
+  function accumulatedWorkMs() {
+    return T.workedMs + (T.paused ? 0 : Date.now() - T.lastResume);
+  }
+
+  function persistActive() {
+    if (!T.running || T.phase !== "work") { S.activeSession = null; save(); return; }
+    S.activeSession = {
+      startedAt: T.startedAt,
+      lastBeat: Date.now(),
+      plannedMinutes: Math.max(1, S.settings.workMin),
+      label: T.subject ? T.subject.label : "General study",
+      workedMs: accumulatedWorkMs()
+    };
+    save();
+  }
+
+  function startPhase(phase) {
+    T.phase = phase;
+    T.running = true; T.paused = false; T.remainAtPause = 0;
+    T.endAt = Date.now() + phaseSeconds(phase) * 1000;
+    if (phase === "work") {
+      T.startedAt = Date.now(); T.workedMs = 0; T.lastResume = Date.now();
+    }
+    clearInterval(T.tick); T.tick = setInterval(onTick, 200);
+    clearInterval(T.beat); T.beat = setInterval(persistActive, HEARTBEAT_MS);
+    persistActive();
+    renderTimer();
+  }
+
+  function onTick() {
+    /* A block left paused past PAUSE_ABANDON_MS is closed out with the work
+       it actually accumulated. Otherwise a session paused overnight sits in
+       storage forever and reappears as a phantom the next morning. */
+    if (T.paused && T.phase === "work" && Date.now() - T.pausedAt > PAUSE_ABANDON_MS) {
+      finishWork(true, "Paused for over 30 minutes — closed and credited.");
+      return;
+    }
+    if (!T.paused && remainingSec() <= 0) {
+      if (T.phase === "work") finishWork(false, "");
+      else {
+        cue("break"); stopAll();
+        msg("timerMsg", "Break over. Start when you're ready.", "ok");
+        renderTimer();
+      }
+      return;
+    }
+    renderTimer(true);
+  }
+
+  function finishWork(interrupted, note) {
+    var sec = Math.round(accumulatedWorkMs() / 1000);
+    sec = Math.min(sec, Math.max(1, S.settings.workMin) * 60);
+    clearInterval(T.tick); clearInterval(T.beat);
+    S.activeSession = null;
+
+    if (sec < MIN_SESSION_SEC) {
+      T.running = false; T.paused = false;
+      save(); renderTimer();
+      msg("timerMsg", "Under a minute — nothing logged.", "");
+      return;
+    }
+    var mins = Math.max(1, Math.round(sec / 60));
+    addSession({
+      id: newId(),
+      dayKey: dayKeyFor(T.startedAt, S.settings.dayBoundaryHour),
+      code: null,
+      label: T.subject ? T.subject.label : "General study",
+      startedAt: T.startedAt, endedAt: Date.now(),
+      minutes: mins, source: "pomodoro",
+      interrupted: !!interrupted, note: note || ""
+    });
+    cue("work");
+
+    var useLong = T.round % Math.max(1, S.settings.roundsBeforeLong) === 0;
+    T.round = T.round + 1 > 999 ? 1 : T.round + 1;
+    T.running = false; T.paused = false;
+    renderAll();
+    msg("timerMsg", "Logged " + mins + " min" + (interrupted ? " (interrupted)" : "") +
+      ". " + (useLong ? "Long break" : "Short break") + " next.", "ok");
+    startPhase(useLong ? "long" : "short");
+  }
+
+  function stopAll() {
+    clearInterval(T.tick); clearInterval(T.beat);
+    T.running = false; T.paused = false;
+    S.activeSession = null; save();
+  }
+
+  /* ---- CRASH RECOVERY ------------------------------------------------- */
+
+  function recoverIfNeeded() {
+    var a = S.activeSession;
+    if (!a || !a.startedAt) return;
+    S.activeSession = null;
+
+    var workedMs = a.workedMs != null ? a.workedMs : (a.lastBeat - a.startedAt);
+    var cap = Math.max(1, a.plannedMinutes || S.settings.workMin) * 60 * 1000;
+    var sec = Math.round(Math.max(0, Math.min(workedMs, cap)) / 1000);
+
+    if (sec < MIN_SESSION_SEC) { save(); return; }
+    var rec = {
+      id: newId(),
+      dayKey: dayKeyFor(a.startedAt, S.settings.dayBoundaryHour),
+      code: null,
+      label: a.label || "General study",
+      startedAt: a.startedAt,
+      endedAt: a.lastBeat || (a.startedAt + sec * 1000),
+      minutes: Math.max(1, Math.round(sec / 60)),
+      source: "pomodoro", interrupted: true,
+      note: "Recovered after the app closed mid-session."
+    };
+    addSession(rec);
+    showRecoveryBanner(rec);
+  }
+
+  function showRecoveryBanner(rec) {
+    var host = document.getElementById("recoveryHost");
+    var d = document.createElement("div");
+    d.className = "banner";
+    d.innerHTML =
+      "<strong>Recovered an interrupted session.</strong> " +
+      esc(String(rec.minutes)) + " min on " + esc(rec.label) + ", ending " +
+      esc(fmtClock(rec.endedAt)) + " on " + esc(fmtDate(rec.dayKey)) + ". " +
+      "Credit is capped at one focus block, so it can never invent time you didn't study." +
+      "<div class='row'>" +
+      "<button class='btn btn--sm' data-act='keep'>Keep it</button>" +
+      "<button class='btn btn--sm btn--danger' data-act='drop'>Delete it</button></div>";
+    d.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.act === "drop") { removeSession(rec.id); renderAll(); toast("Deleted."); }
+      d.remove();
+    });
+    host.appendChild(d);
+  }
+
+  /* ---- SMALL DOM HELPERS ---------------------------------------------- */
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function msg(id, text, cls) {
+    var el = $(id); if (!el) return;
+    el.textContent = text || "";
+    el.className = "inline-msg" + (cls ? " " + cls : "");
+  }
+  var toastTimer = null;
+  function toast(text, actionLabel, action) {
+    var t = $("toast"), b = $("toastAct");
+    $("toastMsg").textContent = text;
+    if (actionLabel) {
+      b.hidden = false; b.textContent = actionLabel;
+      b.onclick = function () { action(); t.classList.remove("show"); };
+    } else { b.hidden = true; b.onclick = null; }
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, actionLabel ? 7000 : 3000);
+  }
+
+  /* Subjects are whatever you type. The datalist offers back the ones you
+     have already used so a repeat entry is one keystroke, without ever
+     restricting you to a fixed list. */
+  function subjectFrom(input) {
+    var v = (input.value || "").trim();
+    return v ? { code: null, label: v } : { code: null, label: "General study" };
+  }
+  function refreshSubjectList() {
+    var seen = subjectTotals();
+    var names = Object.keys(seen).sort(function (a, b) { return seen[b] - seen[a]; });
+    $("subjSeen").innerHTML = names.map(function (n) {
+      return "<option value='" + esc(n) + "'></option>";
+    }).join("");
+  }
+
+  /* ---- RENDER: TIMER -------------------------------------------------- */
+
+  /* One helper for every icon in generated markup, so a glyph is never
+     pasted twice and a `use` reference can never drift from the sprite. */
+  function icon(name, px) {
+    return "<svg class='i' aria-hidden='true'" +
+      (px ? " style='width:" + px + "px;height:" + px + "px'" : "") +
+      "><use href='#i-" + name + "'/></svg>";
+  }
+
+  var ARC_C = 2 * Math.PI * 103;          // matches r="103" in the dial markup
+
+  function renderTimer(faceOnly) {
+    var sec = Math.ceil(remainingSec());
+    var face = $("timerFace");
+    face.textContent = pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
+    face.className = "timer__face" + (T.running && T.paused ? " paused" : "");
+
+    /* The ring shows time remaining, so it empties as the block runs. An idle
+       timer draws a full ring: the block has not started losing anything yet. */
+    var total = phaseSeconds(T.phase);
+    var frac = T.running ? Math.max(0, Math.min(1, remainingSec() / total)) : 1;
+    var arc = $("timerArc");
+    arc.setAttribute("stroke-dasharray",
+      (ARC_C * frac).toFixed(1) + " " + ARC_C.toFixed(1));
+    arc.setAttribute("class", "arc" +
+      (T.phase !== "work" ? " break" : "") + (T.paused ? " paused" : ""));
+    if (faceOnly) return;
+
+    /* The phase pill carries an icon, so it is rebuilt rather than having its
+       text swapped — textContent here would silently delete the glyph. */
+    var ph = $("phaseLabel"), work = T.phase === "work";
+    ph.className = "timer__phase" + (work ? "" : " break");
+    ph.innerHTML = icon(work ? "clock" : "break", 13) +
+      (work ? (T.paused ? "Paused" : "Focus")
+            : T.phase === "long" ? "Long break" : "Short break");
+
+    $("startBtn").hidden = T.running;
+    $("pauseBtn").hidden = !T.running;
+    $("stopBtn").hidden = !T.running;
+    $("pauseBtn").innerHTML = T.paused ? icon("play") + "Resume" : icon("pause") + "Pause";
+    $("subjInput").disabled = T.running && T.phase === "work";
+
+    /* One bar per round in the cycle: solid for rounds finished, dimmed for the
+       one running, so the long break is always visibly N blocks away. */
+    var n = Math.max(1, S.settings.roundsBeforeLong), done = (T.round - 1) % n;
+    var chips = "";
+    for (var i = 0; i < n; i++) {
+      chips += "<i class='" +
+        (i < done ? "on" : (i === done && T.running && work ? "now" : "")) + "'></i>";
+    }
+    $("roundChips").innerHTML = chips;
+
+    $("timerSub").textContent = T.running
+      ? "Round " + (done + 1) + " of " + n
+      : Math.max(1, S.settings.workMin) + " min block";
+  }
+
+  /* ---- RENDER: TODAY -------------------------------------------------- */
+
+  function renderToday() {
+    var k = todayKey(), st = streakInfo(), mins = minutesOn(k);
+
+    /* The streak answers "did you show up". The goal answers "how much".
+       They are never merged into one verdict, because a five-minute day
+       genuinely is both a kept streak and a missed goal. */
+    $("streakTile").innerHTML =
+      "<div class='card__head'><span class='card__title'>" + icon("flame") + "Streak</span>" +
+      (st.graceUsed ? "<span class='chip chip--warn'>" + st.graceUsed + " grace bridging" +
+        "</span>" : "") + "</div>" +
+      "<div class='stat__value'>" + st.current +
+      "<small>day" + (st.current === 1 ? "" : "s") + "</small></div>" +
+      "<div class='stat__sub' style='margin-top:6px'>" +
+      (st.current ? "Any logged minute keeps it. " : "Log anything today to start one. ") +
+      st.graceLeft + " grace left this month.</div>";
+
+    var gT = $("goalTile"), goal = S.settings.goalMinutesPerDay;
+    if (!goal) {
+      gT.innerHTML =
+        "<div class='card__head'><span class='card__title'>" + icon("target") +
+        "Today</span></div>" +
+        "<div class='stat__value'>" + fmtMins(mins) + "</div>" +
+        "<div class='stat__sub' style='margin-top:6px'>No daily target set. Add one in " +
+        "Settings if you want one — it changes nothing about your streak.</div>";
+    } else {
+      var pctv = Math.min(1, mins / goal), r = 32, c = 2 * Math.PI * r;
+      gT.innerHTML =
+        "<div class='card__head'><span class='card__title'>" + icon("target") +
+        "Daily goal</span>" +
+        (mins >= goal ? "<span class='chip chip--good'><span class='chip__dot'></span>Met" +
+          "</span>" : "") + "</div>" +
+        "<div class='ring'><svg width='80' height='80' viewBox='0 0 80 80'>" +
+        "<circle class='track' cx='40' cy='40' r='" + r + "' stroke-width='9'/>" +
+        "<circle class='fill" + (mins >= goal ? " done" : "") + "' cx='40' cy='40' r='" + r +
+        "' stroke-width='9' transform='rotate(-90 40 40)' stroke-dasharray='" +
+        (c * pctv).toFixed(1) + " " + c.toFixed(1) + "'/></svg>" +
+        "<div><div class='stat__value'>" + fmtMins(mins) + "</div>" +
+        "<div class='stat__sub'>of " + fmtMins(goal) + " · " + Math.round(pctv * 100) +
+        "%</div></div></div>";
+    }
+
+    var nToday = S.sessions.filter(function (s) { return s.dayKey === k; }).length;
+    $("todayTotal").textContent = fmtMins(mins) + " · " + nToday +
+      " session" + (nToday === 1 ? "" : "s");
+    $("todayLog").innerHTML = logTable(S.sessions.filter(function (s) {
+      return s.dayKey === k;
+    }).slice().reverse(), false);
+
+    renderWeek();
+    renderSplit();
+  }
+
+  /* ---- RENDER: WEEK STRIP --------------------------------------------- */
+
+  /* Weeks start Monday: that is how a semester timetable reads here, and a
+     Sunday-first strip makes the weekend look like the start of the effort. */
+  function weekStart(key) {
+    var d = parseKey(key), off = (d.getDay() + 6) % 7;
+    return shiftDay(key, -off);
+  }
+
+  function renderWeek() {
+    var today = todayKey(), start = weekStart(today);
+    var names = ["M", "T", "W", "T", "F", "S", "S"];
+    var mins = [], total = 0;
+    for (var i = 0; i < 7; i++) {
+      var v = minutesOn(shiftDay(start, i));
+      mins.push(v); total += v;
+    }
+    var goalDay = S.settings.goalMinutesPerDay || 0;
+    /* The bar scale has to clear the goal line, or a day at 80% of target would
+       render taller than the line it is supposed to sit under. */
+    var top = Math.max(60, goalDay, Math.max.apply(null, mins) * 1.08);
+
+    var cols = "";
+    for (var j = 0; j < 7; j++) {
+      var k = shiftDay(start, j), future = daysBetween(today, k) > 0;
+      var h = future ? 0 : Math.max(3, Math.round(96 * mins[j] / top));
+      cols += "<div class='week__col" + (mins[j] ? " has" : "") +
+        (k === today ? " today" : "") + (future ? " future" : "") +
+        "' title='" + esc(fmtDate(k) + " · " + fmtMins(mins[j])) + "'>" +
+        "<div class='week__m'>" + (mins[j] ? fmtMins(mins[j]) : "") + "</div>" +
+        "<div class='week__track'>" +
+          (future ? "<div class='week__bar' style='height:10px'></div>"
+                  : "<div class='week__bar' style='height:" + h + "px'></div>") +
+        "</div>" +
+        "<div class='week__d'>" + names[j] + "</div></div>";
+    }
+    /* 18px below the track top = the label row + the minutes row above it. */
+    var goalLine = "";
+    if (goalDay) {
+      var y = 96 - Math.round(96 * Math.min(1, goalDay / top));
+      goalLine = "<div class='week__goal' style='top:" + (y + 26) + "px'>" +
+        "<span>" + fmtMins(goalDay) + " goal</span></div>";
+    }
+    $("weekStrip").innerHTML = cols + goalLine;
+
+    var hit = mins.filter(function (m, i) {
+      return goalDay && m >= goalDay && daysBetween(today, shiftDay(start, i)) <= 0;
+    }).length;
+    $("weekTotal").textContent = fmtMins(total);
+
+    var gw = S.settings.goalMinutesPerWeek || 0;
+    var host = $("weekGoal");
+    if (gw) {
+      var pctw = Math.min(1, total / gw);
+      host.innerHTML =
+        "<div class='bar'><div class='bar__fill" + (total >= gw ? " done" : "") +
+        "' style='width:" + (pctw * 100).toFixed(1) + "%'></div></div>" +
+        "<div class='help' style='margin-top:6px'><strong>" + fmtMins(total) +
+        " of " + fmtMins(gw) + "</strong> this week · " + Math.round(pctw * 100) + "%" +
+        (goalDay ? " · " + hit + " of 7 days hit the daily goal" : "") +
+        ". Weekly targets never touch the streak.</div>";
+    } else {
+      host.innerHTML = "<div class='help'>" +
+        (goalDay ? hit + " day" + (hit === 1 ? "" : "s") + " hit the daily goal so far. "
+                 : "") +
+        "No weekly target set — add one in Settings and this fills in.</div>";
+    }
+  }
+
+  /* ---- RENDER: SUBJECT SPLIT ------------------------------------------- */
+
+  var splitDays = 30;
+  var SPLIT_MAX = 6;               // named slices before everything else is "Other"
+
+  /* One accent stepped down through the card colour, not six unrelated hues:
+     with a single-accent palette any second hue would be off-theme, and the
+     order of the legend already carries the ranking. */
+  function splitShade(i, n) {
+    var pct = Math.round(100 - (i * (70 / Math.max(1, n - 1))));
+    return "color-mix(in srgb, var(--accent) " + Math.max(24, pct) +
+      "%, var(--surface-2))";
+  }
+
+  function renderSplit() {
+    var host = $("splitHost");
+    var cutoff = splitDays ? shiftDay(todayKey(), -(splitDays - 1)) : null;
+    var per = {}, total = 0;
+    S.sessions.forEach(function (s) {
+      if (cutoff && s.dayKey < cutoff) return;
+      var k = subjKey(s);
+      per[k] = (per[k] || 0) + s.minutes;
+      total += s.minutes;
+    });
+    if (!total) {
+      host.innerHTML = "<div class='empty'>Nothing logged in this range yet.</div>";
+      return;
+    }
+    var names = Object.keys(per).sort(function (a, b) { return per[b] - per[a]; });
+    var shown = names.slice(0, SPLIT_MAX);
+    var rest = names.slice(SPLIT_MAX).reduce(function (a, k) { return a + per[k]; }, 0);
+    var rows = shown.map(function (k) { return { n: k, v: per[k] }; });
+    if (rest) rows.push({ n: names.length - SPLIT_MAX + " more", v: rest, other: true });
+
+    var bar = rows.map(function (r, i) {
+      return "<i style='width:" + (100 * r.v / total).toFixed(2) + "%;background:" +
+        (r.other ? "var(--surface-3)" : splitShade(i, rows.length)) + "' title='" +
+        esc(r.n + " · " + fmtMins(r.v)) + "'></i>";
+    }).join("");
+
+    var legend = rows.map(function (r, i) {
+      return "<span><i style='background:" +
+        (r.other ? "var(--surface-3)" : splitShade(i, rows.length)) + "'></i>" +
+        "<b>" + esc(r.n) + "</b><em>" + fmtMins(r.v) + " · " +
+        Math.round(100 * r.v / total) + "%</em></span>";
+    }).join("");
+
+    host.innerHTML = "<div class='split'>" + bar + "</div>" +
+      "<div class='split-legend'>" + legend + "</div>" +
+      "<div class='help' style='margin-top:var(--s3)'>" + fmtMins(total) + " across " +
+      names.length + " subject" + (names.length === 1 ? "" : "s") +
+      (splitDays ? " in the last " + splitDays + " days" : ", all time") + ".</div>";
+  }
+
+  /* ---- RENDER: LOG TABLE ---------------------------------------------- */
+
+  function logTable(list, showDate) {
+    if (!list.length) {
+      return "<div class='empty'>Nothing logged yet. Start a focus block, or add time " +
+             "you already spent.</div>";
+    }
+    var rows = list.map(function (s) {
+      return "<tr data-id='" + s.id + "'>" +
+        (showDate ? "<td class='t'>" + esc(fmtDate(s.dayKey)) + "</td>" : "") +
+        "<td class='t'>" + esc(fmtClock(s.startedAt)) + "</td>" +
+        "<td class='subj'>" + esc(s.label) + "</td>" +
+        "<td><input type='number' min='1' max='1440' value='" + s.minutes +
+        "' data-edit='" + s.id + "' aria-label='Minutes'></td>" +
+        "<td><span class='chip'>" + (s.source === "manual" ? "manual" : "timer") + "</span>" +
+        (s.interrupted ? " <span class='chip chip--warn' title='" + esc(s.note) +
+          "'>interrupted</span>" : "") + "</td>" +
+        "<td style='text-align:right'><button class='btn btn--sm btn--danger' data-del='" +
+        s.id + "' aria-label='Delete this session'>" + icon("trash", 13) + "</button></td>" +
+        "</tr>";
+    }).join("");
+    return "<div class='log-scroll'><table class='log'><thead><tr>" +
+      (showDate ? "<th>Date</th>" : "") +
+      "<th>Start</th><th>Subject</th><th>Min</th><th>Source</th><th></th>" +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+
+  /* Delete is immediate with an undo, never a confirm() dialog: reversing a
+     mistake beats interrupting every correct action to ask about it. */
+  function wireLogHost(host) {
+    host.addEventListener("click", function (e) {
+      var d = e.target.closest("[data-del]"); if (!d) return;
+      var gone = removeSession(d.dataset.del);
+      if (!gone) return;
+      renderAll();
+      toast("Deleted " + gone.minutes + " min.", "Undo", function () {
+        addSession(gone); renderAll();
+      });
+    });
+    host.addEventListener("change", function (e) {
+      var i = e.target.closest("[data-edit]"); if (!i) return;
+      var s = S.sessions.find(function (x) { return x.id === i.dataset.edit; });
+      if (!s) return;
+      var v = Math.max(1, Math.min(1440, Math.round(Number(i.value) || 0)));
+      var before = s.minutes, id = i.dataset.edit;
+      s.minutes = v; awardBadges(); save(); renderAll();
+      toast("Changed " + before + " min to " + v + " min.", "Undo", function () {
+        var t = S.sessions.find(function (x) { return x.id === id; });
+        if (t) { t.minutes = before; save(); renderAll(); }
+      });
+    });
+  }
+
+  /* ---- RENDER: HISTORY ------------------------------------------------ */
+
+  var heatSelected = null, heatSubject = "";
+  var LOG_PAGE = 50, logLimit = LOG_PAGE;
+
+  function renderHistory() {
+    var sel = $("heatFilter"), subs = subjectTotals();
+    var opts = ["<option value=''>All subjects</option>"];
+    Object.keys(subs).sort(function (a, b) { return subs[b] - subs[a]; }).forEach(function (k) {
+      opts.push("<option value='" + esc(k) + "'>" + esc(k) + " · " +
+        fmtMins(subs[k]) + "</option>");
+    });
+    sel.innerHTML = opts.join("");
+    sel.value = heatSubject;
+
+    var byDay = totalsByDay(heatSubject || null);
+    var b = heatBuckets(byDay);
+    $("heatMode").textContent = b.note;
+
+    /* Columns start on Monday, the same week the strip on Today uses. Two
+       different weeks in one app is a question waiting to be asked, and the
+       strip's Monday is the semantic one -- it decides which days "this week"
+       actually counts. */
+    var end = todayKey(), start = weekStart(shiftDay(end, -HEAT_DAYS));
+
+    var cells = [], k = start, guard = 0;
+    while (guard++ < 500) {
+      var mins = byDay[k] || 0;
+      cells.push("<i class='l" + heatLevel(mins, b.cuts) +
+        (k === heatSelected ? " sel" : "") + "' data-k='" + k + "' title='" +
+        esc(fmtDate(k) + " · " + fmtMins(mins)) + "'></i>");
+      if (k === end) break;
+      k = shiftDay(k, 1);
+    }
+    var endRow = (parseKey(end).getDay() + 6) % 7;      // Monday = 0
+    for (var i = endRow + 1; i <= 6; i++) cells.push("<i class='future'></i>");
+    $("heat").innerHTML = cells.join("");
+
+    /* Month labels are sized in pixels from the column pitch (13px cell + 3px
+       gap) rather than laid out in a grid, because a month is a ragged number
+       of week columns and a grid would space them evenly and lie. */
+    var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var weeks = Math.ceil(cells.length / 7), lab = [], cur = -1, run = 0;
+    for (var w = 0; w < weeks; w++) {
+      var m = parseKey(shiftDay(start, w * 7)).getMonth();
+      if (m !== cur) {
+        if (cur >= 0) lab.push({ m: cur, w: run });
+        cur = m; run = 1;
+      } else run++;
+    }
+    if (cur >= 0) lab.push({ m: cur, w: run });
+    $("heatMonths").innerHTML = lab.map(function (x) {
+      /* A month narrower than three columns has no room for its name; leaving
+         the space blank beats printing a clipped "Ja". */
+      return "<span style='width:" + (x.w * 16) + "px'>" +
+        (x.w >= 3 ? MON[x.m] : "") + "</span>";
+    }).join("");
+
+    renderHeatDetail();
+    $("logCount").textContent = S.sessions.length + " session" +
+      (S.sessions.length === 1 ? "" : "s") + " · " + fmtMins(totalMinutes()) + " total";
+
+    /* A semester of logging is several hundred rows. Rendering all of them
+       made the page 25,000px tall, so the newest LOG_PAGE are shown and the
+       rest are one click away -- the count above always states the true
+       total so the cap can never read as missing data. */
+    var all = S.sessions.slice().reverse();
+    var shown = all.slice(0, logLimit);
+    $("fullLog").innerHTML = logTable(shown, true) +
+      (all.length > shown.length
+        ? "<div class='row' style='margin-top:var(--s4)'>" +
+          "<button class='btn btn--ghost' id='logMore'>Show " +
+          Math.min(LOG_PAGE, all.length - shown.length) + " more</button>" +
+          "<span class='xs muted'>Showing " + shown.length + " of " +
+          all.length + "</span></div>"
+        : "");
+    var more = $("logMore");
+    if (more) more.addEventListener("click", function () {
+      logLimit += LOG_PAGE; renderHistory();
+    });
+  }
+
+  function renderHeatDetail() {
+    var el = $("heatDetail");
+    if (!heatSelected) { el.textContent = "Pick a day to see what you studied."; return; }
+    var list = S.sessions.filter(function (s) {
+      return s.dayKey === heatSelected && (!heatSubject || subjKey(s) === heatSubject);
+    });
+    if (!list.length) {
+      el.innerHTML = "<strong>" + esc(fmtDate(heatSelected)) + "</strong> — nothing logged.";
+      return;
+    }
+    var mins = list.reduce(function (a, s) { return a + s.minutes; }, 0), per = {};
+    list.forEach(function (s) { per[s.label] = (per[s.label] || 0) + s.minutes; });
+    el.innerHTML = "<span><strong>" + esc(fmtDate(heatSelected)) + "</strong> — " +
+      fmtMins(mins) + " across " + list.length + " session" +
+      (list.length === 1 ? "" : "s") + ": " +
+      Object.keys(per).map(function (n) {
+        return esc(n) + " " + fmtMins(per[n]);
+      }).join(", ") + "</span>";
+  }
+
+  /* ---- RENDER: PROGRESS ----------------------------------------------- */
+
+  function renderProgress() {
+    var mins = totalMinutes(), xp = mins * XP_PER_MIN;
+    var lv = levelFor(xp), cur = xpForLevel(lv), next = xpForLevel(lv + 1);
+    var into = xp - cur, span = next - cur, pctv = span ? into / span : 0;
+
+    $("levelCard").innerHTML =
+      "<div class='card__head'><span class='card__title'>" + icon("level") +
+      "Level " + lv + "</span>" +
+      "<span class='chip chip--accent'>" + xp.toLocaleString() + " XP</span></div>" +
+      "<div class='bar'><div class='bar__fill' style='width:" +
+      (pctv * 100).toFixed(1) + "%'></div></div>" +
+      "<div class='card__note' style='margin-top:var(--s3)'>" +
+      "<strong>" + into.toLocaleString() + " / " + span.toLocaleString() +
+      " XP</strong> toward level " + (lv + 1) + " — that's " + fmtMins(span - into) +
+      " more focused time. One XP is one focused minute, so this number is your " +
+      "minutes, not a score.</div>";
+
+    var st = streakInfo();
+    $("statTiles").innerHTML = [
+      tile("Total time", fmtMins(mins), "", S.sessions.length + " sessions"),
+      tile("Current streak", st.current, "days", st.graceLeft + " grace left this month"),
+      tile("Longest streak", Math.max(st.current, longestStreak()), "days", "grace included"),
+      tile("Days studied", Object.keys(totalsByDay()).length, "days", "at least one session"),
+      tile("Subjects", Object.keys(subjectTotals()).length, "", "tracked"),
+      tile("Best day", fmtMins(bestDayMinutes()), "", "most in one day")
+    ].join("");
+
+    var prog = badgeProgress(), earned = 0;
+    BADGES.forEach(function (b) { if (S.badges[b.id]) earned++; });
+
+    /* Grouped by family, each with its own count. Twenty-six tiles in one wall
+       reads as noise; "2 / 6 Streak" is the number you actually came for. */
+    var fams = [];
+    BADGES.forEach(function (b) { if (fams.indexOf(b.fam) < 0) fams.push(b.fam); });
+    $("badgeGrid").innerHTML = fams.map(function (fam) {
+      var list = BADGES.filter(function (b) { return b.fam === fam; });
+      var got = list.filter(function (b) { return !!S.badges[b.id]; }).length;
+      return "<div class='badge-group'>" +
+        "<div class='badge-group__h'><h3>" + esc(fam) + "</h3><hr>" +
+        "<span>" + got + " / " + list.length + "</span></div>" +
+        "<div class='badges'>" + list.map(function (b) {
+          return badgeCard(b, prog[b.id]);
+        }).join("") + "</div></div>";
+    }).join("");
+    $("badgeCount").textContent = earned + " of " + BADGES.length;
+  }
+
+  /* The bar makes "16 / 30" legible at a glance, but the raw pair stays printed
+     beside it — a bar alone hides how far away the target actually is. */
+  function badgeCard(b, have) {
+    var got = !!S.badges[b.id];
+    have = Math.min(have, b.need);
+    return "<div class='badge" + (got ? " earned" : "") + "'>" +
+      "<div class='badge__n'>" + esc(b.n) + "</div>" +
+      "<div class='badge__t'>" + esc(b.need + " " + b.unit) + "</div>" +
+      "<div class='badge__p'>" + (got ? "Earned" : have + " / " + b.need) + "</div>" +
+      (got ? "" : "<div class='badge__bar'><i style='width:" +
+        Math.round(100 * have / b.need) + "%'></i></div>") +
+      "</div>";
+  }
+  /* `unit` is the quantity the number is in, printed small beside it, so a
+     tile can never read as a bare number whose meaning you have to guess. */
+  function tile(label, value, unit, sub) {
+    return "<div class='stat'><div class='stat__label'>" + esc(label) + "</div>" +
+      "<div class='stat__value'>" + esc(String(value)) +
+      (unit ? "<small>" + esc(unit) + "</small>" : "") + "</div>" +
+      "<div class='stat__sub'>" + esc(sub) + "</div></div>";
+  }
+  function bestDayMinutes() {
+    var m = totalsByDay(), best = 0;
+    Object.keys(m).forEach(function (k) { best = Math.max(best, m[k]); });
+    return best;
+  }
+
+  /* ---- RENDER: SETTINGS ----------------------------------------------- */
+
+  function hourOpts(sel) {
+    var o = "";
+    for (var h = 0; h < 24; h++)
+      o += "<option value='" + h + "'" + (h === sel ? " selected" : "") + ">" +
+        pad(h) + ":00</option>";
+    return o;
+  }
+  function renderSettings() {
+    var s = S.settings;
+    $("sWork").value = s.workMin; $("sShort").value = s.shortBreakMin;
+    $("sLong").value = s.longBreakMin; $("sRounds").value = s.roundsBeforeLong;
+    var bo = "";
+    for (var h = 0; h <= 6; h++)
+      bo += "<option value='" + h + "'" + (h === s.dayBoundaryHour ? " selected" : "") +
+        ">" + (h === 0 ? "Midnight" : pad(h) + ":00") + "</option>";
+    $("sBoundary").innerHTML = bo;
+    $("sGrace").value = s.graceDaysPerMonth;
+    $("sGoalDay").value = s.goalMinutesPerDay == null ? "" : s.goalMinutesPerDay;
+    $("sGoalWeek").value = s.goalMinutesPerWeek == null ? "" : s.goalMinutesPerWeek;
+    $("sBeep").checked = !!s.cues.beep;
+    $("sVib").checked = !!s.cues.vibrate;
+    $("sNotify").checked = !!s.cues.notify;
+    $("sQFrom").innerHTML = hourOpts(s.quietHours.from);
+    $("sQTo").innerHTML = hourOpts(s.quietHours.to);
+    $("aboutTxt").innerHTML =
+      "<strong>Schema v" + S.schemaVersion + ".</strong> Everything is stored in this " +
+      "browser under one key and never leaves it — no account, no backend, no network " +
+      "call of any kind. Minutes count focused time only: breaks and paused time are " +
+      "excluded everywhere, so a number here is never larger than the time you sat " +
+      "with the timer running.";
+  }
+
+  /* ---- BACKUP / RESTORE / EXPORT -------------------------------------- */
+
+  function download(name, text, mime) {
+    try {
+      var url = URL.createObjectURL(new Blob([text], { type: mime }));
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 800);
+      return true;
+    } catch (e) { return false; }
+  }
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function exportCsv() {
+    var head = ["id","dayKey","code","label","startedAt","endedAt","minutes","source","interrupted","note"];
+    var rows = [head.join(",")];
+    S.sessions.forEach(function (s) {
+      rows.push(head.map(function (h) { return csvCell(s[h]); }).join(","));
+    });
+    return rows.join("\n");
+  }
+
+  /* ---- VIEWS / ROUTER -------------------------------------------------- */
+
+  var currentView = "today";
+  function show(v) {
+    currentView = v;
+    Array.prototype.forEach.call(document.querySelectorAll(".view"), function (el) {
+      el.classList.toggle("active", el.id === "view-" + v);
+    });
+    /* Two navs render the same four sections — the sidebar on desktop, the
+       bottom bar on a phone. Selecting on the attribute keeps them in step
+       without either one needing to know the other exists. */
+    Array.prototype.forEach.call(document.querySelectorAll("[data-view]"), function (b) {
+      if (b.dataset.view === v) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
+    });
+    window.scrollTo({ top: 0, behavior: "instant" in document.body.style ? "instant" : "auto" });
+    renderAll();
+  }
+  function renderAll() {
+    renderTimer();
+    renderToday();
+    refreshSubjectList();
+    if (currentView === "history") renderHistory();
+    if (currentView === "progress") renderProgress();
+    if (currentView === "settings") renderSettings();
+
+    var lvl = "Level " + levelFor(totalMinutes() * XP_PER_MIN);
+    $("levelPill").textContent = lvl;
+    $("levelPillM").textContent = lvl;
+
+    var st = streakInfo();
+    $("streakChip").innerHTML = "<span class='chip__dot'></span>" + st.current + "d streak";
+    $("streakChip").className = "chip" + (st.current ? " chip--good" : "");
+
+    var tk = todayKey();
+    $("sideDate").textContent = fmtDate(tk);
+    $("todayEyebrow").textContent = fmtDate(tk);
+    $("dotToday").hidden = !doneOn(tk);
+
+    /* The rail carries the one number worth seeing from any view. Without a
+       daily goal the ring has nothing honest to fill against, so it shows a
+       full accent circle rather than an invented target. */
+    var tmin = minutesOn(tk), g = S.settings.goalMinutesPerDay || 0;
+    var R = 15, C = 2 * Math.PI * R, f = g ? Math.min(1, tmin / g) : 1;
+    $("sideToday").innerHTML =
+      "<svg width='38' height='38' viewBox='0 0 38 38'>" +
+      "<circle class='trk' cx='19' cy='19' r='" + R + "' stroke-width='4'/>" +
+      "<circle class='arc" + (g && tmin >= g ? " done" : "") + "' cx='19' cy='19' r='" +
+      R + "' stroke-width='4' transform='rotate(-90 19 19)' stroke-dasharray='" +
+      (C * f).toFixed(1) + " " + C.toFixed(1) + "'/></svg>" +
+      "<span><span class='side__today-v'>" + fmtMins(tmin) + "</span>" +
+      "<span class='side__today-l'>" + (g ? "of " + fmtMins(g) + " today" : "today") +
+      "</span></span>";
+  }
+
+  /* ---- THEME ---------------------------------------------------------- */
+
+  /* Mode and palette are two separate choices. "auto" is a real third mode,
+     not a default: it tracks the system and keeps tracking it, while light and
+     dark override the system in both directions. Whichever mode resolves picks
+     up that mode's chosen palette, so you can run Porcelain by day and
+     Voidwalker by night without touching a setting at the boundary. */
+  var DARK_MQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function resolvedMode() {
+    var m = S.settings.themeMode;
+    if (m === "light" || m === "dark") return m;
+    return DARK_MQ && DARK_MQ.matches ? "dark" : "light";
+  }
+  function resolvedPalette() {
+    var m = resolvedMode();
+    var id = m === "dark" ? S.settings.darkPalette : S.settings.lightPalette;
+    return paletteById(id) || paletteById(m === "dark" ? "pine" : "paper");
+  }
+
+  function applyTheme() {
+    var mode = S.settings.themeMode, eff = resolvedMode(), pal = resolvedPalette();
+    var root = document.documentElement;
+    root.setAttribute("data-palette", pal.id);
+    root.setAttribute("data-mode", eff);
+    /* Tells the browser which way to render form controls, scrollbars and the
+       date picker it draws itself. Without it a dark palette still gets a white
+       native calendar popup. */
+    root.style.colorScheme = eff;
+
+    /* The address-bar colour is read back off the live palette rather than
+       hard-coded, so it matches whichever of the 26 is actually on screen. */
+    var meta = $("metaTheme");
+    if (meta) meta.setAttribute("content", pal.sw[0]);
+
+    var btn = $("themeBtn");
+    if (btn) {
+      btn.innerHTML = icon(mode === "auto" ? "auto" : mode === "dark" ? "moon" : "sun");
+      btn.title = "Mode: " + mode + " · " + pal.n + " — tap to change";
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".js-themeSeg button"),
+      function (b) {
+        b.setAttribute("aria-pressed", b.dataset.themeSet === mode ? "true" : "false");
+      });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-pal]"), function (b) {
+      var chosen = b.dataset.palMode === "dark"
+        ? S.settings.darkPalette : S.settings.lightPalette;
+      b.setAttribute("aria-pressed", b.dataset.pal === chosen ? "true" : "false");
+    });
+
+    var help = $("themeHelp");
+    if (help) {
+      help.textContent = mode === "auto"
+        ? "Following the system, which is currently " + eff + ". Wearing " + pal.n + "."
+        : "Locked to " + mode + ", whatever the system is set to. Wearing " + pal.n + ".";
+    }
+    var pc = $("paletteCount");
+    if (pc) pc.textContent = pal.n;
+  }
+
+  /* One miniature per palette: the page ground, a card sitting on it, an accent
+     pill and two text bars. A row of abstract dots cannot show you that a card
+     will disappear into the ground; this can. */
+  function paletteButton(p, mode) {
+    return "<button type='button' class='pal' data-pal='" + p.id +
+      "' data-pal-mode='" + mode + "' aria-pressed='false' title='" + esc(p.d) + "'>" +
+      "<span class='pal__prev' style='background:" + p.sw[0] + "'>" +
+        "<span class='pal__card' style='background:" + p.sw[1] +
+          ";border-color:" + p.sw[2] + "'>" +
+          "<i style='background:" + p.sw[3] + "'></i>" +
+          "<b style='background:" + p.sw[4] + "'></b>" +
+          "<b style='background:" + p.sw[5] + ";width:58%'></b>" +
+        "</span>" +
+      "</span>" +
+      "<span class='pal__n'>" + esc(p.n) + "</span>" +
+      "<span class='pal__d'>" + esc(p.d) + "</span></button>";
+  }
+
+  function renderPalettes() {
+    var host = { light: $("lightPalettes"), dark: $("darkPalettes") };
+    if (!host.light || !host.dark) return;
+    ["light", "dark"].forEach(function (m) {
+      host[m].innerHTML = PALETTES.filter(function (p) { return p.m === m; })
+        .map(function (p) { return paletteButton(p, m); }).join("");
+    });
+  }
+
+  /* ---- WIRING --------------------------------------------------------- */
+
+  function init() {
+    load();
+    renderPalettes();
+    applyTheme();
+    if (awardBadges(true).length) save();
+    recoverIfNeeded();
+
+    wireLogHost($("todayLog"));
+    wireLogHost($("fullLog"));
+
+    /* One delegated listener covers the sidebar and the bottom bar together. */
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-view]"); if (!b) return;
+      show(b.dataset.view);
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".js-themeSeg"),
+      function (seg) {
+        seg.addEventListener("click", function (e) {
+          var b = e.target.closest("button[data-theme-set]"); if (!b) return;
+          S.settings.themeMode = b.dataset.themeSet;
+          save(); applyTheme();
+        });
+      });
+
+    /* Picking a palette applies it immediately and only touches the mode it
+       belongs to, so choosing a dark palette while in light mode stages it
+       rather than yanking the page out from under you. */
+    ["lightPalettes", "darkPalettes"].forEach(function (id) {
+      var host = $(id); if (!host) return;
+      host.addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-pal]"); if (!b) return;
+        var m = b.dataset.palMode;
+        S.settings[m === "dark" ? "darkPalette" : "lightPalette"] = b.dataset.pal;
+        save(); applyTheme();
+        var p = paletteById(b.dataset.pal);
+        if (m === resolvedMode()) { toast(p.n + " applied."); return; }
+        /* Staged for the other mode. Switching is offered rather than done:
+           the mode is an explicit choice and taking it over silently is exactly
+           the kind of thing that makes a settings page untrustworthy. */
+        toast(p.n + " saved for " + m + " mode — you are in " + resolvedMode() + " now.",
+          "Switch to " + m, function () {
+            S.settings.themeMode = m; save(); applyTheme();
+          });
+      });
+    });
+
+    /* The compact bar has room for one control, so it cycles the three modes. */
+    $("themeBtn").addEventListener("click", function () {
+      var order = ["light", "dark", "auto"];
+      S.settings.themeMode = order[(order.indexOf(S.settings.themeMode) + 1) % 3];
+      save(); applyTheme();
+      toast("Mode: " + S.settings.themeMode + " · " + resolvedPalette().n);
+    });
+
+    /* On "auto" the palette must move with the system while the page is open,
+       not only on the next reload. */
+    if (DARK_MQ && DARK_MQ.addEventListener) {
+      DARK_MQ.addEventListener("change", function () {
+        if (S.settings.themeMode === "auto") applyTheme();
+      });
+    }
+
+    $("startBtn").addEventListener("click", function () {
+      if (!T.running) T.phase = "work";
+      T.subject = subjectFrom($("subjInput"));
+      $("subjHint").textContent = "Locked for this block: " + T.subject.label;
+      msg("timerMsg", "", "");
+      startPhase("work");
+    });
+
+    $("pauseBtn").addEventListener("click", function () {
+      if (!T.running) return;
+      if (T.paused) {
+        T.paused = false;
+        T.lastResume = Date.now();
+        T.endAt = Date.now() + T.remainAtPause * 1000;
+        msg("timerMsg", "", "");
+      } else {
+        T.paused = true;
+        T.pausedAt = Date.now();
+        T.remainAtPause = Math.max(0, (T.endAt - Date.now()) / 1000);
+        if (T.phase === "work") T.workedMs += Date.now() - T.lastResume;
+        msg("timerMsg", "Paused. Paused time is never counted as study time. " +
+          "Left over 30 minutes, this block closes itself and keeps what it earned.", "");
+      }
+      persistActive();
+      renderTimer();
+    });
+
+    $("stopBtn").addEventListener("click", function () {
+      if (T.phase !== "work") {
+        stopAll(); renderAll();
+        msg("timerMsg", "Break skipped.", "");
+        return;
+      }
+      var sec = Math.min(Math.round(accumulatedWorkMs() / 1000),
+        Math.max(1, S.settings.workMin) * 60);
+      clearInterval(T.tick); clearInterval(T.beat);
+      if (sec < MIN_SESSION_SEC) {
+        stopAll(); renderAll();
+        msg("timerMsg", "Under a minute — nothing logged.", "");
+        return;
+      }
+      var mins = Math.max(1, Math.round(sec / 60));
+      addSession({
+        id: newId(),
+        dayKey: dayKeyFor(T.startedAt, S.settings.dayBoundaryHour),
+        code: null,
+        label: T.subject ? T.subject.label : "General study",
+        startedAt: T.startedAt, endedAt: Date.now(),
+        minutes: mins, source: "pomodoro", interrupted: false, note: ""
+      });
+      stopAll(); renderAll();
+      msg("timerMsg", "Stopped early — logged " + mins + " min.", "ok");
+    });
+
+    /* -- manual entry -- */
+    $("mDate").value = todayKey();
+    $("mAdd").addEventListener("click", function () {
+      var d = $("mDate").value, a = $("mStart").value, b = $("mEnd").value;
+      if (!d || !a || !b) { msg("mMsg", "Pick a date, a start and an end.", "err"); return; }
+      var sp = a.split(":"), ep = b.split(":");
+      var sd = parseKey(d); sd.setHours(+sp[0], +sp[1], 0, 0);
+      var ed = parseKey(d); ed.setHours(+ep[0], +ep[1], 0, 0);
+      if (ed <= sd) ed.setDate(ed.getDate() + 1);      // crossed midnight
+      var mins = Math.round((ed - sd) / 60000);
+      if (mins < 1) { msg("mMsg", "That's under a minute.", "err"); return; }
+      if (mins > 1440) { msg("mMsg", "Over 24 hours — check the times.", "err"); return; }
+      if (sd.getTime() > Date.now()) {
+        msg("mMsg", "That start time is in the future.", "err"); return;
+      }
+      var sub = subjectFrom($("mSubj"));
+      addSession({
+        id: newId(),
+        dayKey: dayKeyFor(sd.getTime(), S.settings.dayBoundaryHour),
+        code: null, label: sub.label,
+        startedAt: sd.getTime(), endedAt: ed.getTime(),
+        minutes: mins, source: "manual", interrupted: false, note: ""
+      });
+      $("mStart").value = ""; $("mEnd").value = ""; $("mSubj").value = "";
+      renderAll();
+      msg("mMsg", "Added " + fmtMins(mins) + ".", "ok");
+    });
+
+    /* -- settings -- */
+    function bindNum(id, key, min, max) {
+      $(id).addEventListener("change", function () {
+        var v = Math.max(min, Math.min(max, Math.round(Number($(id).value) || min)));
+        $(id).value = v; S.settings[key] = v; save(); renderAll();
+      });
+    }
+    bindNum("sWork", "workMin", 1, 180);
+    bindNum("sShort", "shortBreakMin", 1, 60);
+    bindNum("sLong", "longBreakMin", 1, 120);
+    bindNum("sRounds", "roundsBeforeLong", 1, 12);
+    bindNum("sGrace", "graceDaysPerMonth", 0, 10);
+
+    $("sBoundary").addEventListener("change", function () {
+      var old = S.settings.dayBoundaryHour;
+      S.settings.dayBoundaryHour = +$("sBoundary").value;
+      /* Day keys are derived, so changing the boundary must re-derive every
+         stored session. Leaving them alone would silently move history. */
+      S.sessions.forEach(function (s) {
+        s.dayKey = dayKeyFor(s.startedAt, S.settings.dayBoundaryHour);
+      });
+      save(); renderAll();
+      toast("Day boundary changed — " + S.sessions.length + " session(s) re-dated.",
+        "Undo", function () {
+          S.settings.dayBoundaryHour = old;
+          S.sessions.forEach(function (s) { s.dayKey = dayKeyFor(s.startedAt, old); });
+          save(); renderAll(); renderSettings();
+        });
+    });
+
+    function bindGoal(id, key) {
+      $(id).addEventListener("change", function () {
+        var raw = $(id).value.trim();
+        S.settings[key] = raw === "" ? null : (Math.max(0, Math.round(Number(raw) || 0)) || null);
+        save(); renderAll();
+      });
+    }
+    bindGoal("sGoalDay", "goalMinutesPerDay");
+    bindGoal("sGoalWeek", "goalMinutesPerWeek");
+
+    ["sBeep|beep", "sVib|vibrate", "sNotify|notify"].forEach(function (pair) {
+      var p = pair.split("|");
+      $(p[0]).addEventListener("change", function () {
+        var on = $(p[0]).checked;
+        S.settings.cues[p[1]] = on;
+        save();
+        if (p[1] === "notify" && on && window.Notification) {
+          if (Notification.permission === "granted") msg("cueMsg", "Notifications on.", "ok");
+          else if (Notification.permission === "denied") {
+            S.settings.cues.notify = false; $(p[0]).checked = false; save();
+            msg("cueMsg", "The browser has notifications blocked for this page.", "err");
+          } else {
+            Notification.requestPermission().then(function (r) {
+              if (r !== "granted") {
+                S.settings.cues.notify = false; $(p[0]).checked = false; save();
+                msg("cueMsg", "Permission not granted — left off.", "err");
+              } else msg("cueMsg", "Notifications on.", "ok");
+            });
+          }
+        }
+      });
+    });
+    $("sQFrom").addEventListener("change", function () {
+      S.settings.quietHours.from = +this.value; save();
+    });
+    $("sQTo").addEventListener("change", function () {
+      S.settings.quietHours.to = +this.value; save();
+    });
+    $("testCue").addEventListener("click", function () {
+      cue("work");
+      msg("cueMsg", inQuiet() ? "Quiet hours are active right now, so nothing played."
+        : "Played.", inQuiet() ? "" : "ok");
+    });
+
+    /* -- data -- */
+    $("expJson").addEventListener("click", function () {
+      var name = "study-tracker-backup-" + todayKey() + ".json";
+      if (download(name, JSON.stringify(S, null, 2), "application/json"))
+        msg("dataMsg", "Downloaded " + name, "ok");
+      else msg("dataMsg", "Download blocked by the browser — try the CSV export.", "err");
+    });
+    $("expCsv").addEventListener("click", function () {
+      var name = "study-sessions-" + todayKey() + ".csv";
+      if (download(name, exportCsv(), "text/csv"))
+        msg("dataMsg", "Downloaded " + name + " (" + S.sessions.length + " rows)", "ok");
+      else msg("dataMsg", "Download blocked by the browser.", "err");
+    });
+    $("impBtn").addEventListener("click", function () { $("impFile").click(); });
+    $("impFile").addEventListener("change", function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var before = JSON.parse(JSON.stringify(S));
+        try {
+          S = migrate(JSON.parse(fr.result));
+          awardBadges(true);
+          save(); applyTheme(); renderAll(); renderSettings();
+          msg("dataMsg", "Restored " + S.sessions.length + " session(s).", "ok");
+          toast("Backup restored.", "Undo", function () {
+            S = before; save(); applyTheme(); renderAll(); renderSettings();
+          });
+        } catch (e) {
+          msg("dataMsg", "That file isn't a valid backup — nothing was changed.", "err");
+        }
+      };
+      fr.readAsText(f);
+      this.value = "";
+    });
+    $("wipeBtn").addEventListener("click", function () {
+      var before = JSON.parse(JSON.stringify(S));
+      S = blank(); save(); applyTheme(); renderAll(); renderSettings();
+      msg("wipeMsg", "Everything deleted.", "");
+      toast("Deleted everything.", "Undo", function () {
+        S = before; save(); applyTheme(); renderAll(); renderSettings();
+        msg("wipeMsg", "Restored.", "ok");
+      });
+    });
+
+    /* -- heatmap -- */
+    $("heat").addEventListener("click", function (e) {
+      var c = e.target.closest("i[data-k]"); if (!c) return;
+      heatSelected = (heatSelected === c.dataset.k) ? null : c.dataset.k;
+      renderHistory();
+    });
+    $("heatFilter").addEventListener("change", function () {
+      heatSubject = this.value; renderHistory();
+    });
+
+    $("splitRange").addEventListener("change", function () {
+      splitDays = Number(this.value) || 0;
+      renderSplit();
+    });
+
+    /* Saving on unload is the last line of defence: the 15s heartbeat means
+       at most 15s of a live block is ever unaccounted for. */
+    window.addEventListener("beforeunload", function () {
+      if (T.running && T.phase === "work") persistActive();
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) renderTimer();
+    });
+
+    show("today");
+    renderSettings();
+
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  }
+
+  /* Exposed for the verification harness and for the console; nothing in the
+     UI reaches for it. */
+  window.Study = {
+    state: function () { return S; },
+    save: save, load: load, render: renderAll, show: show,
+    dayKeyFor: dayKeyFor, streakInfo: streakInfo, heatBuckets: heatBuckets,
+    levelFor: levelFor, xpForLevel: xpForLevel, badgeProgress: badgeProgress,
+    migrate: migrate, exportCsv: exportCsv, BADGES: BADGES,
+    PALETTES: PALETTES, resolvedMode: resolvedMode,
+    resolvedPalette: function () { return resolvedPalette().id; }
+  };
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", init);
+  else init();
+
+})();
+</script>
+</body>
+</html>
