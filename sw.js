@@ -3,7 +3,7 @@
    a stale shell is always better than a blank page. Bump CACHE on release. */
 "use strict";
 
-var CACHE = "study-tracker-v3";   // bumped: palettes + dashboard layout
+var CACHE = "study-tracker-v4";   // bumped: fixed the uncentered layout, added History's session stats
 var ASSETS = [
   "./",
   "./index.html",

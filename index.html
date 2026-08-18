@@ -644,10 +644,15 @@ svg.i{display:inline-block; vertical-align:middle; flex:0 0 auto;
 .bottomnav .navbtn[aria-current="page"] span{color:var(--text-strong)}
 .bottomnav .navbtn__dot{position:absolute; top:5px; left:50%; margin-left:9px}
 
-main.main{margin-left:var(--sidebar-w); padding:var(--s8) var(--s8) var(--s12);
-  max-width:1120px}
-
-.view{display:none}
+main.main{
+  display:flex; flex-direction:column; align-items:center;
+  padding:var(--s8) var(--s8) var(--s12) calc(var(--sidebar-w) + var(--s8));
+}
+/* Raised from 1120px: at a normal 1920px display the old cap still left
+   244px unused even once centered. 1400px keeps a two-column dashboard
+   readable while cutting that waste to something that reads as an
+   intentional margin, not an abandoned half of the page. */
+.view{display:none; width:100%; max-width:1400px}
 .view.active{display:block; animation:viewin .28s var(--ease)}
 @keyframes viewin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
@@ -1076,8 +1081,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   .side{display:none}
   .topbar{display:flex}
   .bottomnav{display:flex}
-  main.main{margin-left:0; padding:var(--s5) var(--s4)
-    calc(var(--bottomnav-h) + var(--s10))}
+  main.main{padding:var(--s5) var(--s4) calc(var(--bottomnav-h) + var(--s10))}
   #toast{bottom:calc(var(--bottomnav-h) + var(--s3) + env(safe-area-inset-bottom,0px))}
   .head{margin-bottom:var(--s5)}
   .log-scroll{margin:0 calc(var(--s4) * -1) calc(var(--s4) * -1);
@@ -1097,7 +1101,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 }
 @media print{
   .side,.topbar,.bottomnav,#toast,.timer__actions{display:none !important}
-  main.main{margin:0; padding:0}
+  main.main{padding:0}
   body::before{display:none}
   .card{box-shadow:none; break-inside:avoid}
 }
@@ -1306,61 +1310,74 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         to see what you studied on it.</p>
     </div>
 
-    <div class="stack">
-      <div class="card">
-        <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-grid"/></svg>Study heatmap</span>
-          <select id="heatFilter" aria-label="Filter by subject" style="width:auto;max-width:220px"></select>
+    <div class="dash">
+      <div class="stack">
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-grid"/></svg>Study heatmap</span>
+            <select id="heatFilter" aria-label="Filter by subject" style="width:auto;max-width:220px"></select>
+          </div>
+          <div class="heat-scroll">
+            <div class="heat-grid">
+              <div class="heat-months" id="heatMonths"></div>
+              <div class="heat-wdays"><i>M</i><i></i><i>W</i><i></i><i>F</i><i></i><i></i></div>
+              <div class="heat" id="heat"></div>
+            </div>
+          </div>
+          <div class="row row--between" style="margin-top:var(--s3)">
+            <span class="xs muted" id="heatMode"></span>
+            <span class="heat-legend">Less
+              <i style="background:var(--heat-0)"></i>
+              <i style="background:var(--heat-1)"></i>
+              <i style="background:var(--heat-2)"></i>
+              <i style="background:var(--heat-3)"></i>
+              <i style="background:var(--heat-4)"></i>More</span>
+          </div>
+          <div class="heat-detail" id="heatDetail">Pick a day to see what you studied.</div>
         </div>
-        <div class="heat-scroll">
-          <div class="heat-grid">
-            <div class="heat-months" id="heatMonths"></div>
-            <div class="heat-wdays"><i>M</i><i></i><i>W</i><i></i><i>F</i><i></i><i></i></div>
-            <div class="heat" id="heat"></div>
+
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-plus"/></svg>Log time you didn't run a timer for</span>
+          </div>
+          <div class="grid grid--3" style="margin-bottom:var(--s4)">
+            <div class="field"><label class="field__label" for="mDate">Date</label>
+              <input type="date" id="mDate"></div>
+            <div class="field"><label class="field__label" for="mStart">Start</label>
+              <input type="time" id="mStart"></div>
+            <div class="field"><label class="field__label" for="mEnd">End</label>
+              <input type="time" id="mEnd"></div>
+          </div>
+          <div class="field" style="margin-bottom:var(--s4)">
+            <label class="field__label" for="mSubj">Subject</label>
+            <input id="mSubj" type="text" autocomplete="off" spellcheck="false"
+                   list="subjSeen" placeholder="What were you studying?">
+          </div>
+          <div class="row">
+            <button class="btn btn--soft" id="mAdd">
+              <svg class="i"><use href="#i-plus"/></svg>Add entry</button>
+            <span class="inline-msg" id="mMsg" style="margin-top:0"></span>
           </div>
         </div>
-        <div class="row row--between" style="margin-top:var(--s3)">
-          <span class="xs muted" id="heatMode"></span>
-          <span class="heat-legend">Less
-            <i style="background:var(--heat-0)"></i>
-            <i style="background:var(--heat-1)"></i>
-            <i style="background:var(--heat-2)"></i>
-            <i style="background:var(--heat-3)"></i>
-            <i style="background:var(--heat-4)"></i>More</span>
-        </div>
-        <div class="heat-detail" id="heatDetail">Pick a day to see what you studied.</div>
-      </div>
 
-      <div class="card">
-        <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-plus"/></svg>Log time you didn't run a timer for</span>
-        </div>
-        <div class="grid grid--3" style="margin-bottom:var(--s4)">
-          <div class="field"><label class="field__label" for="mDate">Date</label>
-            <input type="date" id="mDate"></div>
-          <div class="field"><label class="field__label" for="mStart">Start</label>
-            <input type="time" id="mStart"></div>
-          <div class="field"><label class="field__label" for="mEnd">End</label>
-            <input type="time" id="mEnd"></div>
-        </div>
-        <div class="field" style="margin-bottom:var(--s4)">
-          <label class="field__label" for="mSubj">Subject</label>
-          <input id="mSubj" type="text" autocomplete="off" spellcheck="false"
-                 list="subjSeen" placeholder="What were you studying?">
-        </div>
-        <div class="row">
-          <button class="btn btn--soft" id="mAdd">
-            <svg class="i"><use href="#i-plus"/></svg>Add entry</button>
-          <span class="inline-msg" id="mMsg" style="margin-top:0"></span>
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-list"/></svg>All sessions</span>
+            <span class="chip" id="logCount"></span>
+          </div>
+          <div id="fullLog"></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-list"/></svg>All sessions</span>
-          <span class="chip" id="logCount"></span>
+      <div class="dash__side">
+        <div class="card">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-level"/></svg>Session stats</span>
+          </div>
+          <p class="card__note" style="margin-bottom:var(--s4)">Patterns in how you actually
+            study, computed from every session you have logged.</p>
+          <div class="grid grid--2" id="sessionStats"></div>
         </div>
-        <div id="fullLog"></div>
       </div>
     </div>
   </section>
@@ -2661,6 +2678,57 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     if (more) more.addEventListener("click", function () {
       logLimit += LOG_PAGE; renderHistory();
     });
+
+    renderSessionStats();
+  }
+
+  /* ---- RENDER: SESSION STATS -------------------------------------------
+     Four patterns that don't live anywhere else in the app: Progress shows
+     totals and streaks, not which weekday actually gets the work done or how
+     often a block gets interrupted. Reuses the same `tile()` the Progress
+     stat row uses, so a number here looks and reads exactly like one there. */
+
+  function weekdayTotals() {
+    var names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    var sums = [0, 0, 0, 0, 0, 0, 0];
+    S.sessions.forEach(function (s) { sums[parseKey(s.dayKey).getDay()] += s.minutes; });
+    return { names: names, sums: sums };
+  }
+
+  function renderSessionStats() {
+    var host = $("sessionStats");
+    if (!S.sessions.length) {
+      host.innerHTML = "<div class='empty'>Nothing to summarise yet — this fills in " +
+        "once you've logged a few sessions.</div>";
+      return;
+    }
+    var mk = todayKey().slice(0, 7), monthMins = 0;
+    S.sessions.forEach(function (s) { if (s.dayKey.slice(0, 7) === mk) monthMins += s.minutes; });
+    var monthName = parseKey(todayKey()).toLocaleDateString(undefined, { month: "long" });
+
+    var avg = Math.round(totalMinutes() / S.sessions.length);
+
+    var longest = S.sessions.reduce(function (a, s) { return s.minutes > a.minutes ? s : a; });
+
+    var wd = weekdayTotals(), bi = 0;
+    for (var i = 1; i < 7; i++) if (wd.sums[i] > wd.sums[bi]) bi = i;
+    var hasBest = wd.sums[bi] > 0;
+
+    var interrupted = S.sessions.filter(function (s) { return s.interrupted; }).length;
+    var pct = Math.round(100 * interrupted / S.sessions.length);
+
+    host.innerHTML = [
+      tile("This month", fmtMins(monthMins), "", "so far in " + monthName),
+      tile("Avg session", fmtMins(avg), "",
+        "across " + S.sessions.length + " session" + (S.sessions.length === 1 ? "" : "s")),
+      /* tile() already escapes `sub` internally -- escaping longest.label here
+         too would double-escape a subject like "R&D" into "R&amp;D". */
+      tile("Longest session", fmtMins(longest.minutes), "",
+        longest.label + " · " + fmtDate(longest.dayKey)),
+      tile("Most active day", hasBest ? wd.names[bi] : "—",
+        "", hasBest ? fmtMins(wd.sums[bi]) + " total on that weekday" : "Not enough data yet"),
+      tile("Interrupted", pct + "%", "", interrupted + " of " + S.sessions.length + " sessions")
+    ].join("");
   }
 
   function renderHeatDetail() {
