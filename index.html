@@ -941,6 +941,46 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .split-legend em{margin-left:auto; font-family:var(--mono); font-size:11px;
   font-style:normal; color:var(--text-dim); flex:0 0 auto}
 
+/* --- study companion --- */
+/* Every expression below is read off state the app already tracks -- the
+   timer's own phase, quiet hours, whether a day went by unlogged. There is
+   no separate care mechanic: nothing to feed, nothing to neglect on purpose,
+   same as the rest of the app never inventing a number it can't back up. */
+.companion__body{display:flex; justify-content:center; padding:var(--s2) 0 var(--s3)}
+.companion__caption{font-size:12.5px; color:var(--text-dim); text-align:center;
+  line-height:1.5; margin:0}
+.owl{overflow:visible; transform-origin:60px 55px}
+.owl-body,.owl-ears,.owl-wings,.owl-branch{fill:none; stroke:var(--text-dim);
+  stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round}
+.owl-branch{stroke:var(--border)}
+.owl-eyes-open circle{fill:none; stroke:var(--text-dim); stroke-width:2.6}
+.owl-eyes-open .owl-pupil{fill:var(--text-strong); stroke:none}
+.owl-eyes-half path,.owl-eyes-closed path{fill:none; stroke:var(--text-dim);
+  stroke-width:2.6; stroke-linecap:round}
+.owl-beak{fill:var(--accent); stroke:none}
+.owl-zzz path{fill:none; stroke:var(--accent); stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round}
+/* One shape, four moods -- the matching group is shown, the rest stay hidden
+   rather than swapping in a different SVG per mood. */
+.owl-eyes-open{transform-origin:60px 52px}
+.owl-eyes-half,.owl-eyes-closed,.owl-zzz{display:none}
+.owl.mood-resting .owl-eyes-open{display:none}
+.owl.mood-resting .owl-eyes-half{display:block}
+.owl.mood-dozing .owl-eyes-open{display:none}
+.owl.mood-dozing .owl-eyes-closed{display:block}
+.owl.mood-dozing .owl-zzz{display:block}
+.owl.mood-dozing{transform:rotate(-6deg)}
+/* Focus reads as warmth, not a different pose: the ears and beak alone pick
+   up the accent, the same way an active nav item or a met goal does. */
+.owl.mood-focused .owl-ears,.owl.mood-focused .owl-beak{stroke:var(--accent)}
+.owl.mood-focused .owl-beak{fill:var(--accent)}
+@keyframes owlBlink{0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.08)}}
+@keyframes owlBreathe{0%,100%{transform:scale(1)} 50%{transform:scale(1.015)}}
+.owl.mood-alert .owl-eyes-open,.owl.mood-focused .owl-eyes-open{
+  animation:owlBlink 6s ease-in-out infinite}
+.owl.mood-alert,.owl.mood-focused,.owl.mood-resting{
+  animation:owlBreathe 4.5s ease-in-out infinite}
+
 /* --- sidebar today readout --- */
 .side__today{display:flex; align-items:center; gap:var(--s3);
   padding:var(--s3) var(--s2); border-radius:var(--r);
@@ -1029,8 +1069,17 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .log tbody tr:hover{background:var(--surface-2)}
 .log tr:last-child td{border-bottom:none}
 .log td.t{font-family:var(--mono); color:var(--text-dim); white-space:nowrap}
-.log td.subj{font-weight:550; color:var(--text-strong)}
-.log input[type=number]{width:76px; padding:5px var(--s2); font-size:12.5px}
+.log td.subj{padding:0}
+/* Both editable cells share one compact style: full-bleed inside the cell so
+   the row height doesn't grow, transparent until focus so a table of thirty
+   sessions doesn't read as thirty stacked form fields. */
+.log input[type=number],.log input[type=text]{
+  width:100%; padding:9px var(--s2); font-size:12.5px; font-weight:550;
+  border-color:transparent; background:transparent; border-radius:6px}
+.log input[type=number]{width:76px; font-weight:400}
+.log input[type=text]{color:var(--text-strong)}
+.log input:hover{background:var(--surface-2)}
+.log input:focus{background:var(--surface); border-color:var(--accent)}
 .log .btn{opacity:.55; transition:opacity var(--fast)}
 .log tr:hover .btn, .log .btn:focus-visible{opacity:1}
 
@@ -1272,6 +1321,40 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       </div>
 
       <div class="dash__side">
+        <div class="card companion" id="companionCard">
+          <div class="card__head">
+            <span class="card__title"><svg class="i"><use href="#i-moon"/></svg>Study companion</span>
+            <span class="chip" id="companionMoodChip"></span>
+          </div>
+          <div class="companion__body">
+            <svg class="owl" id="companionSvg" width="104" height="90" viewBox="0 0 120 104"
+                 aria-hidden="true">
+              <path class="owl-branch" d="M6 96 H114"/>
+              <path class="owl-body" d="M60 14C82 14 98 32 98 56C98 80 82 92 60 92
+                C38 92 22 80 22 56C22 32 38 14 60 14Z"/>
+              <path class="owl-ears" d="M40 16 34 4 48 12M80 16 86 4 72 12"/>
+              <path class="owl-wings" d="M28 50Q22 66 30 82M92 50Q98 66 90 82"/>
+              <g class="owl-eyes-open">
+                <circle cx="46" cy="52" r="12"/>
+                <circle cx="74" cy="52" r="12"/>
+                <circle class="owl-pupil" cx="46" cy="52" r="4.5"/>
+                <circle class="owl-pupil" cx="74" cy="52" r="4.5"/>
+              </g>
+              <g class="owl-eyes-half">
+                <path d="M34 52Q46 60 58 52"/>
+                <path d="M62 52Q74 60 86 52"/>
+              </g>
+              <g class="owl-eyes-closed">
+                <path d="M36 53Q46 58 56 53"/>
+                <path d="M64 53Q74 58 84 53"/>
+              </g>
+              <path class="owl-beak" d="M60 60 54 70 60 74 66 70Z"/>
+              <g class="owl-zzz"><path d="M92 20H100L92 28H100"/></g>
+            </svg>
+          </div>
+          <p class="companion__caption" id="companionCaption"></p>
+        </div>
+
         <div class="grid grid--2 grid--top">
           <div class="card" id="streakTile"></div>
           <div class="card" id="goalTile"></div>
@@ -1455,6 +1538,20 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-moon"/></svg>Study companion</span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">A small owl on Today, styled
+          entirely from the timer and your recent days — nothing to feed, nothing it holds
+          against you for skipping one.</p>
+        <label class="switch">
+          <input type="checkbox" id="sCompanion">
+          <span class="switch__track"></span>
+          <span class="switch__label">Show the study companion</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
           <span class="card__title"><svg class="i"><use href="#i-clock"/></svg>Pomodoro</span>
         </div>
         <div class="grid grid--3">
@@ -1588,7 +1685,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* ---- CONSTANTS ------------------------------------------------------ */
 
   var KEY = "studyTracker.v1";
-  var SCHEMA_VERSION = 2;   // v2 split one `theme` field into mode + a palette per mode
+  var SCHEMA_VERSION = 3;   // v3 adds showCompanion. The generic default-fill in
+                            // migrate() already backfills any key missing from an
+                            // older blob, so no new migration branch was needed --
+                            // only DEFAULTS changed, which is why the bump is here
+                            // with a comment rather than with new merge logic.
 
   /* Recovery is capped at the planned interval so a tab that died at 14:05
      and reopens at 22:00 can never credit eight hours it did not earn. */
@@ -1616,6 +1717,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     themeMode: "auto",              // light | dark | auto
     lightPalette: "paper",          // worn when the resolved mode is light
     darkPalette: "pine",            // worn when it is dark
+    showCompanion: true,
     cues: { beep: true, vibrate: true, notify: false },
     quietHours: { from: 22, to: 7 }
   };
@@ -2366,6 +2468,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     $("timerSub").textContent = T.running
       ? "Round " + (done + 1) + " of " + n
       : Math.max(1, S.settings.workMin) + " min block";
+
+    /* Start/Pause/Stop only ever call the full path of this function, never
+       renderToday() on their own -- Start in particular calls startPhase()
+       directly. Hooking the mood update here, not only from renderToday(),
+       is what actually catches it turning Focused the moment a block starts. */
+    renderCompanion();
   }
 
   /* ---- RENDER: TODAY -------------------------------------------------- */
@@ -2420,6 +2528,53 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
     renderWeek();
     renderSplit();
+    renderCompanion();
+  }
+
+  /* ---- RENDER: STUDY COMPANION -----------------------------------------
+     Four moods, all read off state that already exists elsewhere: the
+     timer's own running phase, quiet hours, and whether a day went by
+     unlogged. No mood is invented for the sake of having one -- "focused"
+     only shows while a work block is actually running, and "dozing" only
+     shows for a reason the caption states, the same way the heatmap names
+     which shading mode it's in rather than letting a colour imply a
+     precision it doesn't have. */
+
+  function companionMood() {
+    if (T.running && T.phase === "work") return "focused";
+    if (T.running) return "resting";
+    if (inQuiet()) return "dozing";
+    /* Two unlogged days, not one -- so it doesn't go sleepy in the first
+       hour of a fresh day that simply hasn't happened yet. */
+    var today = todayKey();
+    if (!doneOn(today) && !doneOn(shiftDay(today, -1))) return "dozing";
+    return "alert";
+  }
+
+  var COMPANION_LABEL = { focused: "Focused", resting: "On a break",
+    alert: "Watching", dozing: "Dozing" };
+
+  function companionCaption(mood) {
+    if (mood === "focused") return "Locked in with you. It settles the moment you take a break.";
+    if (mood === "resting") return "Taking the break with you.";
+    if (mood === "dozing") {
+      return inQuiet()
+        ? "Asleep for quiet hours — back once they end."
+        : "Nothing logged in a couple of days. No judgement, just resting.";
+    }
+    return "Awake and watching. Start a block and it focuses with you.";
+  }
+
+  function renderCompanion() {
+    var host = $("companionCard");
+    if (!host) return;
+    if (!S.settings.showCompanion) { host.hidden = true; return; }
+    host.hidden = false;
+    var mood = companionMood();
+    $("companionSvg").setAttribute("class", "owl mood-" + mood);
+    $("companionMoodChip").className = "chip" + (mood === "focused" ? " chip--accent" : "");
+    $("companionMoodChip").textContent = COMPANION_LABEL[mood];
+    $("companionCaption").textContent = companionCaption(mood);
   }
 
   /* ---- RENDER: WEEK STRIP --------------------------------------------- */
@@ -2556,7 +2711,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       return "<tr data-id='" + s.id + "'>" +
         (showDate ? "<td class='t'>" + esc(fmtDate(s.dayKey)) + "</td>" : "") +
         "<td class='t'>" + esc(fmtClock(s.startedAt)) + "</td>" +
-        "<td class='subj'>" + esc(s.label) + "</td>" +
+        "<td class='subj'><input type='text' autocomplete='off' spellcheck='false' " +
+        "list='subjSeen' value='" + esc(s.label) + "' data-edit-label='" + s.id +
+        "' aria-label='Subject'></td>" +
         "<td><input type='number' min='1' max='1440' value='" + s.minutes +
         "' data-edit='" + s.id + "' aria-label='Minutes'></td>" +
         "<td><span class='chip'>" + (s.source === "manual" ? "manual" : "timer") + "</span>" +
@@ -2573,7 +2730,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   }
 
   /* Delete is immediate with an undo, never a confirm() dialog: reversing a
-     mistake beats interrupting every correct action to ask about it. */
+     mistake beats interrupting every correct action to ask about it. Renaming
+     a subject after the fact follows the same rule -- go back and fix a typo,
+     or fold "eco" and "ECO354" into one name, without a modal in the way. */
   function wireLogHost(host) {
     host.addEventListener("click", function (e) {
       var d = e.target.closest("[data-del]"); if (!d) return;
@@ -2585,16 +2744,36 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       });
     });
     host.addEventListener("change", function (e) {
-      var i = e.target.closest("[data-edit]"); if (!i) return;
-      var s = S.sessions.find(function (x) { return x.id === i.dataset.edit; });
-      if (!s) return;
-      var v = Math.max(1, Math.min(1440, Math.round(Number(i.value) || 0)));
-      var before = s.minutes, id = i.dataset.edit;
-      s.minutes = v; awardBadges(); save(); renderAll();
-      toast("Changed " + before + " min to " + v + " min.", "Undo", function () {
-        var t = S.sessions.find(function (x) { return x.id === id; });
-        if (t) { t.minutes = before; save(); renderAll(); }
-      });
+      var i = e.target.closest("[data-edit]");
+      if (i) {
+        var s = S.sessions.find(function (x) { return x.id === i.dataset.edit; });
+        if (!s) return;
+        var v = Math.max(1, Math.min(1440, Math.round(Number(i.value) || 0)));
+        var before = s.minutes, id = i.dataset.edit;
+        s.minutes = v; awardBadges(); save(); renderAll();
+        toast("Changed " + before + " min to " + v + " min.", "Undo", function () {
+          var t = S.sessions.find(function (x) { return x.id === id; });
+          if (t) { t.minutes = before; save(); renderAll(); }
+        });
+        return;
+      }
+      var li = e.target.closest("[data-edit-label]");
+      if (li) {
+        var sl = S.sessions.find(function (x) { return x.id === li.dataset.editLabel; });
+        if (!sl) return;
+        /* Same fallback a blank subject gets at creation: an empty title reads
+           as missing data everywhere it's grouped (the split legend, the
+           heatmap filter), so it becomes "General study" rather than "". */
+        var nv = (li.value || "").trim() || "General study";
+        var beforeL = sl.label, idL = li.dataset.editLabel;
+        if (nv === beforeL) { li.value = beforeL; return; }
+        sl.label = nv; li.value = nv; awardBadges(); save(); renderAll();
+        toast("Renamed \u201c" + beforeL + "\u201d to \u201c" + nv + "\u201d.", "Undo",
+          function () {
+            var tl = S.sessions.find(function (x) { return x.id === idL; });
+            if (tl) { tl.label = beforeL; save(); renderAll(); }
+          });
+      }
     });
   }
 
@@ -2848,6 +3027,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     $("sGrace").value = s.graceDaysPerMonth;
     $("sGoalDay").value = s.goalMinutesPerDay == null ? "" : s.goalMinutesPerDay;
     $("sGoalWeek").value = s.goalMinutesPerWeek == null ? "" : s.goalMinutesPerWeek;
+    $("sCompanion").checked = !!s.showCompanion;
     $("sBeep").checked = !!s.cues.beep;
     $("sVib").checked = !!s.cues.vibrate;
     $("sNotify").checked = !!s.cues.notify;
@@ -3176,6 +3356,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     });
 
     /* -- settings -- */
+    $("sCompanion").addEventListener("change", function () {
+      S.settings.showCompanion = $("sCompanion").checked;
+      save();
+      renderToday();
+    });
+
     function bindNum(id, key, min, max) {
       $(id).addEventListener("change", function () {
         var v = Math.max(min, Math.min(max, Math.round(Number($(id).value) || min)));
@@ -3333,7 +3519,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     dayKeyFor: dayKeyFor, streakInfo: streakInfo, heatBuckets: heatBuckets,
     levelFor: levelFor, xpForLevel: xpForLevel, badgeProgress: badgeProgress,
     migrate: migrate, exportCsv: exportCsv, BADGES: BADGES,
-    PALETTES: PALETTES, resolvedMode: resolvedMode,
+    PALETTES: PALETTES, resolvedMode: resolvedMode, companionMood: companionMood,
     resolvedPalette: function () { return resolvedPalette().id; }
   };
 
