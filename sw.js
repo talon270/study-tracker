@@ -3,7 +3,7 @@
    a stale shell is always better than a blank page. Bump CACHE on release. */
 "use strict";
 
-var CACHE = "study-tracker-v7";   // bumped: the companion moves around the scene now
+var CACHE = "study-tracker-v8";   // bumped: cloud sync
 var ASSETS = [
   "./",
   "./index.html",
@@ -30,6 +30,12 @@ self.addEventListener("activate", function (e) {
 
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
+  /* Cross-origin is the Supabase API and nothing else. It must not be touched:
+     the catch below falls back to index.html, so an intercepted sync request
+     that failed would hand the app an HTML page where it expected JSON, and
+     the parse error would be reported as a sync failure with a nonsense
+     reason. Let the network handle its own errors. */
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(e.request).then(function (hit) {
       if (hit) return hit;

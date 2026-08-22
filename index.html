@@ -736,6 +736,8 @@ hr.sep{border:none; border-top:1px solid var(--border); margin:var(--s5) 0}
   border-color:rgba(var(--good-rgb),.36)}
 .chip--warn{background:rgba(var(--warn-rgb),.13); color:var(--warn);
   border-color:rgba(var(--warn-rgb),.36)}
+.chip--bad{background:rgba(var(--danger-rgb),.13); color:var(--danger);
+  border-color:rgba(var(--danger-rgb),.36)}
 .chip__dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 
 /* --- fields --- */
@@ -1620,7 +1622,8 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <div class="head__eyebrow">Configuration</div>
       <h1>Settings</h1>
       <p>Nothing here is switched on for you. Everything is stored in this browser
-        under a single key, and the export below is the only copy that outlives it.</p>
+        under a single key. Cloud sync is off until you set it up, and until then
+        the export below is the only copy that outlives this browser.</p>
     </div>
 
     <div class="stack">
@@ -1751,9 +1754,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         <div class="card__head">
           <span class="card__title"><svg class="i"><use href="#i-db"/></svg>Your data</span>
         </div>
-        <p class="card__note" style="margin-bottom:var(--s4)">It lives in this browser
-          only. Export it before clearing site data, switching machines, or anything
-          else that could take it away.</p>
+        <p class="card__note" style="margin-bottom:var(--s4)" id="dataNote">It lives in
+          this browser only. Export it before clearing site data, switching machines, or
+          anything else that could take it away.</p>
         <div class="row">
           <button class="btn" id="expJson"><svg class="i"><use href="#i-down"/></svg>Download backup (JSON)</button>
           <button class="btn" id="expCsv"><svg class="i"><use href="#i-down"/></svg>Export sessions (CSV)</button>
@@ -1766,6 +1769,48 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           <button class="btn btn--danger" id="wipeBtn"><svg class="i"><use href="#i-trash"/></svg>Delete everything</button>
           <span class="inline-msg" id="wipeMsg" style="margin-top:0"></span>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <span class="card__title"><svg class="i"><use href="#i-up"/></svg>Cloud sync</span>
+          <span class="chip" id="syncChip">Off</span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">Off unless you set it up.
+          Sync keeps this browser's log and your other devices' logs in step through a
+          Supabase project you own. <strong>Nothing about how the app works changes:</strong>
+          every session is still written to this browser first and the page still opens
+          with no network. The cloud copy is a second copy, not the copy.</p>
+
+        <div id="syncSetup">
+          <div class="grid grid--2">
+            <div class="field"><label class="field__label" for="syUrl">Project URL</label>
+              <input type="url" id="syUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
+              <div class="help">Supabase dashboard → Project Settings → Data API.</div></div>
+            <div class="field"><label class="field__label" for="syKey">Anon / publishable key</label>
+              <input type="text" id="syKey" placeholder="eyJhbGci…" autocomplete="off">
+              <div class="help">The public key, not the service-role key. It is safe in a
+                page; row-level security is what protects the data.</div></div>
+            <div class="field"><label class="field__label" for="syEmail">Email</label>
+              <input type="email" id="syEmail" autocomplete="username"></div>
+            <div class="field"><label class="field__label" for="syPass">Password</label>
+              <input type="password" id="syPass" autocomplete="current-password"></div>
+          </div>
+          <div class="row" style="margin-top:var(--s4)">
+            <button class="btn btn--primary" id="syIn"><svg class="i"><use href="#i-up"/></svg>Sign in and sync</button>
+          </div>
+        </div>
+
+        <div id="syncPanel" hidden>
+          <div class="row row--between">
+            <span class="xs muted" id="syWho"></span>
+            <span class="row" style="gap:var(--s2)">
+              <button class="btn btn--sm" id="syNow">Sync now</button>
+              <button class="btn btn--sm btn--ghost" id="syOut">Sign out</button>
+            </span>
+          </div>
+        </div>
+        <div class="inline-msg" id="syMsg"></div>
       </div>
 
       <div class="card">
@@ -1809,11 +1854,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* ---- CONSTANTS ------------------------------------------------------ */
 
   var KEY = "studyTracker.v1";
-  var SCHEMA_VERSION = 3;   // v3 adds showCompanion. The generic default-fill in
+  var SCHEMA_VERSION = 4;   // v3 adds showCompanion. The generic default-fill in
                             // migrate() already backfills any key missing from an
                             // older blob, so no new migration branch was needed --
                             // only DEFAULTS changed, which is why the bump is here
                             // with a comment rather than with new merge logic.
+                            // v4 adds updatedAt, the timestamp cloud sync compares
+                            // to decide which side's settings and badges are newer.
+                            // A pre-v4 blob gets updatedAt 0 so it always loses that
+                            // comparison to a real cloud copy rather than fighting it.
+
+  /* Sync credentials live in their own key, deliberately not inside KEY. Two
+     reasons, both load-bearing: the state blob is what gets uploaded, so
+     storing tokens in it would ship your own access token to the server as
+     data; and the JSON backup is a straight dump of KEY, so tokens would land
+     in a file you download and hand around. */
+  var SYNC_KEY = "studyTracker.sync.v1";
 
   /* Recovery is capped at the planned interval so a tab that died at 14:05
      and reopens at 22:00 can never credit eight hours it did not earn. */
@@ -1920,6 +1976,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   function blank() {
     return {
       schemaVersion: SCHEMA_VERSION,
+      updatedAt: 0,
       settings: JSON.parse(JSON.stringify(DEFAULTS)),
       sessions: [],
       badges: {},
@@ -1993,6 +2050,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     }
     if (raw.badges && typeof raw.badges === "object") s.badges = raw.badges;
     if (raw.activeSession && typeof raw.activeSession === "object") s.activeSession = raw.activeSession;
+    s.updatedAt = Number(raw.updatedAt) || 0;
     s.schemaVersion = SCHEMA_VERSION;
     return s;
   }
@@ -2003,13 +2061,333 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     catch (e) { raw = null; }
     S = migrate(raw);
   }
+  /* Local write first, always, then the network. A session you just finished
+     is on disk before any request is attempted, so an unreachable server can
+     never cost you a logged block -- it only delays when the other device
+     sees it. */
   function save() {
+    S.updatedAt = Date.now();
+    saveLocal();
+    Sync.schedulePush();
+  }
+
+  /* Writes that change nothing another device would want. Two callers, both
+     for the same reason: they must not restamp updatedAt, because updatedAt is
+     what decides whose settings win a merge, and neither of these represents a
+     decision you made.
+
+     · the badge backfill at load, which is derived from sessions already saved
+     · the timer heartbeat, which only ever touches activeSession -- a field
+       that is stripped before upload and so cannot be news to anyone
+
+     Left on save(), the heartbeat alone would stamp a fresh updatedAt and fire
+     a network write every 15 seconds of every study block, carrying no new
+     information, and would let a laptop that merely had the timer open
+     overwrite the settings you actually changed on your phone. */
+  function saveLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); }
     catch (e) { toast("Could not save — storage may be full."); }
   }
   function newId() {
     return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
   }
+
+  /* ---- CLOUD SYNC ------------------------------------------------------
+     Supabase over plain fetch -- no client library, no CDN, no module import.
+     The whole surface is four HTTP calls (password grant, token refresh, one
+     select, one upsert), which is less code than the loader for a library
+     would be, and it keeps the file openable from file:// with the service
+     worker still able to serve the app with no network at all.
+
+     Everything here is optional. With no config saved the module is inert and
+     the app behaves exactly as it did before: local-only, no request made.
+     -------------------------------------------------------------------- */
+
+  var Sync = (function () {
+
+    var PUSH_DEBOUNCE_MS = 2500;   // one write per burst of edits, not per keystroke
+    var TOKEN_SKEW_MS = 60000;     // refresh a minute early rather than racing expiry
+    var PULL_STALE_MS = 60000;     // returning to the tab re-pulls if it's been this long
+
+    var cfg = null;                // null until configured; see SYNC_KEY
+    var pushTimer = null;
+    var inFlight = false;
+    var pendingPush = false;
+    var onChange = null;           // set by the settings view to re-render status
+
+    /* Status is a state machine the UI renders verbatim. "stale" exists on
+       purpose: a sync that failed must look different from one that never
+       ran and from one that succeeded, or the page quietly implies your
+       data is safe elsewhere when it isn't. */
+    var status = { state: "off", detail: "", at: 0 };
+
+    function setStatus(state, detail) {
+      status.state = state;
+      status.detail = detail || "";
+      status.at = Date.now();
+      if (onChange) { try { onChange(); } catch (e) {} }
+    }
+
+    function loadCfg() {
+      try { cfg = JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); }
+      catch (e) { cfg = null; }
+      if (cfg && !cfg.url) cfg = null;
+      return cfg;
+    }
+    function saveCfg() {
+      try {
+        if (cfg) localStorage.setItem(SYNC_KEY, JSON.stringify(cfg));
+        else localStorage.removeItem(SYNC_KEY);
+      } catch (e) {}
+    }
+
+    function configured() { return !!(cfg && cfg.url && cfg.anonKey); }
+    function signedIn()   { return !!(configured() && cfg.refreshToken && cfg.userId); }
+
+    function base() { return String(cfg.url).replace(/\/+$/, ""); }
+
+    function req(path, opts) {
+      opts = opts || {};
+      var h = { "apikey": cfg.anonKey, "Content-Type": "application/json" };
+      if (opts.auth !== false && cfg.accessToken)
+        h["Authorization"] = "Bearer " + cfg.accessToken;
+      Object.keys(opts.headers || {}).forEach(function (k) { h[k] = opts.headers[k]; });
+      return fetch(base() + path, {
+        method: opts.method || "GET",
+        headers: h,
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+        cache: "no-store"
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = t ? JSON.parse(t) : null; } catch (e) { j = null; }
+          if (!r.ok) {
+            var m = (j && (j.error_description || j.msg || j.message || j.error)) ||
+                    ("HTTP " + r.status);
+            var err = new Error(m); err.status = r.status; throw err;
+          }
+          return j;
+        });
+      });
+    }
+
+    function applyToken(j) {
+      cfg.accessToken = j.access_token;
+      cfg.refreshToken = j.refresh_token;
+      cfg.expiresAt = Date.now() + (Number(j.expires_in) || 3600) * 1000;
+      if (j.user && j.user.id) cfg.userId = j.user.id;
+      if (j.user && j.user.email) cfg.email = j.user.email;
+      saveCfg();
+    }
+
+    function signIn(url, anonKey, email, password) {
+      cfg = { url: url, anonKey: anonKey, email: email };
+      saveCfg();
+      return req("/auth/v1/token?grant_type=password", {
+        method: "POST", auth: false, body: { email: email, password: password }
+      }).then(function (j) {
+        applyToken(j);
+        setStatus("signedin", "Signed in as " + cfg.email);
+        return true;
+      }).catch(function (e) {
+        cfg = null; saveCfg();
+        setStatus("error", e.message);
+        throw e;
+      });
+    }
+
+    function signOut() {
+      cfg = null; saveCfg();
+      setStatus("off", "");
+    }
+
+    /* Refresh tokens are single-use in Supabase: if a refresh fails the stored
+       one is already spent, so there is no retrying it. Clearing the tokens but
+       keeping url/anonKey/email means the sign-in form comes back pre-filled
+       with only the password missing. */
+    function ensureToken() {
+      if (!signedIn()) return Promise.reject(new Error("Not signed in."));
+      if (cfg.accessToken && Date.now() < (cfg.expiresAt || 0) - TOKEN_SKEW_MS)
+        return Promise.resolve();
+      return req("/auth/v1/token?grant_type=refresh_token", {
+        method: "POST", auth: false, body: { refresh_token: cfg.refreshToken }
+      }).then(applyToken).catch(function (e) {
+        cfg.accessToken = null; cfg.refreshToken = null; saveCfg();
+        setStatus("signedout", "Session expired — sign in again.");
+        throw e;
+      });
+    }
+
+    function pull() {
+      return req("/rest/v1/study_state?select=data&user_id=eq." +
+        encodeURIComponent(cfg.userId)).then(function (rows) {
+          return (rows && rows[0] && rows[0].data) || null;
+        });
+    }
+
+    /* activeSession is deliberately stripped before upload. A running timer
+       belongs to the machine it is running on -- shipping it would let a
+       second device "recover" a block it never sat through and credit itself
+       the minutes, which is the exact destructive-by-surprise class this app
+       avoids everywhere else. */
+    function payload() {
+      var out = JSON.parse(JSON.stringify(S));
+      out.activeSession = null;
+      return out;
+    }
+
+    function push() {
+      return req("/rest/v1/study_state", {
+        method: "POST",
+        headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
+        body: [{
+          user_id: cfg.userId,
+          data: payload(),
+          updated_at: new Date().toISOString()
+        }]
+      });
+    }
+
+    /* Merge, never overwrite. Two devices can each log offline for days; a
+       last-write-wins blob would delete every session on the losing side
+       without a word. Sessions union by id so both survive. Settings and
+       badges cannot union meaningfully, so the more recently saved blob wins
+       those -- except badges, where a badge earned on either device is
+       earned, and the earlier timestamp is the true one. */
+    function mergeStates(local, remote) {
+      var lt = Number(local.updatedAt) || 0, rt = Number(remote.updatedAt) || 0;
+      var older = rt > lt ? local : remote;
+      var newer = rt > lt ? remote : local;   // ties go to local
+
+      var out = JSON.parse(JSON.stringify(newer));
+
+      var byId = {}, order = [];
+      [older, newer].forEach(function (side) {
+        (side.sessions || []).forEach(function (s) {
+          if (!s || !s.id) return;
+          if (byId[s.id] === undefined) order.push(s.id);
+          byId[s.id] = s;                     // newer side overwrites on collision
+        });
+      });
+      out.sessions = order.map(function (id) { return byId[id]; });
+
+      out.badges = {};
+      [newer.badges || {}, older.badges || {}].forEach(function (b) {
+        Object.keys(b).forEach(function (k) {
+          var t = Number(b[k]) || 0;
+          if (!out.badges[k] || t < out.badges[k]) out.badges[k] = t;
+        });
+      });
+
+      /* Re-run migrate so a union of sessions from two schema versions is
+         normalised and re-sorted the same way a restored backup is. */
+      var localActive = local.activeSession;
+      out = migrate(out);
+      out.activeSession = localActive;        // never crosses devices, see payload()
+      out.updatedAt = Math.max(lt, rt);
+      return out;
+    }
+
+    /* One round trip: pull, merge into local, push the merged result back so
+       the other device gets everything on its next pull. Returns a short
+       description of what actually moved, which the UI prints -- "synced" with
+       no numbers is the kind of vague reassurance this app doesn't give. */
+    function syncNow() {
+      if (!signedIn()) return Promise.reject(new Error("Not signed in."));
+      if (inFlight) { pendingPush = true; return Promise.resolve(null); }
+      inFlight = true;
+      setStatus("syncing", "");
+
+      var before = S.sessions.length;
+      return ensureToken().then(pull).then(function (remote) {
+        var gained = 0, sentOnly = false;
+        if (remote && typeof remote === "object") {
+          var merged = mergeStates(S, remote);
+          gained = merged.sessions.length - before;
+          S = merged;
+          try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+        } else {
+          sentOnly = true;                    // first sync from this account
+        }
+        return push().then(function () {
+          cfg.lastSyncAt = Date.now(); saveCfg();
+          var d = sentOnly
+            ? "Uploaded " + S.sessions.length + " session(s) — the cloud copy was empty."
+            : (gained > 0
+                ? "Merged — " + gained + " session(s) came down, " +
+                  S.sessions.length + " total now."
+                : "Up to date — " + S.sessions.length + " session(s).");
+          setStatus("ok", d);
+          return { gained: gained, total: S.sessions.length, sentOnly: sentOnly };
+        });
+      }).catch(function (e) {
+        if (status.state !== "signedout")
+          setStatus(navigator.onLine === false ? "offline" : "error", e.message);
+        throw e;
+      }).then(function (r) {
+        inFlight = false;
+        if (pendingPush) { pendingPush = false; schedulePush(); }
+        return r;
+      }, function (e) {
+        inFlight = false;
+        throw e;
+      });
+    }
+
+    /* A push-only path for the debounced case: the common edit does not need
+       to pull, and pulling on every keystroke-debounce would double the
+       traffic for no benefit. Failures downgrade the status rather than
+       throwing into nothing. */
+    function pushOnly() {
+      if (!signedIn() || inFlight) return;
+      inFlight = true;
+      ensureToken().then(push).then(function () {
+        cfg.lastSyncAt = Date.now(); saveCfg();
+        setStatus("ok", "Saved to the cloud — " + S.sessions.length + " session(s).");
+      }).catch(function (e) {
+        if (status.state !== "signedout")
+          setStatus(navigator.onLine === false ? "offline" : "error", e.message);
+      }).then(function () {
+        inFlight = false;
+        if (pendingPush) { pendingPush = false; schedulePush(); }
+      });
+    }
+
+    function schedulePush() {
+      if (!signedIn()) return;
+      if (inFlight) { pendingPush = true; return; }
+      if (pushTimer) clearTimeout(pushTimer);
+      pushTimer = setTimeout(function () { pushTimer = null; pushOnly(); },
+        PUSH_DEBOUNCE_MS);
+    }
+
+    function init(cb) {
+      onChange = cb || null;
+      loadCfg();
+      if (!configured()) { setStatus("off", ""); return; }
+      if (!signedIn()) { setStatus("signedout", "Signed out — enter your password."); return; }
+      setStatus("signedin", "Signed in as " + (cfg.email || ""));
+      syncNow().catch(function () {});
+
+      /* Coming back online, and coming back to the tab after a while, are the
+         two moments the other device's work is most likely to be waiting. */
+      window.addEventListener("online", function () { syncNow().catch(function () {}); });
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) return;
+        if (Date.now() - (cfg.lastSyncAt || 0) > PULL_STALE_MS)
+          syncNow().catch(function () {});
+      });
+    }
+
+    return {
+      init: init, signIn: signIn, signOut: signOut, syncNow: syncNow,
+      schedulePush: schedulePush,
+      configured: configured, signedIn: signedIn,
+      status: function () { return status; },
+      cfg: function () { return cfg; },
+      mergeStates: mergeStates
+    };
+  })();
 
   /* ---- DATES ---------------------------------------------------------- */
 
@@ -2365,7 +2743,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   }
 
   function persistActive() {
-    if (!T.running || T.phase !== "work") { S.activeSession = null; save(); return; }
+    if (!T.running || T.phase !== "work") { S.activeSession = null; saveLocal(); return; }
     S.activeSession = {
       startedAt: T.startedAt,
       lastBeat: Date.now(),
@@ -2373,7 +2751,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       label: T.subject ? T.subject.label : "General study",
       workedMs: accumulatedWorkMs()
     };
-    save();
+    saveLocal();
   }
 
   function startPhase(phase) {
@@ -3157,12 +3535,74 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     $("sNotify").checked = !!s.cues.notify;
     $("sQFrom").innerHTML = hourOpts(s.quietHours.from);
     $("sQTo").innerHTML = hourOpts(s.quietHours.to);
+    renderSync();
     $("aboutTxt").innerHTML =
       "<strong>Schema v" + S.schemaVersion + ".</strong> Everything is stored in this " +
-      "browser under one key and never leaves it — no account, no backend, no network " +
-      "call of any kind. Minutes count focused time only: breaks and paused time are " +
-      "excluded everywhere, so a number here is never larger than the time you sat " +
-      "with the timer running.";
+      "browser under one key. " +
+      (Sync.signedIn()
+        ? "Cloud sync is on, so a copy also sits in your own Supabase project — that " +
+          "is the only place any of it is sent, and it is sent nowhere else."
+        : "It never leaves this browser — no account, no backend, no network call of " +
+          "any kind. Cloud sync above is off.") +
+      " Minutes count focused time only: breaks and paused time are excluded " +
+      "everywhere, so a number here is never larger than the time you sat with the " +
+      "timer running.";
+  }
+
+  /* The status line is the whole honesty budget of this feature. A sync that
+     failed, a sync that has never run, and a sync that succeeded must be three
+     visibly different things -- anything vaguer implies your data is safe on
+     another machine when it may not be. */
+  var SYNC_CHIP = {
+    off:       { cls: "",            txt: "Off" },
+    signedout: { cls: "chip--warn",  txt: "Signed out" },
+    signedin:  { cls: "chip--accent",txt: "Connected" },
+    syncing:   { cls: "chip--accent",txt: "Syncing…" },
+    ok:        { cls: "chip--good",  txt: "Synced" },
+    offline:   { cls: "chip--warn",  txt: "Offline" },
+    error:     { cls: "chip--bad",   txt: "Sync failed" }
+  };
+
+  function renderSync() {
+    var st = Sync.status(), c = Sync.cfg();
+    var look = SYNC_CHIP[st.state] || SYNC_CHIP.off;
+    var chip = $("syncChip");
+    chip.className = "chip" + (look.cls ? " " + look.cls : "");
+    chip.textContent = look.txt;
+
+    var on = Sync.signedIn();
+    $("syncSetup").hidden = on;
+    $("syncPanel").hidden = !on;
+
+    $("dataNote").textContent = on
+      ? "A copy lives in this browser and a copy lives in your Supabase project. " +
+        "A downloaded backup is still worth keeping — it is the only copy that " +
+        "survives you deleting the project or losing the password."
+      : "It lives in this browser only. Export it before clearing site data, " +
+        "switching machines, or anything else that could take it away.";
+
+    if (on) {
+      var last = c && c.lastSyncAt
+        ? "last sync " + relTime(c.lastSyncAt)
+        : "not synced yet";
+      $("syWho").textContent = (c.email || "signed in") + " · " + last;
+    } else if (c) {
+      /* Keep url/key/email in the form after a token expiry: only the password
+         is actually missing, and retyping a project URL is busywork. */
+      $("syUrl").value = c.url || "";
+      $("syKey").value = c.anonKey || "";
+      $("syEmail").value = c.email || "";
+    }
+    msg("syMsg", st.detail || "",
+      st.state === "error" ? "err" : (st.state === "ok" ? "ok" : ""));
+  }
+
+  function relTime(t) {
+    var s = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.round(s / 60) + " min ago";
+    if (s < 86400) return Math.round(s / 3600) + "h ago";
+    return Math.round(s / 86400) + "d ago";
   }
 
   /* ---- BACKUP / RESTORE / EXPORT -------------------------------------- */
@@ -3338,7 +3778,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     load();
     renderPalettes();
     applyTheme();
-    if (awardBadges(true).length) save();
+    if (awardBadges(true).length) saveLocal();
     recoverIfNeeded();
 
     wireLogHost($("todayLog"));
@@ -3603,6 +4043,38 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       });
     });
 
+    /* -- cloud sync -- */
+    $("syIn").addEventListener("click", function () {
+      var url = $("syUrl").value.trim(), key = $("syKey").value.trim();
+      var em = $("syEmail").value.trim(), pw = $("syPass").value;
+      if (!/^https?:\/\/.+/.test(url)) { msg("syMsg", "Project URL should start with https://", "err"); return; }
+      if (!key) { msg("syMsg", "The anon key is missing.", "err"); return; }
+      if (!em || !pw) { msg("syMsg", "Email and password are both needed.", "err"); return; }
+      this.disabled = true;
+      msg("syMsg", "Signing in…", "");
+      Sync.signIn(url, key, em, pw).then(function () {
+        $("syPass").value = "";
+        return Sync.syncNow();
+      }).then(function () {
+        renderAll();
+      }).catch(function () { /* status already carries the reason */ })
+        .then(function () { $("syIn").disabled = false; renderSync(); });
+    });
+    $("syNow").addEventListener("click", function () {
+      this.disabled = true;
+      Sync.syncNow().catch(function () {}).then(function () {
+        $("syNow").disabled = false; renderAll();
+      });
+    });
+    /* Signing out clears the tokens, never the log. The local copy is the
+       canonical one and dropping it here would turn a sign-out into data
+       loss -- the single worst thing this app could do. */
+    $("syOut").addEventListener("click", function () {
+      Sync.signOut();
+      renderSync();
+      toast("Signed out. Your " + S.sessions.length + " session(s) stay in this browser.");
+    });
+
     /* -- heatmap -- */
     $("heat").addEventListener("click", function (e) {
       var c = e.target.closest("i[data-k]"); if (!c) return;
@@ -3629,6 +4101,16 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
     show("today");
     renderSettings();
+
+    /* Started last, after every view can render: the first pull replaces S
+       wholesale, so the callback has to be able to repaint the whole app. */
+    Sync.init(function () {
+      /* A completed sync can have replaced settings and sessions both, so the
+         theme is re-applied and everything repainted rather than only the
+         status line. Any other status change is just text. */
+      if (Sync.status().state === "ok") { applyTheme(); renderAll(); }
+      if (currentView === "settings") renderSync();
+    });
 
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       navigator.serviceWorker.register("sw.js").catch(function () {});

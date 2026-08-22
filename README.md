@@ -1,10 +1,11 @@
 # Study Tracker
 
 A pomodoro timer, study heatmap and streak tracker that runs from a single HTML
-file. No backend, no account, no network call of any kind — every session you
-log lives in your own browser's `localStorage` under one key, and the only copy
-that outlives that browser is the backup you export yourself. Twenty-six colour
-palettes, twenty of them ported from my terminal schemes.
+file. Every session you log lives in your own browser's `localStorage` under one
+key. Optional cloud sync keeps two devices in step through a Supabase project
+you own — off until you set it up, and the app is byte-for-byte as offline as it
+ever was until you do. Twenty-six colour palettes, twenty of them ported from my
+terminal schemes.
 
 **Live: <https://talon270.github.io/study-tracker/>**
 
@@ -39,6 +40,7 @@ and installable-app behaviour.
 | Levels and badges | 26 badges in five families. One XP is one focused minute |
 | 26 palettes | 5 light, 21 dark. Mode and palette are separate choices |
 | Backup and export | Full JSON backup, CSV of every session, restore, and an undo on every destructive action |
+| Cloud sync (optional) | Phone and laptop share one log through your own Supabase project. Off by default — see [`SETUP-sync.md`](SETUP-sync.md) |
 
 ## The things most study trackers get wrong
 
@@ -106,6 +108,37 @@ another red chip. Palettes whose accent is already green keep it; the rest get a
 real green, because semantic clarity beats palette purity for the one colour
 that means "you did the thing".
 
+**Sync merges, it never overwrites.** Two devices can each log offline for days.
+Last-write-wins on the whole blob is the obvious implementation and it silently
+deletes every session on the losing side — you would find out weeks later, from
+a heatmap with a hole in it. Sessions union by id instead, so a block survives if
+either device has it. Only settings and badges use a timestamp, and only because
+half-merged settings mean nothing; badges take the *earlier* of two timestamps,
+because a badge was earned when it was first earned.
+
+**Syncing is not editing.** The timestamp that decides a settings conflict is
+stamped by real changes only, never by the sync itself or by the timer's 15-second
+heartbeat. Stamping it on sync looks harmless and is not: a laptop that merely had
+the app open would outrank a phone where you actually changed a setting an hour
+earlier, and quietly revert it. The heartbeat is the same defect in miniature —
+left on the syncing save path it would fire a network write every 15 seconds of
+every study block, carrying nothing new, because the field it touches is stripped
+before upload anyway.
+
+**A running timer never leaves the device it runs on.** `activeSession` is
+excluded from the upload. Sync it, and a second device pulls a live block and
+"recovers" it on next open — crediting itself minutes you sat through somewhere
+else. The one thing this app must never get wrong is logging time you did not
+study, and a sync layer is the easiest possible way to introduce exactly that.
+
+**A failed sync says so, in the words the server used.** The status chip has
+seven distinct states and prints Supabase's own error text underneath, rather
+than a generic "couldn't sync". `Email not confirmed` and
+`new row violates row-level security policy` are different setup mistakes with
+different fixes, and flattening them into one message costs an hour of guessing.
+Local storage is always written before the request is attempted, so a failure
+delays when the other device sees a session — it can never lose one.
+
 ## Solid vs. assumed
 
 | Solid — measured | Assumed — a choice I made |
@@ -115,6 +148,7 @@ that means "you did the thing".
 | Totals, per-subject splits, best day | That a block under 60 seconds is not worth logging |
 | Which palette clears which contrast ratio | That focused minutes are the right unit to count at all |
 | Recovered time, capped and tagged `interrupted` | That the day boundary belongs at midnight until you move it |
+| Which sessions exist on each device, matched by id | That on a settings conflict, the more recently edited device is the one you meant |
 
 The heatmap sits between the two columns: the minutes are measured, the *shade*
 is a percentile of your own history, and the caption states which of the two
@@ -124,13 +158,22 @@ modes produced it.
 
 Everything lives in `localStorage` under the single key `studyTracker.v1`, with
 an integer `SCHEMA_VERSION` and a migration that runs on every load rather than
-only on a version bump. Nothing is transmitted anywhere: no analytics, no font
-CDN, no remote asset, no fetch to any origin. GitHub Pages serves four static
-files and never sees a byte of what you log.
+only on a version bump. With sync off — the default — nothing is transmitted
+anywhere: no analytics, no font CDN, no remote asset, no fetch to any origin.
+GitHub Pages serves four static files and never sees a byte of what you log.
+
+With sync on, the single destination is the Supabase project you created and
+control. There is no intermediary and no client library: the app talks to your
+project over four plain `fetch` calls, which is why the page still has zero
+dependencies and still opens offline. Your access tokens are kept in a *separate*
+`localStorage` key from the log, deliberately — the log is what gets uploaded and
+what a JSON backup dumps, and tokens belong in neither.
 
 Export before you clear site data, switch machines, or do anything else that
 takes a browser profile away. Settings → Your data gives you a full JSON backup
-that restores exactly, plus a CSV of every session for anything else.
+that restores exactly, plus a CSV of every session for anything else. **Two
+synced devices are not two backups** — they converge, so a bad merge reaches
+both. Keep downloading the JSON occasionally regardless.
 
 ## Deployment
 
