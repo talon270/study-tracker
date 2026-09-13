@@ -33,6 +33,10 @@ and installable-app behaviour.
 | Crash recovery | A tab that dies mid-block is credited on reopen, capped at one focus block, with a banner offering to delete it |
 | Manual entry | Log time you studied without a timer running. Crossing midnight is handled |
 | Streaks | Any logged minute keeps the day. Configurable grace days per month |
+| Streak at risk | In the last 6 hours of a day with nothing logged, the tile says what is about to be lost — or that a grace day covers it |
+| Five-minute block | A second start button that runs one 5-minute block and queues no break |
+| Daily reminder | Off by default. A banner on next open, plus a notification while a tab is open |
+| Next badge | The closest unearned badge of the 26, printed on Today |
 | Daily and weekly goals | Off by default, and both kept separate from the streak |
 | Heatmap | 364 days, shaded relative to your own history, filterable by subject |
 | Week strip | Seven Monday-start bars with the daily-goal line drawn across them |
@@ -57,6 +61,106 @@ and you reopen it at 22:00, the naive fix credits eight hours. This one credits
 at most one configured focus block, writes `Recovered after the app closed
 mid-session` into the note, and shows a banner with a Delete button. A tracker
 that can invent time is worse than one that loses it.
+
+**The streak tile reads the clock, and refuses to overstate the stake.** Every
+other number in the app describes time already logged, which means none of them
+can affect whether a block happens. In the last 6 hours before the day boundary,
+with a run going and nothing logged, the tile turns and names the stake and the
+cost in that order: *"3 days · Ends in 3h 00m · One logged minute keeps it."*
+The refusal is the other half. With a grace day left the run **holds** whatever
+you do tonight, so it says that instead — *"a grace day bridges tonight, 1 left
+this month"* — and drops the alarm styling. Frightening you with a loss that
+isn't coming would work exactly once.
+
+**The five-minute block has its own cap, in one place, for a reason.** Four
+separate things cap against the length of a work block: the ring, the credit at
+finish, the credit on Stop, and the `plannedMinutes` written into
+`activeSession` for crash recovery. Read any of them from `settings.workMin` and
+a 5-minute block that died mid-run comes back as 25 — twenty minutes you did not
+study, invented by the one feature meant to lower the bar. `workCapMin()` is the
+only answer to "how long is this block", and the verification asserts a quick
+block backdated by 30 minutes credits exactly 5 while a normal one credits 25.
+It logs as an ordinary `pomodoro` session, but it does not advance the round
+counter and queues no break: five minutes has not earned one.
+
+**The reminder ships as two named halves because they are not equally
+reliable.** A page with no push server cannot wake a closed tab, and this one
+has no server. So the settings text says which half is which rather than
+promising a notification that may never arrive: the **banner on next open** is
+fully offline and always works, the **notification** only fires while a tab is
+open or backgrounded. Both go quiet the moment the day has a logged minute — a
+reminder to do what you already did is noise — and it fires at most once per
+day. The time it fires at belongs to the *logical* day, so with the boundary at
+05:00 a 19:00 reminder is seven hours overdue at 02:00, not seventeen hours
+early.
+
+**Whether this device already nudged you is not news your phone wants.**
+`nudgedOn` sits beside `activeSession` on the list of things stripped from every
+upload. Sync it and dismissing the banner on a laptop silently swallows the
+reminder on a phone that never showed one. It is written with `saveLocal()` for
+the same reason the heartbeat is — it is not a decision you made, so it must not
+restamp the timestamp that decides whose settings win a merge.
+
+**A session id from outside this browser is untrusted input.** Ids are
+interpolated straight into HTML attributes by the log table — `data-id`,
+`data-edit`, `data-del` — and two paths carry ids in from elsewhere: restoring a
+backup file, and pulling a row from Supabase. An id of
+`s_1' onfocus='…' autofocus x='` broke out of that attribute and ran. The fix is
+one regex at `migrate()`, the single door every external blob comes through,
+rather than three `esc()` calls at the call sites — that way a fourth
+interpolation added later is covered too. A failing id is **regenerated, not
+dropped**, so a hand-edited backup still restores every session it contains, and
+real ids (`s_<millis>_<base36>`) always pass, which matters because sync unions
+sessions by id.
+
+**The day can roll over underneath an open tab, and everything on Today is keyed
+to that day.** Leave the app open past midnight and the session list, the day
+total, the goal ring and the sidebar all still described yesterday — and the
+manual-entry date still defaulted to it, which silently logs to the wrong day.
+That is the exact failure this app exists to not have. The minute tick now
+compares `todayKey()` against the last one it saw and forces a full repaint when
+it changes. The manual date is only reset if it was still sitting on the old
+default: someone who deliberately set it to a past day keeps that choice.
+
+**The streak walked the whole log once per day of the streak.** `doneOn()` is a
+full scan of every session, and the streak loop called it once for every day in
+the run. At two years of daily study — 2,190 sessions, a 730-day streak — that
+was 730 scans, measured at 31ms, and `streakInfo()` runs several times per
+render plus once a minute. Building the day map once locally instead took it to
+**1.5ms**; `renderAll` went 88.5ms → 12.8ms and Progress 172ms → 41ms. The map
+is local to the call rather than cached, so there is no invalidation to get
+wrong and a stale streak is not a failure this can have.
+
+**The heatmap is a listbox, because what you do with it is pick one day.** 371
+cells with a click handler and no `tabindex` meant a keyboard user could not
+select a day at all, and the claim that "every cell prints its real minutes on
+click" was true for mice only. Arrow keys now move a roving tab stop — up/down a
+day, left/right a week, matching what the column layout looks like it should do —
+Enter selects, and focus survives the re-render. One tab stop, not 371, because
+tabbing through a year of squares to reach the log below is its own defect.
+
+**Picking a day on the heatmap changes two cells and one line, so that is
+all it touches.** It used to call the whole History render, which rewrote the
+371-cell grid, the 50-row session table with its 100 inputs, the subject select
+and the stats tiles — producing markup identical to what was already on screen.
+The rewrites themselves were cheap (1.3ms and 3.1ms); the layout they forced was
+not (7.4ms and 21.8ms). Measured before and after on the same script: **89ms →
+1ms** per click. The subject filter still rebuilds everything, because it changes
+the shading, and that genuinely is every cell.
+
+**The streak loop is bounded by your data, not by a magic number.** It used to
+run `while (guard++ < 3000)` — an arbitrary 8.2 years, past which a longer streak
+silently stopped counting and reported a shorter one, with nothing saying so. A
+run can never begin before the first day you logged anything, so that is the real
+bound. Seeded with 3,200 consecutive days, the old code reported **3000** and the
+new one reports **3200**. It is also faster, because it stops when the data runs
+out instead of walking empty days.
+
+**Changing view moves focus into the view.** `<main>` already carried
+`tabindex="-1"`, which is the affordance for exactly this and was going unused.
+Without the move, activating History from the keyboard left focus on the nav
+button: nothing announced that the content had changed, and the next Tab
+restarted at the top of the nav instead of entering the view you just asked for.
 
 **Grace days bridge a streak; they never start one.** With one grace day a
 month, missing Tuesday does not zero a run spanning Monday and Wednesday. But a
@@ -148,6 +252,9 @@ delays when the other device sees a session — it can never lose one.
 | Totals, per-subject splits, best day | That a block under 60 seconds is not worth logging |
 | Which palette clears which contrast ratio | That focused minutes are the right unit to count at all |
 | Recovered time, capped and tagged `interrupted` | That the day boundary belongs at midnight until you move it |
+| Hours left in the day, from your own boundary setting | That 6 hours is the right point to start warning |
+| Which unearned badge is closest | That a quick block should be 5 minutes, and queue no break |
+| Render cost at 2,190 sessions, measured in the browser | That 364 days is the right heatmap window |
 | Which sessions exist on each device, matched by id | That on a settings conflict, the more recently edited device is the one you meant |
 
 The heatmap sits between the two columns: the minutes are measured, the *shade*

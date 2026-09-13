@@ -1,0 +1,16 @@
+[package]
+name = "study-tracker"
+version = "1.0.0"
+edition = "2021"
+description = "Study Tracker desktop shell"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-notification = "2"
+
+# ponytail: skeleton shell only — no Rust-side logic. All app behaviour stays
+# in the existing index.html. Rust exists here purely to be the native window,
+# the tray, and the notification bridge, the same shape as Helth/src-tauri.

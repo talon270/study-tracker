@@ -644,6 +644,9 @@ svg.i{display:inline-block; vertical-align:middle; flex:0 0 auto;
 .bottomnav .navbtn[aria-current="page"] span{color:var(--text-strong)}
 .bottomnav .navbtn__dot{position:absolute; top:5px; left:50%; margin-left:9px}
 
+/* Focused programmatically on every view change, never by tabbing to it, so
+   a ring here would be noise rather than a wayfinding cue. */
+main.main:focus{outline:none}
 main.main{
   display:flex; flex-direction:column; align-items:center;
   padding:var(--s8) var(--s8) var(--s12) calc(var(--sidebar-w) + var(--s8));
@@ -670,6 +673,11 @@ main.main{
   border-radius:var(--r-lg); padding:var(--s5); box-shadow:var(--shadow)}
 .card--flush{padding:var(--s4)}
 .card--accent{border-color:rgba(var(--accent-rgb),.4)}
+/* Deliberately keyed to --warn, not --accent: in Arasaka and Akira the accent
+   is already red, and a warning that dissolves into the palette is not one. */
+.card--warn{border-color:rgba(var(--warn-rgb),.55);
+  background:linear-gradient(0deg,rgba(var(--warn-rgb),.06),rgba(var(--warn-rgb),.06)),
+             var(--surface)}
 .card__head{display:flex; align-items:center; justify-content:space-between;
   gap:var(--s3); margin-bottom:var(--s4)}
 .card__title{display:flex; align-items:center; gap:var(--s2);
@@ -1123,6 +1131,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .heat i.l1{background:var(--heat-1)} .heat i.l2{background:var(--heat-2)}
 .heat i.l3{background:var(--heat-3)} .heat i.l4{background:var(--heat-4)}
 .heat i.sel{outline:2px solid var(--text-strong); outline-offset:1px}
+.heat i:focus-visible{outline:2px solid var(--ring-focus); outline-offset:2px}
 .heat i.future{background:transparent; cursor:default; border-color:transparent}
 .heat i.future:hover{outline:none}
 .heat-legend{display:flex; align-items:center; gap:4px; font-size:11px;
@@ -1215,9 +1224,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
    would widen the whole column instead of scrolling inside its own box. */
 .dash > *{min-width:0}
 .stack{min-width:0}
+/* The column, not the two-column split, is what stacks these cards -- so it
+   lives outside the media query. Inside it, every width below 1180px fell back
+   to display:block and the side cards butted together with 0px between them. */
+.dash__side{display:flex; flex-direction:column; gap:var(--s4); min-width:0}
 @media (min-width:1180px){
   .dash{grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr)}
-  .dash__side{display:flex; flex-direction:column; gap:var(--s4)}
 }
 
 /* ---------------------------------------------------------------------
@@ -1272,6 +1284,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 </script>
 </head>
 <body>
+<noscript><p style="padding:24px;font:14px system-ui">Study Tracker is one HTML file that runs entirely in JavaScript — there is no server rendering a fallback. Enable JavaScript to use it. Your logged data is untouched either way; it lives in this browser under <code>studyTracker.v1</code>.</p></noscript>
 
 <!-- Icon sprite. Inline so it works from file:// with no network and no
      second request; every icon is stroke-only and inherits currentColor. -->
@@ -1313,20 +1326,20 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 <!-- ================= SHELL: SIDEBAR (>=960px) ================= -->
 <aside class="side">
   <div class="side__brand">
-    <span class="logo"><svg class="i"><use href="#i-book"/></svg></span>
+    <span class="logo"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg></span>
     <span class="side__name">Study Tracker<span id="sideTerm">Monsoon 2026</span></span>
   </div>
 
   <nav class="nav" aria-label="Sections">
     <button class="navbtn" data-view="today" aria-current="page">
-      <svg class="i"><use href="#i-today"/></svg><span>Today</span>
+      <svg class="i" aria-hidden="true"><use href="#i-today"/></svg><span>Today</span>
       <i class="navbtn__dot" id="dotToday" hidden></i></button>
     <button class="navbtn" data-view="history">
-      <svg class="i"><use href="#i-history"/></svg><span>History</span></button>
+      <svg class="i" aria-hidden="true"><use href="#i-history"/></svg><span>History</span></button>
     <button class="navbtn" data-view="progress">
-      <svg class="i"><use href="#i-progress"/></svg><span>Progress</span></button>
+      <svg class="i" aria-hidden="true"><use href="#i-progress"/></svg><span>Progress</span></button>
     <button class="navbtn" data-view="settings">
-      <svg class="i"><use href="#i-settings"/></svg><span>Settings</span></button>
+      <svg class="i" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></button>
   </nav>
 
   <div class="side__foot">
@@ -1338,22 +1351,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     </div>
     <div class="seg js-themeSeg" role="group" aria-label="Theme">
       <button type="button" data-theme-set="light" aria-pressed="false"
-              title="Light palette"><svg class="i"><use href="#i-sun"/></svg>Light</button>
+              title="Light palette"><svg class="i" aria-hidden="true"><use href="#i-sun"/></svg>Light</button>
       <button type="button" data-theme-set="dark" aria-pressed="false"
-              title="Dark palette"><svg class="i"><use href="#i-moon"/></svg>Dark</button>
+              title="Dark palette"><svg class="i" aria-hidden="true"><use href="#i-moon"/></svg>Dark</button>
       <button type="button" data-theme-set="auto" aria-pressed="false"
-              title="Follow the system"><svg class="i"><use href="#i-auto"/></svg>Auto</button>
+              title="Follow the system"><svg class="i" aria-hidden="true"><use href="#i-auto"/></svg>Auto</button>
     </div>
   </div>
 </aside>
 
 <!-- ================= SHELL: TOP BAR (<960px) ================= -->
 <header class="topbar">
-  <span class="logo"><svg class="i"><use href="#i-book"/></svg></span>
+  <span class="logo"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg></span>
   <span class="topbar__title">Study Tracker</span>
   <span class="chip chip--accent" id="levelPillM">Level 1</span>
   <button class="btn btn--ghost btn--icon" id="themeBtn" title="Switch theme"
-          aria-label="Switch theme"><svg class="i"><use href="#i-auto"/></svg></button>
+          aria-label="Switch theme"><svg class="i" aria-hidden="true"><use href="#i-auto"/></svg></button>
 </header>
 
 <main class="main" id="main" tabindex="-1">
@@ -1371,17 +1384,25 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     <div class="dash">
       <div class="stack">
         <div class="card card--accent">
-          <div class="field" style="margin-bottom:var(--s4)">
-            <label class="field__label" for="subjInput">Subject</label>
-            <input id="subjInput" type="text" autocomplete="off" spellcheck="false"
-                   list="subjSeen" placeholder="What are you studying?">
-            <div class="help" id="subjHint">Leave it blank and it logs as General study.</div>
+          <div class="grid grid--2" style="margin-bottom:var(--s4)">
+            <div class="field">
+              <label class="field__label" for="subjInput">Subject</label>
+              <input id="subjInput" type="text" autocomplete="off" spellcheck="false"
+                     list="subjSeen" placeholder="What are you studying?">
+            </div>
+            <div class="field">
+              <label class="field__label" for="groupInput">Group <span class="muted">(optional)</span></label>
+              <input id="groupInput" type="text" autocomplete="off" spellcheck="false"
+                     list="groupSeen" placeholder="e.g. C, for related subjects">
+            </div>
           </div>
+          <div class="help" id="subjHint" style="margin-bottom:var(--s4)">Leave it blank and it logs as General study. A group folds subjects together in the split chart and filters -- "C - Arrays" and "C - Structures" both under "C".</div>
           <datalist id="subjSeen"></datalist>
+          <datalist id="groupSeen"></datalist>
 
           <div class="timer">
             <div class="timer__phase" id="phaseLabel">
-              <svg class="i" style="width:13px;height:13px"><use href="#i-clock"/></svg>Focus</div>
+              <svg class="i" aria-hidden="true" style="width:13px;height:13px"><use href="#i-clock"/></svg>Focus</div>
             <div class="timer__dial">
               <svg class="timer__ring" width="228" height="228" viewBox="0 0 228 228"
                    aria-hidden="true">
@@ -1398,11 +1419,13 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
             <div class="roundchips" id="roundChips"></div>
             <div class="timer__actions">
               <button class="btn btn--primary btn--lg" id="startBtn">
-                <svg class="i"><use href="#i-play"/></svg>Start</button>
+                <svg class="i" aria-hidden="true"><use href="#i-play"/></svg>Start</button>
               <button class="btn btn--lg" id="pauseBtn" hidden>
-                <svg class="i"><use href="#i-pause"/></svg>Pause</button>
+                <svg class="i" aria-hidden="true"><use href="#i-pause"/></svg>Pause</button>
               <button class="btn btn--lg" id="stopBtn" hidden>
-                <svg class="i"><use href="#i-stop"/></svg>Stop</button>
+                <svg class="i" aria-hidden="true"><use href="#i-stop"/></svg>Stop</button>
+              <button class="btn btn--lg" id="quickBtn" title="One 5-minute block, no break after">
+                <svg class="i" aria-hidden="true"><use href="#i-play"/></svg>5 min</button>
             </div>
           </div>
           <div class="inline-msg" id="timerMsg"></div>
@@ -1410,7 +1433,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-list"/></svg>Today's sessions</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>Today's sessions</span>
             <span class="chip" id="todayTotal"></span>
           </div>
           <div id="todayLog"></div>
@@ -1420,7 +1443,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <div class="dash__side">
         <div class="card companion" id="companionCard">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-moon"/></svg>Study companion</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-moon"/></svg>Study companion</span>
             <span class="chip" id="companionMoodChip"></span>
           </div>
           <div class="companion__body">
@@ -1486,9 +1509,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           <div class="card" id="goalTile"></div>
         </div>
 
+        <div class="card card--flush" id="nextBadge" hidden></div>
+
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-week"/></svg>This week</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-week"/></svg>This week</span>
             <span class="chip" id="weekTotal"></span>
           </div>
           <div class="week" id="weekStrip"></div>
@@ -1497,7 +1522,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-split"/></svg>Where the time went</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-split"/></svg>Where the time went</span>
             <select id="splitRange" aria-label="Range" style="width:auto">
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
@@ -1523,14 +1548,18 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <div class="stack">
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-grid"/></svg>Study heatmap</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-grid"/></svg>Study heatmap</span>
             <select id="heatFilter" aria-label="Filter by subject" style="width:auto;max-width:220px"></select>
           </div>
           <div class="heat-scroll">
             <div class="heat-grid">
               <div class="heat-months" id="heatMonths"></div>
               <div class="heat-wdays"><i>M</i><i></i><i>W</i><i></i><i>F</i><i></i><i></i></div>
-              <div class="heat" id="heat"></div>
+              <!-- A listbox, not a grid: what you do here is pick one day.
+                   That also buys arrow-key movement and a single tab stop
+                   instead of 371 of them. -->
+              <div class="heat" id="heat" role="listbox"
+                   aria-label="Daily study totals, last 364 days"></div>
             </div>
           </div>
           <div class="row row--between" style="margin-top:var(--s3)">
@@ -1547,7 +1576,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-plus"/></svg>Log time you didn't run a timer for</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Log time you didn't run a timer for</span>
           </div>
           <div class="grid grid--3" style="margin-bottom:var(--s4)">
             <div class="field"><label class="field__label" for="mDate">Date</label>
@@ -1557,21 +1586,28 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
             <div class="field"><label class="field__label" for="mEnd">End</label>
               <input type="time" id="mEnd"></div>
           </div>
-          <div class="field" style="margin-bottom:var(--s4)">
-            <label class="field__label" for="mSubj">Subject</label>
-            <input id="mSubj" type="text" autocomplete="off" spellcheck="false"
-                   list="subjSeen" placeholder="What were you studying?">
+          <div class="grid grid--2" style="margin-bottom:var(--s4)">
+            <div class="field">
+              <label class="field__label" for="mSubj">Subject</label>
+              <input id="mSubj" type="text" autocomplete="off" spellcheck="false"
+                     list="subjSeen" placeholder="What were you studying?">
+            </div>
+            <div class="field">
+              <label class="field__label" for="mGroup">Group <span class="muted">(optional)</span></label>
+              <input id="mGroup" type="text" autocomplete="off" spellcheck="false"
+                     list="groupSeen" placeholder="e.g. C">
+            </div>
           </div>
           <div class="row">
             <button class="btn btn--soft" id="mAdd">
-              <svg class="i"><use href="#i-plus"/></svg>Add entry</button>
+              <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Add entry</button>
             <span class="inline-msg" id="mMsg" style="margin-top:0"></span>
           </div>
         </div>
 
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-list"/></svg>All sessions</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>All sessions</span>
             <span class="chip" id="logCount"></span>
           </div>
           <div id="fullLog"></div>
@@ -1581,7 +1617,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <div class="dash__side">
         <div class="card">
           <div class="card__head">
-            <span class="card__title"><svg class="i"><use href="#i-level"/></svg>Session stats</span>
+            <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-level"/></svg>Session stats</span>
           </div>
           <p class="card__note" style="margin-bottom:var(--s4)">Patterns in how you actually
             study, computed from every session you have logged.</p>
@@ -1605,7 +1641,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <div class="grid grid--stats" id="statTiles"></div>
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-medal"/></svg>Badges</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-medal"/></svg>Badges</span>
           <span class="chip" id="badgeCount"></span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)">Locked badges show what
@@ -1629,7 +1665,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     <div class="stack">
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-sun"/></svg>Appearance</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-sun"/></svg>Appearance</span>
           <span class="chip chip--accent" id="paletteCount"></span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)">Mode and palette are two
@@ -1640,11 +1676,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
         <div class="seg js-themeSeg" role="group" aria-label="Theme mode">
           <button type="button" data-theme-set="light" aria-pressed="false">
-            <svg class="i"><use href="#i-sun"/></svg>Light</button>
+            <svg class="i" aria-hidden="true"><use href="#i-sun"/></svg>Light</button>
           <button type="button" data-theme-set="dark" aria-pressed="false">
-            <svg class="i"><use href="#i-moon"/></svg>Dark</button>
+            <svg class="i" aria-hidden="true"><use href="#i-moon"/></svg>Dark</button>
           <button type="button" data-theme-set="auto" aria-pressed="false">
-            <svg class="i"><use href="#i-auto"/></svg>Auto</button>
+            <svg class="i" aria-hidden="true"><use href="#i-auto"/></svg>Auto</button>
         </div>
         <div class="help" style="margin-top:var(--s3)" id="themeHelp"></div>
 
@@ -1665,7 +1701,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-moon"/></svg>Study companion</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-moon"/></svg>Study companion</span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)">A small owl on Today, styled
           entirely from the timer and your recent days — nothing to feed, nothing it holds
@@ -1679,7 +1715,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-clock"/></svg>Pomodoro</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg>Pomodoro</span>
         </div>
         <div class="grid grid--3">
           <div class="field"><label class="field__label" for="sWork">Focus (min)</label>
@@ -1695,7 +1731,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-flame"/></svg>Day and streak</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-flame"/></svg>Day and streak</span>
         </div>
         <div class="field" style="margin-bottom:var(--s4)">
           <label class="field__label" for="sBoundary">Day starts at</label>
@@ -1714,7 +1750,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-target"/></svg>Goals</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-target"/></svg>Goals</span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)">Your own target, not a
           prediction. Off by default. The streak and the goal stay separate: the
@@ -1730,7 +1766,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-bell"/></svg>Cues</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>Cues</span>
           <button class="btn btn--sm btn--ghost" id="testCue">Test</button>
         </div>
         <div class="stack" style="gap:var(--s3)">
@@ -1747,33 +1783,49 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           <div class="field"><label class="field__label" for="sQTo">Quiet to</label>
             <select id="sQTo"></select></div>
         </div>
+
+        <hr class="sep">
+        <label class="switch"><input type="checkbox" id="sRemindOn">
+          <span class="switch__track"></span><span class="switch__label">Daily reminder</span></label>
+        <div class="grid grid--2" style="margin-top:var(--s4)">
+          <div class="field"><label class="field__label" for="sRemindHour">Remind at</label>
+            <select id="sRemindHour"></select></div>
+          <div class="field"><label class="field__label" for="sRemindMin">Minutes past</label>
+            <select id="sRemindMin"></select></div>
+        </div>
+        <p class="help" style="margin-top:var(--s3)">Two halves, and they are not
+          equally reliable. The <strong>banner on next open</strong> always works,
+          offline included. The <strong>notification</strong> only fires while a tab
+          is open or backgrounded, and needs the Notification switch above — a page
+          with no server behind it cannot wake a closed tab, and this one has no
+          server. Both stay quiet once the day has a logged minute.</p>
         <div class="inline-msg" id="cueMsg"></div>
       </div>
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-db"/></svg>Your data</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg>Your data</span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)" id="dataNote">It lives in
           this browser only. Export it before clearing site data, switching machines, or
           anything else that could take it away.</p>
         <div class="row">
-          <button class="btn" id="expJson"><svg class="i"><use href="#i-down"/></svg>Download backup (JSON)</button>
-          <button class="btn" id="expCsv"><svg class="i"><use href="#i-down"/></svg>Export sessions (CSV)</button>
-          <button class="btn" id="impBtn"><svg class="i"><use href="#i-up"/></svg>Restore from backup</button>
+          <button class="btn" id="expJson"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Download backup (JSON)</button>
+          <button class="btn" id="expCsv"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Export sessions (CSV)</button>
+          <button class="btn" id="impBtn"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Restore from backup</button>
           <input type="file" id="impFile" accept="application/json" hidden>
         </div>
         <div class="inline-msg" id="dataMsg"></div>
         <hr class="sep">
         <div class="row">
-          <button class="btn btn--danger" id="wipeBtn"><svg class="i"><use href="#i-trash"/></svg>Delete everything</button>
+          <button class="btn btn--danger" id="wipeBtn"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete everything</button>
           <span class="inline-msg" id="wipeMsg" style="margin-top:0"></span>
         </div>
       </div>
 
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-up"/></svg>Cloud sync</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Cloud sync</span>
           <span class="chip" id="syncChip">Off</span>
         </div>
         <p class="card__note" style="margin-bottom:var(--s4)">Off unless you set it up.
@@ -1797,7 +1849,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
               <input type="password" id="syPass" autocomplete="current-password"></div>
           </div>
           <div class="row" style="margin-top:var(--s4)">
-            <button class="btn btn--primary" id="syIn"><svg class="i"><use href="#i-up"/></svg>Sign in and sync</button>
+            <button class="btn btn--primary" id="syIn"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Sign in and sync</button>
           </div>
         </div>
 
@@ -1813,9 +1865,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         <div class="inline-msg" id="syMsg"></div>
       </div>
 
+      <div class="card" id="updateCard" hidden>
+        <div class="card__head">
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Desktop app</span>
+        </div>
+        <p class="card__note" style="margin-bottom:var(--s4)">Rebuilds this window from
+          the current <code>index.html</code> and reinstalls it. Needs the Rust
+          toolchain that built it in the first place; takes up to a minute.</p>
+        <div class="row">
+          <button class="btn" id="updateBtn">Check for updates</button>
+        </div>
+        <div class="inline-msg" id="updateMsg"></div>
+      </div>
+
       <div class="card">
         <div class="card__head">
-          <span class="card__title"><svg class="i"><use href="#i-info"/></svg>About</span>
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg>About</span>
         </div>
         <p class="card__note" id="aboutTxt"></p>
       </div>
@@ -1826,16 +1891,19 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 <!-- ================= SHELL: BOTTOM NAV (<960px) ================= -->
 <nav class="bottomnav" aria-label="Sections">
   <button class="navbtn" data-view="today" aria-current="page">
-    <svg class="i"><use href="#i-today"/></svg><span>Today</span></button>
+    <svg class="i" aria-hidden="true"><use href="#i-today"/></svg><span>Today</span></button>
   <button class="navbtn" data-view="history">
-    <svg class="i"><use href="#i-history"/></svg><span>History</span></button>
+    <svg class="i" aria-hidden="true"><use href="#i-history"/></svg><span>History</span></button>
   <button class="navbtn" data-view="progress">
-    <svg class="i"><use href="#i-progress"/></svg><span>Progress</span></button>
+    <svg class="i" aria-hidden="true"><use href="#i-progress"/></svg><span>Progress</span></button>
   <button class="navbtn" data-view="settings">
-    <svg class="i"><use href="#i-settings"/></svg><span>Settings</span></button>
+    <svg class="i" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></button>
 </nav>
 
-<div id="toast"><span id="toastMsg" class="grow"></span>
+<!-- Every undo in the app is offered here and nowhere else, so a toast that
+     is not announced means a screen-reader user is told neither that a session
+     was deleted nor that the deletion can be reversed. -->
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg" class="grow"></span>
   <button class="btn btn--sm" id="toastAct" hidden></button></div>
 
 <script>
@@ -1854,7 +1922,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* ---- CONSTANTS ------------------------------------------------------ */
 
   var KEY = "studyTracker.v1";
-  var SCHEMA_VERSION = 4;   // v3 adds showCompanion. The generic default-fill in
+  var SCHEMA_VERSION = 6;   // v3 adds showCompanion. The generic default-fill in
                             // migrate() already backfills any key missing from an
                             // older blob, so no new migration branch was needed --
                             // only DEFAULTS changed, which is why the bump is here
@@ -1863,6 +1931,17 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
                             // to decide which side's settings and badges are newer.
                             // A pre-v4 blob gets updatedAt 0 so it always loses that
                             // comparison to a real cloud copy rather than fighting it.
+                            // v5 adds settings.reminder. Same shape of change as v3:
+                            // the generic default-fill below backfills it on any older
+                            // blob, so the bump is a label on the change rather than
+                            // new merge logic. Verified by loading a v4 blob.
+                            // v6 adds a session-level group, so related subjects (e.g.
+                            // "C - Arrays" and "C - Structures") can roll up under one
+                            // name ("C") wherever time is totalled by subject. A
+                            // pre-v6 session has no group -- migrate() defaults it to
+                            // "", which subjKey() falls back from to the label alone,
+                            // so nothing already logged changes its grouping until you
+                            // set one.
 
   /* Sync credentials live in their own key, deliberately not inside KEY. Two
      reasons, both load-bearing: the state blob is what gets uploaded, so
@@ -1889,6 +1968,17 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   var XP_PER_MIN = 1;
   var LEVEL_STEP = 300;          // level N at LEVEL_STEP * N(N-1)/2
 
+  /* ---- MOTIVATION ------------------------------------------------------
+     Every other number in this file describes time already logged. These
+     three read the clock against what is still possible today, which is the
+     only thing that can affect whether a block happens at all. */
+  var AT_RISK_HOURS = 6;         // how close to the day boundary the streak
+                                 // tile starts naming what is about to be lost
+  var QUICK_MIN = 5;             // the short block. A streak needs one logged
+                                 // minute, and starting is the whole problem
+  var SLOW_TICK_MS = 60 * 1000;  // repaints the streak tile with no timer
+                                 // running, so "ends in 3h 20m" is never stale
+
   var DEFAULTS = {
     dayBoundaryHour: 0,
     workMin: 25, shortBreakMin: 5, longBreakMin: 15, roundsBeforeLong: 4,
@@ -1899,7 +1989,10 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     darkPalette: "pine",            // worn when it is dark
     showCompanion: true,
     cues: { beep: true, vibrate: true, notify: false },
-    quietHours: { from: 22, to: 7 }
+    quietHours: { from: 22, to: 7 },
+    /* Off by default, like every other suggestion this app makes. Nothing
+       here is switched on for you. */
+    reminder: { on: false, hour: 19, min: 0 }
   };
 
   /* Every palette the app can wear. `sw` is [ground, card, border, accent,
@@ -1980,7 +2073,14 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       settings: JSON.parse(JSON.stringify(DEFAULTS)),
       sessions: [],
       badges: {},
-      activeSession: null
+      activeSession: null,
+      /* Which dayKey the reminder has already fired on. Device-local for the
+         same reason activeSession is: whether this laptop showed you a banner
+         is not news your phone wants, and syncing it would silently swallow
+         the nudge on the other device. Stripped in payload(), preserved
+         across a merge, and written with saveLocal() so it never restamps
+         updatedAt -- it is not a decision you made. */
+      nudgedOn: null
     };
   }
 
@@ -1997,7 +2097,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           if (k === "goalMinutesPerDay" || k === "goalMinutesPerWeek") s.settings[k] = null;
           return;
         }
-        if (k === "cues" || k === "quietHours") {
+        if (k === "cues" || k === "quietHours" || k === "reminder") {
           Object.keys(DEFAULTS[k]).forEach(function (j) {
             if (raw.settings[k] && raw.settings[k][j] !== undefined)
               s.settings[k][j] = raw.settings[k][j];
@@ -2008,10 +2108,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     if (Array.isArray(raw.sessions)) {
       s.sessions = raw.sessions.map(function (x) {
         return {
-          id: x.id || newId(),
+          id: (typeof x.id === "string" && SAFE_ID.test(x.id)) ? x.id : newId(),
           dayKey: x.dayKey || (x.startedAt ? dayKeyFor(x.startedAt, s.settings.dayBoundaryHour) : null),
           code: x.code === undefined ? null : x.code,
           label: x.label || x.subject || "General study",
+          group: typeof x.group === "string" ? x.group : "",
           startedAt: x.startedAt || Date.now(),
           endedAt: x.endedAt || x.startedAt || Date.now(),
           minutes: Math.max(0, Math.round(Number(x.minutes) || 0)),
@@ -2050,6 +2151,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     }
     if (raw.badges && typeof raw.badges === "object") s.badges = raw.badges;
     if (raw.activeSession && typeof raw.activeSession === "object") s.activeSession = raw.activeSession;
+    if (typeof raw.nudgedOn === "string") s.nudgedOn = raw.nudgedOn;
     s.updatedAt = Number(raw.updatedAt) || 0;
     s.schemaVersion = SCHEMA_VERSION;
     return s;
@@ -2091,6 +2193,20 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   function newId() {
     return "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
   }
+
+  /* Session ids are interpolated straight into HTML attributes by logTable()
+     -- data-id, data-edit, data-del -- and every blob from outside this
+     browser arrives through migrate(): a restored backup file, or a row
+     pulled from Supabase. An id of
+        s_1' onfocus='...' autofocus x='
+     breaks out of that attribute and runs. Validating at the door fixes every
+     interpolation of an id at once, including any added later; escaping each
+     of the three call sites fixes only the three that exist today.
+
+     Ids that fail this are regenerated rather than dropped, so a hand-edited
+     backup still restores every session it contains. Real ids are
+     "s_<millis>_<base36>" and always pass. */
+  var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
   /* ---- CLOUD SYNC ------------------------------------------------------
      Supabase over plain fetch -- no client library, no CDN, no module import.
@@ -2201,10 +2317,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       setStatus("off", "");
     }
 
-    /* Refresh tokens are single-use in Supabase: if a refresh fails the stored
-       one is already spent, so there is no retrying it. Clearing the tokens but
-       keeping url/anonKey/email means the sign-in form comes back pre-filled
-       with only the password missing. */
+    /* Refresh tokens are single-use in Supabase: once the server has actually
+       rejected one, the stored copy is spent and there is no retrying it.
+       Clearing the tokens but keeping url/anonKey/email means the sign-in
+       form comes back pre-filled with only the password missing.
+
+       That destructive branch used to fire on *any* rejection, including a
+       plain network failure -- offline, a laptop waking from sleep mid
+       request, a dropped wifi handoff. None of those mean the refresh token
+       is dead; they mean the request never reached Supabase at all, which
+       fetch reports as a rejection with no `.status`. Burning a still-good
+       refresh token on a blip like that was forcing a full re-login for
+       something a retry on the next scheduled sync would have fixed for
+       free -- this is the "gets logged out on its own" bug. Only an actual
+       server response (`e.status` set -- e.g. 400 invalid_grant because the
+       token was already used or really has expired) means the session is
+       genuinely gone. */
     function ensureToken() {
       if (!signedIn()) return Promise.reject(new Error("Not signed in."));
       if (cfg.accessToken && Date.now() < (cfg.expiresAt || 0) - TOKEN_SKEW_MS)
@@ -2212,8 +2340,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       return req("/auth/v1/token?grant_type=refresh_token", {
         method: "POST", auth: false, body: { refresh_token: cfg.refreshToken }
       }).then(applyToken).catch(function (e) {
-        cfg.accessToken = null; cfg.refreshToken = null; saveCfg();
-        setStatus("signedout", "Session expired — sign in again.");
+        if (e.status) {
+          cfg.accessToken = null; cfg.refreshToken = null; saveCfg();
+          setStatus("signedout", "Session expired — sign in again.");
+        } else {
+          setStatus(navigator.onLine === false ? "offline" : "error", e.message);
+        }
         throw e;
       });
     }
@@ -2233,6 +2365,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     function payload() {
       var out = JSON.parse(JSON.stringify(S));
       out.activeSession = null;
+      out.nudgedOn = null;        // device-local, see blank()
       return out;
     }
 
@@ -2281,9 +2414,10 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       /* Re-run migrate so a union of sessions from two schema versions is
          normalised and re-sorted the same way a restored backup is. */
-      var localActive = local.activeSession;
+      var localActive = local.activeSession, localNudge = local.nudgedOn;
       out = migrate(out);
       out.activeSession = localActive;        // never crosses devices, see payload()
+      out.nudgedOn = localNudge;              // same reason
       out.updatedAt = Math.max(lt, rt);
       return out;
     }
@@ -2305,7 +2439,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           var merged = mergeStates(S, remote);
           gained = merged.sessions.length - before;
           S = merged;
-          try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+          saveLocal();
         } else {
           sentOnly = true;                    // first sync from this account
         }
@@ -2429,6 +2563,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* ---- SESSIONS ------------------------------------------------------- */
 
   function addSession(rec) {
+    rec.group = typeof rec.group === "string" ? rec.group : "";
     S.sessions.push(rec);
     S.sessions.sort(function (a, b) { return a.startedAt - b.startedAt; });
     awardBadges();
@@ -2451,7 +2586,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     }
     return t;
   }
-  function subjKey(s) { return s.code || s.label; }
+  /* Grouped totals key on the group when one is set -- "C - Arrays" and
+     "C - Structures" both count as "C" everywhere time is totalled by
+     subject (the split chart, the heatmap filter, the "Subjects" tile, the
+     per-subject badges). Ungrouped sessions key on their own label, same as
+     before v6. */
+  function subjKey(s) { return s.group || s.code || s.label; }
   function doneOn(key) { return minutesOn(key) > 0; }
 
   function totalsByDay(subj) {
@@ -2469,19 +2609,36 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* Ported from the Wellness Hub rule, including the part that is easy to
      miss: a grace day can bridge a streak but must never start one. Without
      the trim at the end, a run would begin on a day you did not study. */
+  /* One pass over the sessions, not one per day walked. doneOn() is a full
+     scan, and this loop calls it once for every day of the run: at a 730-day
+     streak that was 730 scans of 2,190 sessions, measured at 31ms per call --
+     and streakInfo() is itself called several times per render, plus once a
+     minute by the slow tick. The day map is built locally rather than cached,
+     so there is no invalidation to get wrong and a stale streak is not a
+     failure mode this can have. */
   function streakInfo() {
     var allowance = Math.max(0, Number(S.settings.graceDaysPerMonth) || 0);
+    var byDay = totalsByDay();
+    function done(k) { return (byDay[k] || 0) > 0; }
     var cursor = todayKey();
     var spentByMonth = {};
-    if (!doneOn(cursor)) {
+    if (!done(cursor)) {
       cursor = shiftDay(cursor, -1);
-      if (!doneOn(cursor)) {
+      if (!done(cursor)) {
         return { current: 0, graceUsed: 0, graceLeft: allowance };
       }
     }
-    var run = [], guard = 0;
-    while (guard++ < 3000) {
-      if (doneOn(cursor)) run.push({ key: cursor, grace: false });
+    /* The bound was `guard < 3000` -- an arbitrary 8.2 years, past which a
+       longer streak silently stopped counting and reported a shorter one. A
+       run can never begin before the first day you logged anything, so that
+       is the real bound: exact, no truncation at any length, and it stops as
+       soon as the data runs out instead of walking empty days. */
+    var logged = Object.keys(byDay).sort();
+    var floorKey = logged.length ? logged[0] : todayKey();
+
+    var run = [];
+    while (cursor >= floorKey) {
+      if (done(cursor)) run.push({ key: cursor, grace: false });
       else {
         var mk = cursor.slice(0, 7);
         if ((spentByMonth[mk] || 0) >= allowance) break;
@@ -2501,6 +2658,42 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       graceUsed: graceUsed,
       graceLeft: Math.max(0, allowance - (spentByMonth[thisMonth] || 0))
     };
+  }
+
+  /* ---- WHAT IS STILL POSSIBLE TODAY -----------------------------------
+     The logical day for key D runs from D at dayBoundaryHour to D+1 at the
+     same hour -- that is exactly what dayKeyFor's hour shift encodes, and
+     both functions below are derived from it rather than assuming midnight.
+     A boundary of 5 with the clock at 23:30 is the case where "hours left
+     today" and "hours left on the calendar" disagree, and it is the one this
+     has to get right. */
+
+  function hoursToBoundary(now) {
+    var b = S.settings.dayBoundaryHour || 0;
+    var d = new Date(now);
+    var end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), b, 0, 0, 0);
+    if (end <= d) end = new Date(end.getTime() + 86400000);
+    return (end - d) / 3600000;
+  }
+
+  function fmtLeft(h) {
+    var m = Math.max(0, Math.round(h * 60));
+    return m < 60 ? m + "m" : Math.floor(m / 60) + "h " + pad(m % 60) + "m";
+  }
+
+  /* Null unless a run genuinely stands to be lost tonight. `bridged` is the
+     honest half: with a grace day left the run holds regardless, so the tile
+     must not claim otherwise. Overstating the stake to get you to study is
+     the same defect as a heatmap shade implying a precision it doesn't have,
+     and it costs the same thing -- you stop believing the number. */
+  function streakRisk(st) {
+    st = st || streakInfo();
+    if (!st.current) return null;              // nothing to lose yet
+    if (doneOn(todayKey())) return null;       // today is already safe
+    var h = hoursToBoundary(Date.now());
+    if (h > AT_RISK_HOURS) return null;        // too early to be a warning
+    return { streak: st.current, hours: h,
+             bridged: st.graceLeft > 0, graceLeft: st.graceLeft };
   }
 
   function longestStreak() {
@@ -2557,10 +2750,31 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     });
     return m;
   }
-  function bestPerDay(fn) {
+  /* Autocomplete for the free-text Subject and Group inputs needs the raw,
+     ungrouped names -- typing "Arrays" should still suggest "Arrays" even
+     though its total now folds into "C". subjectTotals() can't serve that;
+     it's already collapsed to group keys. */
+  function labelTotals() {
+    var m = {};
+    S.sessions.forEach(function (s) { m[s.label] = (m[s.label] || 0) + s.minutes; });
+    return m;
+  }
+  function groupTotals() {
+    var m = {};
+    S.sessions.forEach(function (s) {
+      if (s.group) m[s.group] = (m[s.group] || 0) + s.minutes;
+    });
+    return m;
+  }
+  /* `groups` lets a caller that asks several questions of the same grouping
+     build it once. badgeProgress() asks three. */
+  function sessionsByDay() {
     var m = {};
     S.sessions.forEach(function (s) { (m[s.dayKey] = m[s.dayKey] || []).push(s); });
-    var best = 0;
+    return m;
+  }
+  function bestPerDay(fn, groups) {
+    var m = groups || sessionsByDay(), best = 0;
     Object.keys(m).forEach(function (k) { best = Math.max(best, fn(m[k])); });
     return best;
   }
@@ -2577,6 +2791,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   function badgeProgress() {
     var st = streakInfo(), mins = totalMinutes(), subj = subjectTotals();
+    var groups = sessionsByDay();          // three of the badges below ask of it
     var maxSubj = Object.keys(subj).reduce(function (a, k) { return Math.max(a, subj[k]); }, 0);
     var longest = Math.max(st.current, longestStreak());
     var out = {};
@@ -2589,7 +2804,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       else if (b.id === "day_4" || b.id === "day_8")
         have = bestPerDay(function (list) {
           return list.filter(function (s) { return s.source === "pomodoro"; }).length;
-        });
+        }, groups);
       else if (b.id === "early")
         have = S.sessions.some(function (s) {
           var h = new Date(s.startedAt).getHours();
@@ -2604,11 +2819,26 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         have = bestPerDay(function (list) {
           var seen = {}; list.forEach(function (s) { seen[subjKey(s)] = 1; });
           return Object.keys(seen).length;
-        });
+        }, groups);
       else if (b.id === "clean_week") have = cleanWeekRun();
       out[b.id] = have;
     });
     return out;
+  }
+
+  /* badgeProgress() already measures the distance to all 26 on every render,
+     and the Progress grid spends it rendering "4 more sessions" and "430 more
+     hours" at the same size. The closest unearned one is the only one with
+     any pull, so it gets a line on the view you actually sit on. */
+  function nearestBadge() {
+    var prog = badgeProgress(), best = null;
+    BADGES.forEach(function (b) {
+      if (S.badges[b.id]) return;
+      var have = prog[b.id] || 0, left = b.need - have;
+      if (left <= 0) return;                   // awarded on the next pass
+      if (!best || left < best.left) best = { b: b, have: have, left: left };
+    });
+    return best;
   }
 
   /* `silent` is for the load path: a restored backup can qualify for fifteen
@@ -2696,8 +2926,19 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       o.start(); o.stop(actx.currentTime + ms / 1000 + 0.02);
     } catch (e) { /* no audio device is not an error worth showing */ }
   }
+  /* Titles were previously derived with one ternary, so every kind that was
+     not "break" announced itself as "Focus block done" -- including badges.
+     A table is the same size and cannot drift as kinds are added. */
+  var CUE_NOTE = {
+    work:   ["Focus block done", "Time for a break."],
+    "break": ["Break over", "Back to it."],
+    badge:  ["Badge earned", "Have a look at Progress."],
+    remind: ["Time to study", "Nothing logged today yet."]
+  };
+
   function cue(kind) {
     if (kind === "work") beep(880, 260);
+    else if (kind === "remind") { beep(700, 180); setTimeout(function () { beep(900, 220); }, 190); }
     else if (kind === "break") beep(560, 260);
     else if (kind === "badge") { beep(1040, 160); setTimeout(function () { beep(1320, 200); }, 170); }
     /* Chrome drops vibrate() with a console warning until the page has seen a
@@ -2706,14 +2947,28 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     if (S.settings.cues.vibrate && navigator.vibrate && gestured && !inQuiet()) {
       try { navigator.vibrate(kind === "badge" ? [40, 60, 40] : [90]); } catch (e) {}
     }
-    if (S.settings.cues.notify && !inQuiet() && window.Notification
-        && Notification.permission === "granted") {
-      try {
-        new Notification(kind === "break" ? "Break over" : "Focus block done", {
-          body: kind === "break" ? "Back to it." : "Time for a break.", silent: true
-        });
-      } catch (e) {}
+    if (S.settings.cues.notify && !inQuiet()) {
+      var note = CUE_NOTE[kind] || CUE_NOTE.work;
+      /* Desktop shell (Tauri): the web Notification API is unreliable inside
+         the WebView, so route through the native OS plugin instead. The tray
+         keeps the window alive, so this scheduler is still ticking when the
+         window is closed. In the browser/PWA window.__TAURI__ is undefined and
+         the web path below runs exactly as before. */
+      if (window.__TAURI__) tauriNotify(note[0], note[1]);
+      else if (window.Notification && Notification.permission === "granted") {
+        try { new Notification(note[0], { body: note[1], silent: true }); } catch (e) {}
+      }
     }
+  }
+
+  /* Hands a popup to the OS notification daemon via tauri-plugin-notification.
+     The icon name matches the installed hicolor icon (see src-tauri/install.sh);
+     on Windows the bundled app icon is used. Silent no-op in the browser. */
+  function tauriNotify(title, body) {
+    try {
+      window.__TAURI__.core.invoke("plugin:notification|notify",
+        { options: { title: title, body: body, icon: "study-tracker" } });
+    } catch (e) {}
   }
 
   /* ---- TIMER ---------------------------------------------------------- */
@@ -2724,12 +2979,23 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   var T = {
     running: false, paused: false, phase: "work", round: 1,
     endAt: 0, remainAtPause: 0, tick: null, beat: null,
-    startedAt: 0, pausedAt: 0, workedMs: 0, lastResume: 0, subject: null
+    startedAt: 0, pausedAt: 0, workedMs: 0, lastResume: 0, subject: null,
+    quick: false                 // a QUICK_MIN block, see workCapMin()
   };
+
+  /* One place decides how long a work block is, because four separate things
+     cap against it: the ring, the credit at finish, the credit on Stop, and
+     the plannedMinutes written into activeSession for crash recovery. Read
+     from settings.workMin instead, a 5-minute block that died mid-run would
+     be recovered as 25 -- inventing twenty minutes you did not study, which
+     is the one thing this app must never do. */
+  function workCapMin() {
+    return T.quick ? QUICK_MIN : Math.max(1, Number(S.settings.workMin) || 25);
+  }
 
   function phaseSeconds(phase) {
     var s = S.settings;
-    if (phase === "work") return Math.max(1, s.workMin) * 60;
+    if (phase === "work") return workCapMin() * 60;
     if (phase === "long") return Math.max(1, s.longBreakMin) * 60;
     return Math.max(1, s.shortBreakMin) * 60;
   }
@@ -2747,7 +3013,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     S.activeSession = {
       startedAt: T.startedAt,
       lastBeat: Date.now(),
-      plannedMinutes: Math.max(1, S.settings.workMin),
+      plannedMinutes: workCapMin(),
       label: T.subject ? T.subject.label : "General study",
       workedMs: accumulatedWorkMs()
     };
@@ -2789,7 +3055,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   function finishWork(interrupted, note) {
     var sec = Math.round(accumulatedWorkMs() / 1000);
-    sec = Math.min(sec, Math.max(1, S.settings.workMin) * 60);
+    sec = Math.min(sec, workCapMin() * 60);
     clearInterval(T.tick); clearInterval(T.beat);
     S.activeSession = null;
 
@@ -2805,11 +3071,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       dayKey: dayKeyFor(T.startedAt, S.settings.dayBoundaryHour),
       code: null,
       label: T.subject ? T.subject.label : "General study",
+      group: T.subject ? T.subject.group : "",
       startedAt: T.startedAt, endedAt: Date.now(),
       minutes: mins, source: "pomodoro",
       interrupted: !!interrupted, note: note || ""
     });
     cue("work");
+
+    /* A quick block is a real logged block -- same source, same subject, same
+       row in every view. What it is not is a pomodoro round: queueing a break
+       after five minutes is absurd, and letting it advance the cycle would
+       move the long break earlier for a block that did not earn it. */
+    if (T.quick) {
+      stopAll(); renderAll();
+      msg("timerMsg", "Logged " + mins + " min. No break queued.", "ok");
+      return;
+    }
 
     var useLong = T.round % Math.max(1, S.settings.roundsBeforeLong) === 0;
     T.round = T.round + 1 > 999 ? 1 : T.round + 1;
@@ -2822,7 +3099,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   function stopAll() {
     clearInterval(T.tick); clearInterval(T.beat);
-    T.running = false; T.paused = false;
+    T.running = false; T.paused = false; T.quick = false;
     S.activeSession = null; save();
   }
 
@@ -2851,6 +3128,81 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     };
     addSession(rec);
     showRecoveryBanner(rec);
+  }
+
+  /* ---- REMINDER --------------------------------------------------------
+     Two halves, because they have very different reliability and the settings
+     text says which is which. A nudge you believe in and never receive is
+     worse than no nudge at all:
+
+       live      fires the cue at the set time, and only while a tab is open
+                 or backgrounded. A page with no push server cannot wake a
+                 closed tab; no arrangement of this file changes that.
+       catch-up  on next open, if the time has passed and nothing is logged
+                 today, a dismissible banner. Fully offline, always works.
+
+     Both go quiet once the day has a logged minute -- a reminder to do what
+     you already did is noise -- and fire once per dayKey. */
+
+  /* The reminder belongs to the logical day, not the calendar one. With the
+     boundary at 05:00 and a 19:00 reminder, 02:00 is still that day and the
+     reminder is seven hours overdue, not seventeen hours early. */
+  function reminderAt() {
+    var r = S.settings.reminder, b = S.settings.dayBoundaryHour || 0;
+    var d = parseKey(todayKey());
+    var t = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+                     r.hour || 0, r.min || 0, 0, 0);
+    if ((r.hour || 0) < b) t.setDate(t.getDate() + 1);
+    return t.getTime();
+  }
+
+  function reminderDue() {
+    var r = S.settings.reminder;
+    if (!r || !r.on) return false;
+    if (S.nudgedOn === todayKey()) return false;   // once a day, at most
+    if (doneOn(todayKey())) return false;          // already studied
+    return Date.now() >= reminderAt();
+  }
+
+  function fireReminder() {
+    S.nudgedOn = todayKey();
+    saveLocal();                  // device-local, and never a settings edit
+    showReminderBanner();
+    cue("remind");
+  }
+
+  function showReminderBanner() {
+    var r = S.settings.reminder;
+    var d = document.createElement("div");
+    d.className = "banner info";
+    d.innerHTML =
+      "<strong>You set a reminder for " + pad(r.hour) + ":" + pad(r.min) +
+      ".</strong> Nothing is logged today yet. That is the whole nudge — it " +
+      "will not ask again today." +
+      "<div class='row'>" +
+      "<button class='btn btn--sm btn--primary' data-act='quick'>Start " +
+      QUICK_MIN + " min</button>" +
+      "<button class='btn btn--sm' data-act='close'>Not now</button></div>";
+    d.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.act === "quick") { show("today"); startQuick(); }
+      d.remove();
+    });
+    document.getElementById("recoveryHost").appendChild(d);
+  }
+
+  /* Shared by the button on Today and the banner's own Start, so there is one
+     definition of what a quick block is. */
+  function startQuick() {
+    if (T.running) return;
+    T.quick = true;
+    T.phase = "work";
+    T.subject = subjectFrom($("subjInput"), $("groupInput"));
+    $("subjHint").textContent = "Locked for this block: " +
+      (T.subject.group ? T.subject.group + " – " + T.subject.label : T.subject.label);
+    msg("timerMsg", QUICK_MIN + " minutes. It logs like any other block, and no " +
+      "break follows it.", "");
+    startPhase("work");
   }
 
   function showRecoveryBanner(rec) {
@@ -2901,15 +3253,24 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   /* Subjects are whatever you type. The datalist offers back the ones you
      have already used so a repeat entry is one keystroke, without ever
-     restricting you to a fixed list. */
-  function subjectFrom(input) {
+     restricting you to a fixed list. Group is the same idea, one level up --
+     leaving it blank keeps a session exactly as ungrouped as it always was. */
+  function subjectFrom(input, groupInput) {
     var v = (input.value || "").trim();
-    return v ? { code: null, label: v } : { code: null, label: "General study" };
+    var g = groupInput ? (groupInput.value || "").trim() : "";
+    return v
+      ? { code: null, label: v, group: g }
+      : { code: null, label: "General study", group: g };
   }
   function refreshSubjectList() {
-    var seen = subjectTotals();
+    var seen = labelTotals();
     var names = Object.keys(seen).sort(function (a, b) { return seen[b] - seen[a]; });
     $("subjSeen").innerHTML = names.map(function (n) {
+      return "<option value='" + esc(n) + "'></option>";
+    }).join("");
+    var groups = groupTotals();
+    var gnames = Object.keys(groups).sort(function (a, b) { return groups[b] - groups[a]; });
+    $("groupSeen").innerHTML = gnames.map(function (n) {
       return "<option value='" + esc(n) + "'></option>";
     }).join("");
   }
@@ -2963,13 +3324,16 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     var chips = "";
     for (var i = 0; i < n; i++) {
       chips += "<i class='" +
-        (i < done ? "on" : (i === done && T.running && work ? "now" : "")) + "'></i>";
+        (i < done ? "on" : (i === done && T.running && work && !T.quick ? "now" : "")) +
+        "'></i>";
     }
     $("roundChips").innerHTML = chips;
 
-    $("timerSub").textContent = T.running
-      ? "Round " + (done + 1) + " of " + n
+    $("timerSub").textContent =
+      T.running && T.quick ? QUICK_MIN + " min block, no break after"
+      : T.running ? "Round " + (done + 1) + " of " + n
       : Math.max(1, S.settings.workMin) + " min block";
+    $("quickBtn").hidden = T.running;
 
     /* Start/Pause/Stop only ever call the full path of this function, never
        renderToday() on their own -- Start in particular calls startPhase()
@@ -2983,18 +3347,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   function renderToday() {
     var k = todayKey(), st = streakInfo(), mins = minutesOn(k);
 
-    /* The streak answers "did you show up". The goal answers "how much".
-       They are never merged into one verdict, because a five-minute day
-       genuinely is both a kept streak and a missed goal. */
-    $("streakTile").innerHTML =
-      "<div class='card__head'><span class='card__title'>" + icon("flame") + "Streak</span>" +
-      (st.graceUsed ? "<span class='chip chip--warn'>" + st.graceUsed + " grace bridging" +
-        "</span>" : "") + "</div>" +
-      "<div class='stat__value'>" + st.current +
-      "<small>day" + (st.current === 1 ? "" : "s") + "</small></div>" +
-      "<div class='stat__sub' style='margin-top:6px'>" +
-      (st.current ? "Any logged minute keeps it. " : "Log anything today to start one. ") +
-      st.graceLeft + " grace left this month.</div>";
+    renderStreakTile(st);
 
     var gT = $("goalTile"), goal = S.settings.goalMinutesPerDay;
     if (!goal) {
@@ -3028,9 +3381,65 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       return s.dayKey === k;
     }).slice().reverse(), false);
 
+    renderNextBadge();
     renderWeek();
     renderSplit();
     renderCompanion();
+  }
+
+  /* Its own function because the slow tick repaints only this: rebuilding the
+     whole Today view once a minute would wipe out whatever you were typing
+     into an inline session edit. */
+  function renderStreakTile(st) {
+    st = st || streakInfo();
+    var risk = streakRisk(st), host = $("streakTile");
+
+    /* The streak answers "did you show up". The goal answers "how much".
+       They are never merged into one verdict, because a five-minute day
+       genuinely is both a kept streak and a missed goal. */
+    host.className = "card" + (risk && !risk.bridged ? " card--warn" : "");
+
+    var chip = "";
+    if (risk) {
+      chip = "<span class='chip chip--warn'>" +
+        (risk.bridged ? "Grace covers tonight" : "Ends in " + fmtLeft(risk.hours)) +
+        "</span>";
+    } else if (st.graceUsed) {
+      chip = "<span class='chip chip--warn'>" + st.graceUsed + " grace bridging</span>";
+    }
+
+    var sub;
+    if (risk && risk.bridged) {
+      sub = "Nothing logged today, but a grace day bridges tonight and the run " +
+            "holds. " + risk.graceLeft + " grace left this month.";
+    } else if (risk) {
+      sub = "Nothing logged today and no grace left this month. One logged " +
+            "minute keeps it.";
+    } else {
+      sub = (st.current ? "Any logged minute keeps it. "
+                        : "Log anything today to start one. ") +
+            st.graceLeft + " grace left this month.";
+    }
+
+    host.innerHTML =
+      "<div class='card__head'><span class='card__title'>" + icon("flame") +
+      "Streak</span>" + chip + "</div>" +
+      "<div class='stat__value'>" + st.current +
+      "<small>day" + (st.current === 1 ? "" : "s") + "</small></div>" +
+      "<div class='stat__sub' style='margin-top:6px'>" + sub + "</div>";
+  }
+
+  function renderNextBadge() {
+    var host = $("nextBadge"), best = nearestBadge();
+    if (!best) { host.hidden = true; return; }
+    host.hidden = false;
+    host.innerHTML =
+      "<div class='row row--between'>" +
+      "<span class='card__title'>" + icon("medal") + "Next badge</span>" +
+      "<span class='chip'>" + best.left + " to go</span></div>" +
+      "<p class='card__note' style='margin-top:var(--s2)'><strong>" +
+      esc(best.b.n) + "</strong> — " + best.have + " / " +
+      esc(best.b.need + " " + best.b.unit) + ".</p>";
   }
 
   /* ---- RENDER: STUDY COMPANION -----------------------------------------
@@ -3216,6 +3625,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         "<td class='subj'><input type='text' autocomplete='off' spellcheck='false' " +
         "list='subjSeen' value='" + esc(s.label) + "' data-edit-label='" + s.id +
         "' aria-label='Subject'></td>" +
+        "<td class='subj'><input type='text' autocomplete='off' spellcheck='false' " +
+        "list='groupSeen' value='" + esc(s.group || "") + "' data-edit-group='" + s.id +
+        "' aria-label='Group' placeholder='–'></td>" +
         "<td><input type='number' min='1' max='1440' value='" + s.minutes +
         "' data-edit='" + s.id + "' aria-label='Minutes'></td>" +
         "<td><span class='chip'>" + (s.source === "manual" ? "manual" : "timer") + "</span>" +
@@ -3227,7 +3639,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     }).join("");
     return "<div class='log-scroll'><table class='log'><thead><tr>" +
       (showDate ? "<th>Date</th>" : "") +
-      "<th>Start</th><th>Subject</th><th>Min</th><th>Source</th><th></th>" +
+      "<th>Start</th><th>Subject</th><th>Group</th><th>Min</th><th>Source</th><th></th>" +
       "</tr></thead><tbody>" + rows + "</tbody></table></div>";
   }
 
@@ -3275,13 +3687,33 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
             var tl = S.sessions.find(function (x) { return x.id === idL; });
             if (tl) { tl.label = beforeL; save(); renderAll(); }
           });
+        return;
+      }
+      var gi = e.target.closest("[data-edit-group]");
+      if (gi) {
+        var sg = S.sessions.find(function (x) { return x.id === gi.dataset.editGroup; });
+        if (!sg) return;
+        /* Blank is a real answer here, unlike the subject label -- it means
+           "ungrouped", not "missing", so it stays "" rather than falling
+           back to a placeholder name. */
+        var nvg = (gi.value || "").trim();
+        var beforeG = sg.group || "", idG = gi.dataset.editGroup;
+        if (nvg === beforeG) { gi.value = beforeG; return; }
+        sg.group = nvg; gi.value = nvg; awardBadges(); save(); renderAll();
+        toast(nvg
+            ? "Grouped \u201c" + sg.label + "\u201d under \u201c" + nvg + "\u201d."
+            : "Ungrouped \u201c" + sg.label + "\u201d.", "Undo",
+          function () {
+            var tg = S.sessions.find(function (x) { return x.id === idG; });
+            if (tg) { tg.group = beforeG; save(); renderAll(); }
+          });
       }
     });
   }
 
   /* ---- RENDER: HISTORY ------------------------------------------------ */
 
-  var heatSelected = null, heatSubject = "";
+  var heatSelected = null, heatSubject = "", heatFocusKey = null;
   var LOG_PAGE = 50, logLimit = LOG_PAGE;
 
   function renderHistory() {
@@ -3304,18 +3736,36 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
        actually counts. */
     var end = todayKey(), start = weekStart(shiftDay(end, -HEAT_DAYS));
 
+    /* Exactly one cell carries tabindex 0 -- the roving stop. It follows
+       whatever you last moved to, falling back to the selected day and then
+       to today, all three of which are always inside the rendered range. */
+    var roving = heatFocusKey || heatSelected || end;
+    var hadFocus = $("heat").contains(document.activeElement);
+
     var cells = [], k = start, guard = 0;
-    while (guard++ < 500) {
+    while (guard++ < HEAT_DAYS + 14) {          // the range plus a partial week
       var mins = byDay[k] || 0;
-      cells.push("<i class='l" + heatLevel(mins, b.cuts) +
-        (k === heatSelected ? " sel" : "") + "' data-k='" + k + "' title='" +
-        esc(fmtDate(k) + " · " + fmtMins(mins)) + "'></i>");
+      var label = fmtDate(k) + " · " + fmtMins(mins);
+      cells.push("<i role='option' aria-selected='" + (k === heatSelected) +
+        "' tabindex='" + (k === roving ? "0" : "-1") +
+        "' class='l" + heatLevel(mins, b.cuts) +
+        (k === heatSelected ? " sel" : "") + "' data-k='" + k +
+        "' aria-label='" + esc(label) + "' title='" + esc(label) + "'></i>");
       if (k === end) break;
       k = shiftDay(k, 1);
     }
+    /* Padding to square off the last column. Not days, so not options. */
     var endRow = (parseKey(end).getDay() + 6) % 7;      // Monday = 0
-    for (var i = endRow + 1; i <= 6; i++) cells.push("<i class='future'></i>");
+    for (var i = endRow + 1; i <= 6; i++)
+      cells.push("<i class='future' aria-hidden='true'></i>");
     $("heat").innerHTML = cells.join("");
+
+    /* innerHTML threw away the focused element. Put it back, or a keyboard
+       user is dumped to the top of the document on every selection. */
+    if (hadFocus) {
+      var back = $("heat").querySelector("i[tabindex='0']");
+      if (back) back.focus();
+    }
 
     /* Month labels are sized in pixels from the column pitch (13px cell + 3px
        gap) rather than laid out in a grid, because a month is a ragged number
@@ -3410,6 +3860,37 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         "", hasBest ? fmtMins(wd.sums[bi]) + " total on that weekday" : "Not enough data yet"),
       tile("Interrupted", pct + "%", "", interrupted + " of " + S.sessions.length + " sessions")
     ].join("");
+  }
+
+  /* Picking a day changes two cells and one line of text. It used to call
+     renderHistory(), which rewrote the 371-cell grid, the 50-row session
+     table with its 100 inputs, the subject select and the stats tiles -- and
+     the rewrites themselves are cheap (1.3ms and 3.1ms), while the layout
+     they force is not: 7.4ms and 21.8ms. Measured at 63ms per click for work
+     that was identical to what was already on screen.
+
+     Nothing else on History depends on which day is selected, so nothing else
+     is touched. The subject filter still rebuilds -- it changes the shading,
+     which really is every cell. */
+  function selectHeatDay(k) {
+    heatFocusKey = k;
+    heatSelected = (heatSelected === k) ? null : k;
+    var host = $("heat");
+    var target = host.querySelector("i[data-k='" + k + "']");
+
+    var prev = host.querySelector("i.sel");
+    if (prev) { prev.classList.remove("sel"); prev.setAttribute("aria-selected", "false"); }
+    if (heatSelected && target) {
+      target.classList.add("sel"); target.setAttribute("aria-selected", "true");
+    }
+
+    /* The roving tab stop follows a mouse click too, so tabbing back into the
+       grid resumes at the day you last touched rather than wherever the stop
+       happened to be left. */
+    var rover = host.querySelector("i[tabindex='0']");
+    if (rover && target && rover !== target) { rover.tabIndex = -1; target.tabIndex = 0; }
+
+    renderHeatDetail();
   }
 
   function renderHeatDetail() {
@@ -3517,6 +3998,17 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         pad(h) + ":00</option>";
     return o;
   }
+  /* Quarter hours only. A reminder at 19:07 is a setting nobody wants and a
+     select nobody wants to scroll. */
+  function minOpts(sel) {
+    var o = "";
+    [0, 15, 30, 45].forEach(function (m) {
+      o += "<option value='" + m + "'" + (m === sel ? " selected" : "") +
+        ">:" + pad(m) + "</option>";
+    });
+    return o;
+  }
+
   function renderSettings() {
     var s = S.settings;
     $("sWork").value = s.workMin; $("sShort").value = s.shortBreakMin;
@@ -3535,6 +4027,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     $("sNotify").checked = !!s.cues.notify;
     $("sQFrom").innerHTML = hourOpts(s.quietHours.from);
     $("sQTo").innerHTML = hourOpts(s.quietHours.to);
+    $("sRemindOn").checked = !!s.reminder.on;
+    $("sRemindHour").innerHTML = hourOpts(s.reminder.hour);
+    $("sRemindMin").innerHTML = minOpts(s.reminder.min);
     renderSync();
     $("aboutTxt").innerHTML =
       "<strong>Schema v" + S.schemaVersion + ".</strong> Everything is stored in this " +
@@ -3622,7 +4117,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
   function exportCsv() {
-    var head = ["id","dayKey","code","label","startedAt","endedAt","minutes","source","interrupted","note"];
+    var head = ["id","dayKey","code","label","group","startedAt","endedAt","minutes","source","interrupted","note"];
     var rows = [head.join(",")];
     S.sessions.forEach(function (s) {
       rows.push(head.map(function (h) { return csvCell(s[h]); }).join(","));
@@ -3788,6 +4283,13 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     document.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-view]"); if (!b) return;
       show(b.dataset.view);
+      /* <main> already carries tabindex="-1" for exactly this. Without the
+         move, activating History from the keyboard leaves focus on the nav
+         button: nothing announces that the content changed, and the next Tab
+         restarts at the top of the nav rather than entering the view you
+         just asked for. preventScroll because show() has already gone to the
+         top and a second scroll would fight it. */
+      var m = $("main"); if (m) m.focus({ preventScroll: true });
     });
 
     Array.prototype.forEach.call(document.querySelectorAll(".js-themeSeg"),
@@ -3838,12 +4340,15 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     }
 
     $("startBtn").addEventListener("click", function () {
-      if (!T.running) T.phase = "work";
-      T.subject = subjectFrom($("subjInput"));
-      $("subjHint").textContent = "Locked for this block: " + T.subject.label;
+      if (!T.running) { T.phase = "work"; T.quick = false; }
+      T.subject = subjectFrom($("subjInput"), $("groupInput"));
+      $("subjHint").textContent = "Locked for this block: " +
+        (T.subject.group ? T.subject.group + " – " + T.subject.label : T.subject.label);
       msg("timerMsg", "", "");
       startPhase("work");
     });
+
+    $("quickBtn").addEventListener("click", startQuick);
 
     $("pauseBtn").addEventListener("click", function () {
       if (!T.running) return;
@@ -3871,7 +4376,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         return;
       }
       var sec = Math.min(Math.round(accumulatedWorkMs() / 1000),
-        Math.max(1, S.settings.workMin) * 60);
+        workCapMin() * 60);
       clearInterval(T.tick); clearInterval(T.beat);
       if (sec < MIN_SESSION_SEC) {
         stopAll(); renderAll();
@@ -3884,6 +4389,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         dayKey: dayKeyFor(T.startedAt, S.settings.dayBoundaryHour),
         code: null,
         label: T.subject ? T.subject.label : "General study",
+        group: T.subject ? T.subject.group : "",
         startedAt: T.startedAt, endedAt: Date.now(),
         minutes: mins, source: "pomodoro", interrupted: false, note: ""
       });
@@ -3906,15 +4412,15 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       if (sd.getTime() > Date.now()) {
         msg("mMsg", "That start time is in the future.", "err"); return;
       }
-      var sub = subjectFrom($("mSubj"));
+      var sub = subjectFrom($("mSubj"), $("mGroup"));
       addSession({
         id: newId(),
         dayKey: dayKeyFor(sd.getTime(), S.settings.dayBoundaryHour),
-        code: null, label: sub.label,
+        code: null, label: sub.label, group: sub.group,
         startedAt: sd.getTime(), endedAt: ed.getTime(),
         minutes: mins, source: "manual", interrupted: false, note: ""
       });
-      $("mStart").value = ""; $("mEnd").value = ""; $("mSubj").value = "";
+      $("mStart").value = ""; $("mEnd").value = ""; $("mSubj").value = ""; $("mGroup").value = "";
       renderAll();
       msg("mMsg", "Added " + fmtMins(mins) + ".", "ok");
     });
@@ -3971,7 +4477,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         var on = $(p[0]).checked;
         S.settings.cues[p[1]] = on;
         save();
-        if (p[1] === "notify" && on && window.Notification) {
+        if (p[1] === "notify" && on && window.__TAURI__) {
+          /* Desktop shell: the native plugin grants unconditionally on
+             Linux/Windows, so there is no browser prompt to raise. */
+          try { window.__TAURI__.core.invoke("plugin:notification|request_permission"); } catch (e) {}
+          msg("cueMsg", "Notifications on.", "ok");
+        } else if (p[1] === "notify" && on && window.Notification) {
           if (Notification.permission === "granted") msg("cueMsg", "Notifications on.", "ok");
           else if (Notification.permission === "denied") {
             S.settings.cues.notify = false; $(p[0]).checked = false; save();
@@ -3987,11 +4498,53 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         }
       });
     });
+    /* Desktop shell only: the installed binary is a snapshot of index.html
+       taken at the last `cargo build`, so it goes stale the moment this file
+       changes again. run_update shells out to copy-assets.sh + cargo build
+       --release + install.sh (see src-tauri/src/main.rs); relaunch swaps the
+       running process for the freshly installed one. */
+    if (window.__TAURI__) {
+      $("updateCard").hidden = false;
+      $("updateBtn").addEventListener("click", function () {
+        $("updateBtn").disabled = true;
+        msg("updateMsg", "Building — this can take a minute…");
+        window.__TAURI__.core.invoke("run_update").then(function () {
+          $("updateBtn").disabled = false;
+          msg("updateMsg", "Updated.", "ok");
+          toast("Study Tracker updated.", "Relaunch now", function () {
+            window.__TAURI__.core.invoke("relaunch");
+          });
+        }, function (err) {
+          $("updateBtn").disabled = false;
+          msg("updateMsg", "Update failed: " + err, "err");
+        });
+      });
+    }
+
     $("sQFrom").addEventListener("change", function () {
       S.settings.quietHours.from = +this.value; save();
     });
     $("sQTo").addEventListener("change", function () {
       S.settings.quietHours.to = +this.value; save();
+    });
+
+    /* Every change here clears nudgedOn: moving the time, or switching it on
+       part-way through a day, should get you today's reminder rather than
+       silently skipping to tomorrow because an earlier setting had already
+       marked the day spent. */
+    $("sRemindOn").addEventListener("change", function () {
+      S.settings.reminder.on = this.checked;
+      S.nudgedOn = null; save();
+      msg("cueMsg", this.checked
+        ? "Reminder on. The banner always works; the notification needs a tab " +
+          "open and the Notification switch above."
+        : "Reminder off.", this.checked ? "ok" : "");
+    });
+    $("sRemindHour").addEventListener("change", function () {
+      S.settings.reminder.hour = +this.value; S.nudgedOn = null; save();
+    });
+    $("sRemindMin").addEventListener("change", function () {
+      S.settings.reminder.min = +this.value; S.nudgedOn = null; save();
     });
     $("testCue").addEventListener("click", function () {
       cue("work");
@@ -4078,8 +4631,28 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     /* -- heatmap -- */
     $("heat").addEventListener("click", function (e) {
       var c = e.target.closest("i[data-k]"); if (!c) return;
-      heatSelected = (heatSelected === c.dataset.k) ? null : c.dataset.k;
-      renderHistory();
+      selectHeatDay(c.dataset.k);
+    });
+
+    /* Columns are weeks and rows are weekdays, so left/right is a week and
+       up/down is a day -- which is what the layout looks like it should do.
+       DOM order is chronological, so that is index +/-7 and +/-1. */
+    $("heat").addEventListener("keydown", function (e) {
+      var c = e.target.closest("i[data-k]"); if (!c) return;
+      var all = [].slice.call(this.querySelectorAll("i[data-k]"));
+      var i = all.indexOf(c), to = i;
+      if (e.key === "ArrowUp") to = i - 1;
+      else if (e.key === "ArrowDown") to = i + 1;
+      else if (e.key === "ArrowLeft") to = i - 7;
+      else if (e.key === "ArrowRight") to = i + 7;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = all.length - 1;
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); c.click(); return; }
+      else return;
+      e.preventDefault();
+      if (to < 0 || to >= all.length) return;
+      heatFocusKey = all[to].dataset.k;
+      c.tabIndex = -1; all[to].tabIndex = 0; all[to].focus();
     });
     $("heatFilter").addEventListener("change", function () {
       heatSubject = this.value; renderHistory();
@@ -4101,6 +4674,35 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
     show("today");
     renderSettings();
+
+    /* The catch-up half, run once the views can render. */
+    if (reminderDue()) fireReminder();
+
+    /* Today is otherwise repainted only by a user action or a running timer,
+       so "ends in 3h 20m" would freeze the moment you stopped touching the
+       page, and a reminder in a tab left open would never fire at all. Only
+       the streak tile is repainted: rebuilding the whole view once a minute
+       would wipe out an inline session edit mid-keystroke.
+
+       The exception is the day rolling over underneath an open tab. Every
+       number on Today is keyed to todayKey(), so at 00:01 the session list,
+       the day total, the goal ring and the sidebar all still describe
+       yesterday -- and #mDate still defaults to it, which quietly logs a
+       manual entry to the wrong day. That is the one failure this app is
+       built to not have, so a changed key forces the full repaint. */
+    var tickDay = todayKey();
+    setInterval(function () {
+      var k = todayKey();
+      if (k !== tickDay) {
+        /* Only if it was still sitting on the default. Someone who set it to
+           a past day on purpose keeps that choice. */
+        if ($("mDate").value === tickDay) $("mDate").value = k;
+        tickDay = k;
+        renderAll();
+      }
+      if (reminderDue()) fireReminder();
+      if (currentView === "today") { renderStreakTile(); renderNextBadge(); }
+    }, SLOW_TICK_MS);
 
     /* Started last, after every view can render: the first pull replaces S
        wholesale, so the callback has to be able to repaint the whole app. */
@@ -4126,6 +4728,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     levelFor: levelFor, xpForLevel: xpForLevel, badgeProgress: badgeProgress,
     migrate: migrate, exportCsv: exportCsv, BADGES: BADGES,
     PALETTES: PALETTES, resolvedMode: resolvedMode, companionMood: companionMood,
+    streakRisk: streakRisk, hoursToBoundary: hoursToBoundary,
+    nearestBadge: nearestBadge, reminderDue: reminderDue, reminderAt: reminderAt,
+    workCapMin: workCapMin, timer: function () { return T; },
     resolvedPalette: function () { return resolvedPalette().id; }
   };
 

@@ -5,6 +5,14 @@ index.backup-*.html
 # integration that is planned rather than shipped. Delete this line to publish it.
 PLAN-study-tracker.md
 
+# Tauri desktop shell build output and generated files — never committed.
+# The shell sources (Cargo.toml, src/, *.sh, tauri.conf.json, capabilities/)
+# are committed; everything Tauri generates or compiles is not.
+src-tauri/target/
+src-tauri/gen/
+src-tauri/icons/
+src-tauri/dist/
+
 # Editor / OS
 .DS_Store
 *.swp
