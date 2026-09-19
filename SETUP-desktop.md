@@ -19,7 +19,7 @@ out of scope.
 |---|---|
 | `src-tauri/tauri.conf.json` | window (1200×900), `frontendDist: dist`, bundle targets |
 | `src-tauri/Cargo.toml` | Rust deps: `tauri` + `tauri-plugin-notification`. No app logic |
-| `src-tauri/src/main.rs` | the native window, the tray, close-to-tray, `run_update`/`relaunch`. ~125 lines |
+| `src-tauri/src/main.rs` | the native window, the tray, close-to-tray, runtime-resolved project root, `run_update`/`relaunch` |
 | `src-tauri/capabilities/default.json` | window show/hide/focus + notification permissions |
 | `src-tauri/copy-assets.sh` | copies `index.html` + manifest + `sw.js` + `icon.svg` into `dist/` |
 | `src-tauri/install.sh` | drops the built binary + `.desktop` entry into `~/.local` (Linux) |
@@ -41,6 +41,29 @@ first place, and looks for `cargo` on `PATH` first, then
 `~/.cargo/bin/cargo` (a GUI launch often doesn't inherit a login shell's
 `PATH`) — anything more exotic than a stock rustup install still needs the
 terminal path below.
+
+## If you move the project folder
+
+**Move or rename the folder and the Update button stops working until you re-run
+`install.sh` from the new location.** The updater has to know where the source
+tree is, and the path it was compiled with is dead the moment the folder moves.
+So it resolves the root at runtime, in this order:
+
+| Order | Source | When it wins |
+|---|---|---|
+| 1 | `$STUDY_TRACKER_ROOT` | you set it before launching — escape hatch, no rebuild |
+| 2 | `~/.local/share/study-tracker/source-root` | written by `install.sh` on every install |
+| 3 | the compile-time `CARGO_MANIFEST_DIR` | the folder never moved |
+
+A candidate only counts if it actually contains `src-tauri/Cargo.toml`, so a
+stale or half-moved path is skipped rather than used. If none match, the
+Settings card names the dead path and both fixes instead of failing later.
+
+This existed as a bug: moving the project produced `Update failed: couldn't
+start sh: No such file or directory`, which is `std::process::Command`
+reporting a **missing working directory** as ENOENT against the *program name*.
+`sh` was never the problem. `run_step` now checks the directory before
+spawning, so that error can't mislead again.
 
 ## Build and install (Linux)
 

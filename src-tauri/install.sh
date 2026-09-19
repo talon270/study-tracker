@@ -35,6 +35,15 @@ Categories=Utility;Education;
 StartupWMClass=Study Tracker
 EOF
 
+# Record where this install came from, so the in-app updater can find the
+# source tree at runtime instead of trusting the path baked into the binary at
+# compile time. Move the project and the updater breaks until this is rewritten:
+# re-run install.sh from the new location and the updater follows, no rebuild
+# needed. See project_root() in src-tauri/src/main.rs.
+STATEDIR="$HOME/.local/share/study-tracker"
+mkdir -p "$STATEDIR"
+printf '%s\n' "$ROOT" > "$STATEDIR/source-root"
+
 # Refresh the menu/icon caches so it appears without a re-login.
 update-desktop-database "$APPS" 2>/dev/null || true
 gtk-update-icon-cache -f -t "$ICONBASE" 2>/dev/null || true
