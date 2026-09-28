@@ -220,6 +220,26 @@ either device has it. Only settings and badges use a timestamp, and only because
 half-merged settings mean nothing; badges take the *earlier* of two timestamps,
 because a badge was earned when it was first earned.
 
+**A union can't delete, so deletes leave a tombstone.** Union by id alone made a
+deleted session indistinguishable from one the other device hadn't sent yet: delete
+on the laptop, open the phone, and it was back on both — cloud 3 → 2 → 3, measured.
+A delete now records `id → when`, and a session is dropped on merge only if it
+wasn't edited after that moment. Undo stamps the session fresh, which is why an
+undone delete survives even a device that already pulled the tombstone, and a
+restored backup does the same, because restoring means "I want these back".
+
+**The copy edited last wins, not the device saved last.** v6 kept whichever whole
+blob was newer, so a phone that changed its daily goal offline and then reconnected
+reverted a 25 → 50 minute edit made on the laptop, on every device. Each session
+now carries its own `editedAt`; sessions from before v7 tie at 0 and merge exactly
+as they used to.
+
+**"Delete everything" with sync on clears this browser and signs out.** Left
+signed in, it uploaded an empty log and then the other device put everything back
+while the message said "Everything deleted". Making it propagate instead would
+let one button erase every copy you have, so it doesn't — the message says the
+cloud and your other devices are untouched.
+
 **Syncing is not editing.** The timestamp that decides a settings conflict is
 stamped by real changes only, never by the sync itself or by the timer's 15-second
 heartbeat. Stamping it on sync looks harmless and is not: a laptop that merely had

@@ -1922,7 +1922,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* ---- CONSTANTS ------------------------------------------------------ */
 
   var KEY = "studyTracker.v1";
-  var SCHEMA_VERSION = 6;   // v3 adds showCompanion. The generic default-fill in
+  var SCHEMA_VERSION = 7;   // v3 adds showCompanion. The generic default-fill in
                             // migrate() already backfills any key missing from an
                             // older blob, so no new migration branch was needed --
                             // only DEFAULTS changed, which is why the bump is here
@@ -1942,6 +1942,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
                             // "", which subjKey() falls back from to the label alone,
                             // so nothing already logged changes its grouping until you
                             // set one.
+                            // v7 adds per-session editedAt and a `deleted` map of
+                            // tombstones, so sync can tell "deleted here" from "not
+                            // seen yet" and "edited here" from "stale copy there".
+                            // Pre-v7 sessions get editedAt 0 and deleted {}, which
+                            // merges exactly as v6 did until something is edited.
 
   /* Sync credentials live in their own key, deliberately not inside KEY. Two
      reasons, both load-bearing: the state blob is what gets uploaded, so
@@ -2074,6 +2079,8 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       sessions: [],
       badges: {},
       activeSession: null,
+      /* id -> when it was deleted. Synced, never shown. See mergeStates(). */
+      deleted: {},
       /* Which dayKey the reminder has already fired on. Device-local for the
          same reason activeSession is: whether this laptop showed you a banner
          is not news your phone wants, and syncing it would silently swallow
@@ -2118,7 +2125,8 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           minutes: Math.max(0, Math.round(Number(x.minutes) || 0)),
           source: x.source === "manual" ? "manual" : "pomodoro",
           interrupted: !!x.interrupted,
-          note: x.note || ""
+          note: x.note || "",
+          editedAt: Number(x.editedAt) || 0
         };
       }).filter(function (x) { return x.minutes > 0; });
       s.sessions.forEach(function (x) {
@@ -2150,6 +2158,12 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         s.settings.themeMode = DEFAULTS.themeMode;
     }
     if (raw.badges && typeof raw.badges === "object") s.badges = raw.badges;
+    if (raw.deleted && typeof raw.deleted === "object") {
+      Object.keys(raw.deleted).forEach(function (id) {
+        var t = Number(raw.deleted[id]);
+        if (t > 0) s.deleted[id] = t;
+      });
+    }
     if (raw.activeSession && typeof raw.activeSession === "object") s.activeSession = raw.activeSession;
     if (typeof raw.nudgedOn === "string") s.nudgedOn = raw.nudgedOn;
     s.updatedAt = Number(raw.updatedAt) || 0;
@@ -2394,15 +2408,35 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
       var out = JSON.parse(JSON.stringify(newer));
 
+      /* Per session, the copy edited last wins -- not the copy from whichever
+         whole blob was saved last. Blob order was the v6 rule, and it let a
+         device that came back online after changing any unrelated setting
+         revert an edit made elsewhere with its stale copy. Unstamped (pre-v7)
+         copies tie at 0 and fall back to that old rule. */
       var byId = {}, order = [];
       [older, newer].forEach(function (side) {
         (side.sessions || []).forEach(function (s) {
           if (!s || !s.id) return;
-          if (byId[s.id] === undefined) order.push(s.id);
-          byId[s.id] = s;                     // newer side overwrites on collision
+          var had = byId[s.id];
+          if (had === undefined) order.push(s.id);
+          if (!had || (Number(s.editedAt) || 0) >= (Number(had.editedAt) || 0))
+            byId[s.id] = s;
         });
       });
-      out.sessions = order.map(function (id) { return byId[id]; });
+
+      /* Union alone can't delete: a session removed here looks exactly like
+         one the other device hasn't sent yet, so it came straight back. A
+         tombstone drops it -- unless that session was edited after the
+         delete, which is what Undo does, so an undone delete survives even a
+         device that already pulled the tombstone. */
+      out.deleted = {};
+      [older.deleted || {}, newer.deleted || {}].forEach(function (d) {
+        Object.keys(d).forEach(function (id) {
+          out.deleted[id] = Math.max(out.deleted[id] || 0, Number(d[id]) || 0);
+        });
+      });
+      out.sessions = order.map(function (id) { return byId[id]; })
+        .filter(function (s) { return !(out.deleted[s.id] >= (Number(s.editedAt) || 0)); });
 
       out.badges = {};
       [newer.badges || {}, older.badges || {}].forEach(function (b) {
@@ -2562,8 +2596,16 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   /* ---- SESSIONS ------------------------------------------------------- */
 
+  /* Every change to a session stamps it, so a merge can tell which copy is
+     the latest edit. One helper so a new edit site can't forget. */
+  function touch(s) { s.editedAt = Date.now(); }
+
+  /* Also the Undo path for a delete: the fresh stamp outranks the tombstone
+     that delete left, on this device and on any that already pulled it. */
   function addSession(rec) {
     rec.group = typeof rec.group === "string" ? rec.group : "";
+    touch(rec);
+    delete S.deleted[rec.id];
     S.sessions.push(rec);
     S.sessions.sort(function (a, b) { return a.startedAt - b.startedAt; });
     awardBadges();
@@ -2573,6 +2615,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     var i = S.sessions.findIndex(function (s) { return s.id === id; });
     if (i < 0) return null;
     var gone = S.sessions.splice(i, 1)[0];
+    S.deleted[gone.id] = Date.now();
     save();
     return gone;
   }
@@ -2830,13 +2873,18 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
      and the Progress grid spends it rendering "4 more sessions" and "430 more
      hours" at the same size. The closest unearned one is the only one with
      any pull, so it gets a line on the view you actually sit on. */
+  /* Ranked by fraction done, not by `need - have`: the badges count minutes,
+     sessions, days and one-off events, so raw gaps aren't comparable. By raw
+     gap "Early start" (need 1) read "1 to go" forever for anyone who never
+     studies before 08:00 -- 0% done, shown over "Eight in a day" at 5/8. */
   function nearestBadge() {
     var prog = badgeProgress(), best = null;
     BADGES.forEach(function (b) {
       if (S.badges[b.id]) return;
       var have = prog[b.id] || 0, left = b.need - have;
       if (left <= 0) return;                   // awarded on the next pass
-      if (!best || left < best.left) best = { b: b, have: have, left: left };
+      if (!best || have / b.need > best.have / best.b.need)
+        best = { b: b, have: have, left: left };
     });
     return best;
   }
@@ -3664,10 +3712,10 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         if (!s) return;
         var v = Math.max(1, Math.min(1440, Math.round(Number(i.value) || 0)));
         var before = s.minutes, id = i.dataset.edit;
-        s.minutes = v; awardBadges(); save(); renderAll();
+        s.minutes = v; touch(s); awardBadges(); save(); renderAll();
         toast("Changed " + before + " min to " + v + " min.", "Undo", function () {
           var t = S.sessions.find(function (x) { return x.id === id; });
-          if (t) { t.minutes = before; save(); renderAll(); }
+          if (t) { t.minutes = before; touch(t); save(); renderAll(); }
         });
         return;
       }
@@ -3681,11 +3729,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         var nv = (li.value || "").trim() || "General study";
         var beforeL = sl.label, idL = li.dataset.editLabel;
         if (nv === beforeL) { li.value = beforeL; return; }
-        sl.label = nv; li.value = nv; awardBadges(); save(); renderAll();
+        sl.label = nv; touch(sl); li.value = nv; awardBadges(); save(); renderAll();
         toast("Renamed \u201c" + beforeL + "\u201d to \u201c" + nv + "\u201d.", "Undo",
           function () {
             var tl = S.sessions.find(function (x) { return x.id === idL; });
-            if (tl) { tl.label = beforeL; save(); renderAll(); }
+            if (tl) { tl.label = beforeL; touch(tl); save(); renderAll(); }
           });
         return;
       }
@@ -3699,13 +3747,13 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         var nvg = (gi.value || "").trim();
         var beforeG = sg.group || "", idG = gi.dataset.editGroup;
         if (nvg === beforeG) { gi.value = beforeG; return; }
-        sg.group = nvg; gi.value = nvg; awardBadges(); save(); renderAll();
+        sg.group = nvg; touch(sg); gi.value = nvg; awardBadges(); save(); renderAll();
         toast(nvg
             ? "Grouped \u201c" + sg.label + "\u201d under \u201c" + nvg + "\u201d."
             : "Ungrouped \u201c" + sg.label + "\u201d.", "Undo",
           function () {
             var tg = S.sessions.find(function (x) { return x.id === idG; });
-            if (tg) { tg.group = beforeG; save(); renderAll(); }
+            if (tg) { tg.group = beforeG; touch(tg); save(); renderAll(); }
           });
       }
     });
@@ -4142,6 +4190,13 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     });
     window.scrollTo({ top: 0, behavior: "instant" in document.body.style ? "instant" : "auto" });
     renderAll();
+    /* On a phone the heatmap is wider than its card, and a scroller opens on
+       its left edge -- a year ago, with today off-screen. Scrolled to the
+       recent end on entry only, so a manual scroll survives picking a day. */
+    if (v === "history") {
+      var hs = document.querySelector(".heat-scroll");
+      if (hs) hs.scrollLeft = hs.scrollWidth;
+    }
   }
   function renderAll() {
     renderTimer();
@@ -4573,6 +4628,10 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         var before = JSON.parse(JSON.stringify(S));
         try {
           S = migrate(JSON.parse(fr.result));
+          /* Restoring means "I want these back". Stamped now, they outrank any
+             tombstone a synced device holds for a session deleted since the
+             backup was taken -- otherwise the next sync would re-delete them. */
+          S.sessions.forEach(touch);
           awardBadges(true);
           save(); applyTheme(); renderAll(); renderSettings();
           msg("dataMsg", "Restored " + S.sessions.length + " session(s).", "ok");
@@ -4586,13 +4645,25 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       fr.readAsText(f);
       this.value = "";
     });
+    /* With sync on, this clears this browser and signs out -- it never
+       reaches the cloud or another device. Left signed in, the other devices
+       put every session straight back on the next sync while the message
+       said "Everything deleted", and a wipe that did propagate would let one
+       button erase every copy you have. Signing out comes before save(), or
+       the debounced push would upload the empty log. */
     $("wipeBtn").addEventListener("click", function () {
       var before = JSON.parse(JSON.stringify(S));
+      var wasSynced = Sync.signedIn();
+      if (wasSynced) { Sync.signOut(); renderSync(); }
       S = blank(); save(); applyTheme(); renderAll(); renderSettings();
-      msg("wipeMsg", "Everything deleted.", "");
+      msg("wipeMsg", wasSynced
+        ? "Deleted from this browser and signed out of sync. The cloud copy and your other devices are untouched."
+        : "Everything deleted.", "");
       toast("Deleted everything.", "Undo", function () {
         S = before; save(); applyTheme(); renderAll(); renderSettings();
-        msg("wipeMsg", "Restored.", "ok");
+        msg("wipeMsg", wasSynced
+          ? "Restored. Sync stays signed out — sign in again under Cloud sync."
+          : "Restored.", "ok");
       });
     });
 

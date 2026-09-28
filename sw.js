@@ -3,7 +3,7 @@
    a stale shell is always better than a blank page. Bump CACHE on release. */
 "use strict";
 
-var CACHE = "study-tracker-v11";  // bumped: instant day-select, exact streak bound, view focus
+var CACHE = "study-tracker-v12";  // bumped: sync tombstones + per-session edit stamps (schema 7)
 var ASSETS = [
   "./",
   "./index.html",
