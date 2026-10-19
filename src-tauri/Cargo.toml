@@ -4,13 +4,36 @@ version = "1.0.0"
 edition = "2021"
 description = "Study Tracker desktop shell"
 
+[lib]
+name = "study_tracker_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = [] }
 tauri-plugin-notification = "2"
+
+# Desktop-only: no tray on Android/iOS, so it stays off the mobile dependency
+# graph entirely rather than being pulled in and left unused.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+
+# Android release builds forward nothing from `console` to logcat, so the only
+# way to see JS errors on the phone is the WebView inspector over adb
+# (PLAN-android.md B3).
+# ponytail: devtools stay on through B9's on-device checks; drop after if unwanted.
+[target.'cfg(target_os = "android")'.dependencies]
+tauri = { version = "2", features = ["devtools"] }
 
 # ponytail: skeleton shell only — no Rust-side logic. All app behaviour stays
 # in the existing index.html. Rust exists here purely to be the native window,
 # the tray, and the notification bridge, the same shape as Helth/src-tauri.
+
+# Vendored fork of the notification plugin: its Android builder gains the
+# countdown/tap-routing/alarm fixes (PLAN-android.md A5, A2). Copied, not a
+# path dependency into Helth's tree — that breaks the moment Helth checks out
+# a branch where its copy doesn't exist.
+[patch.crates-io]
+tauri-plugin-notification = { path = "plugins/notification" }

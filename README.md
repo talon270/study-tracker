@@ -45,6 +45,7 @@ and installable-app behaviour.
 | 26 palettes | 5 light, 21 dark. Mode and palette are separate choices |
 | Backup and export | Full JSON backup, CSV of every session, restore, and an undo on every destructive action |
 | Cloud sync (optional) | Phone and laptop share one log through your own Supabase project. Off by default — see [`SETUP-sync.md`](SETUP-sync.md) |
+| Android app (sideloaded) | Block-end, break-end and reminder alarms that ring with the app closed, and a full-screen focus face. See [`SETUP-android.md`](SETUP-android.md) |
 
 ## The things most study trackers get wrong
 
@@ -61,6 +62,22 @@ and you reopen it at 22:00, the naive fix credits eight hours. This one credits
 at most one configured focus block, writes `Recovered after the app closed
 mid-session` into the note, and shows a banner with a Delete button. A tracker
 that can invent time is worse than one that loses it.
+
+**On a phone, a killed app is the normal case, so the phone restores the timer
+instead of recovering from a crash.** Recovery trusts a 15-second heartbeat,
+and Android freezes the page within seconds of the screen going off. Press
+Start, lock the phone, and if Android needs the memory before you unlock it,
+the heartbeat last saw 30 seconds — under the 60-second floor. The block you
+sat through for 25 minutes logged **nothing**. The phone now stores the block's
+`endAt` at every start, pause and resume, and on open it picks up where the
+wall clock says it is: still running with 13.0 minutes left, or finished and
+logged in full, ending at 25.0 rather than whenever you happened to unlock.
+The banner says it finished while the app was closed and offers Delete, because
+the app didn't watch you stop early and won't pretend it did. That's the same
+credit a frozen-but-alive page already got; a killed app now gets it too. The
+browser and desktop keep heartbeat recovery, where closing the window is
+something you did. The numbers are Playwright on a fake clock with an Android
+user agent, not a phone. The on-device run (PLAN-android.md B7) is still to do.
 
 **The streak tile reads the clock, and refuses to overstate the stake.** Every
 other number in the app describes time already logged, which means none of them
@@ -93,6 +110,28 @@ reminder to do what you already did is noise — and it fires at most once per
 day. The time it fires at belongs to the *logical* day, so with the boundary at
 05:00 a 19:00 reminder is seven hours overdue at 02:00, not seventeen hours
 early.
+
+**On the phone, the reminder says how old its knowledge is.** The Android app
+hands the next 7 days of reminders to Android as alarms, so they ring with the
+app closed — and with no JS running, nothing can check the log at 19:00. Study
+on the laptop at 15:00, leave the phone untouched, and a reminder reading
+"Nothing logged today" would be false. It reads *"Nothing logged today as of
+Mon 14:32, when this phone last synced"* instead, which is true whatever
+happened since. Opening the app syncs, and a day that now has a session drops
+its alarm. Whether the phone rings at all is a per-device choice, kept in
+`studyTracker.device.v1` beside the sync credentials: never uploaded, never in
+a backup, and never written on desktop, so switching it off on the phone
+can't silence the laptop.
+
+**One event, one alert.** With the phone's alarms armed and the app open, a
+block's end would otherwise arrive three times: Android's heads-up, the page's
+beep, and the page's own notification. One function, `nativeOwnsAlerts()`,
+answers "does Android ring for this?" and both sides read it — the alarm
+planner arms only when it's true, `cue()` stays quiet only when it's true. Any
+rule split across two places would eventually let a block end with two alerts
+or none. Deny the permission or switch notifications off and the page's beep
+comes back, because no alarm is armed to replace it. The badge cue has no alarm
+and keeps its beep either way, and Settings' Test button is never silenced.
 
 **Whether this device already nudged you is not news your phone wants.**
 `nudgedOn` sits beside `activeSession` on the list of things stripped from every

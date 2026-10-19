@@ -615,8 +615,11 @@ svg.i{display:inline-block; vertical-align:middle; flex:0 0 auto;
   text-transform:uppercase; color:var(--text-dim); padding:0 var(--s2)}
 
 .topbar{
-  display:none; position:sticky; top:0; z-index:65; height:var(--topbar-h);
-  align-items:center; gap:var(--s3); padding-inline:var(--s4);
+  display:none; position:sticky; top:0; z-index:65;
+  /* A10: the Android shell draws edge-to-edge, so the status bar sits over
+     the top 48px. 0 in a browser and on desktop. */
+  height:calc(var(--topbar-h) + env(safe-area-inset-top,0px));
+  padding-top:env(safe-area-inset-top,0px); align-items:center; gap:var(--s3); padding-inline:var(--s4);
   background:color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--border);
@@ -869,6 +872,14 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .empty{border:1px dashed var(--line-strong); border-radius:var(--r-lg);
   padding:var(--s8) var(--s5); text-align:center; color:var(--text-dim);
   font-size:13px; line-height:1.6}
+/* The History empty state's hourglass (the hairline block before the app
+   script). It sets no colour of its own: these map its five stroke weights
+   onto the theme tokens, and its plate is the card it sits on. */
+.empty__figure{width:min(220px,100%); margin:calc(-1 * var(--s5)) auto var(--s2);
+  --hairline-plate:var(--surface); --hairline-hi:var(--text-strong); --hairline-edge:var(--text-dim);
+  --hairline-mid:var(--line-strong); --hairline-lo:var(--border)}
+.empty__figure .hl-read{position:absolute; top:4px; right:6px; pointer-events:none;
+  font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-dim)}
 
 /* ---------------------------------------------------------------------
    5 · MODULES
@@ -891,7 +902,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 .timer__ring{display:block; grid-area:1/1}
 .timer__ring .trk{fill:none; stroke:var(--line-strong); opacity:.55}
 .timer__ring .arc{fill:none; stroke:var(--accent); stroke-linecap:round;
-  transition:stroke-dasharray .2s linear, stroke var(--slow)}
+  transition:stroke var(--slow)}
 .timer__ring .arc.break{stroke:var(--good)}
 .timer__ring .arc.paused{stroke:var(--line-strong)}
 .timer__mid{grid-area:1/1; display:flex; flex-direction:column;
@@ -1253,6 +1264,98 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   .week__m{font-size:9px}
   .palettes{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
 }
+/* --- This phone card and the first-run card (Android only) --- */
+.prow{display:flex; align-items:flex-start; justify-content:space-between;
+  gap:var(--s3); padding:var(--s3) 0; border-top:1px solid var(--border)}
+.prow:first-child{border-top:0}
+.prow__t{font-size:13.5px; font-weight:600}
+.prow .btn{flex:0 0 auto}
+.prow__s{margin-top:2px}
+.prow__s.ok{color:var(--good)}
+.prow__s.warn{color:var(--warn)}
+.fr-item{display:flex; flex-direction:column; gap:4px; margin-top:var(--s3)}
+
+/* --- focus face (Android; PLAN-android.md Part C, A12) ---
+   Nothing's own faces are asked for by name and never shipped: local() reads
+   the copies already in the phone's /system/fonts. The last src is Doto
+   (SIL OFL 1.1, vendor/doto/OFL.txt), embedded so the single file stays
+   single. Every other phone gets Doto; a phone where even that fails gets
+   the mono stack. */
+@font-face{
+  font-family:"ST Ndot"; font-weight:400; font-style:normal; font-display:swap;
+  src:local("Ndot 57 Aligned"), local("Ndot-57-Aligned"),
+      local("Ndot55Caps"), local("Ndot55CapsRegular"),
+      url(data:font/woff2;base64,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) format("woff2");
+}
+@font-face{
+  font-family:"ST Lettera"; font-weight:400; font-style:normal;
+  src:local("Lettera Mono LL"), local("LetteraMonoLL-Regular");
+}
+/* True black is the AOD it stands in for and costs nothing on OLED. The
+   colours are the dark palette's own tokens, as Today uses them. In a light
+   mode those tokens are dark-on-light, so the face falls back to Pine's dark
+   values instead: a light phone must not get a white screen held awake. */
+.face{
+  --f-text:var(--text-strong); --f-dim:var(--text-dim);
+  --f-accent:var(--accent); --f-good:var(--good); --f-line:var(--line-strong);
+  --f-digits:"ST Ndot", var(--mono); --f-label:"ST Lettera", var(--mono);
+  position:fixed; inset:0; z-index:200; background:#000; color:var(--f-text);
+  font-family:var(--f-label); font-synthesis:none; overflow:hidden;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+  -webkit-touch-callout:none}
+:root[data-mode="light"] .face{
+  --f-text:#F6F4EF; --f-dim:#9C9A92;
+  --f-accent:#1D9E75; --f-good:#5DCAA5; --f-line:#3E424A}
+.face__inner{position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; padding:calc(48px + env(safe-area-inset-top,0px)) var(--s5)
+  calc(40px + env(safe-area-inset-bottom,0px))}
+.face__clock{font-size:15px; letter-spacing:.14em; color:var(--f-dim); min-height:15px}
+.face__dial{position:relative; display:grid; place-items:center;
+  width:min(84vw, 46dvh); aspect-ratio:1; margin-top:14dvh}
+.face__ring{grid-area:1/1; width:100%; height:100%; display:block}
+.face__ring .trk{fill:none; stroke:var(--f-line); opacity:.55}
+.face__ring .arc{fill:none; stroke:var(--f-accent); stroke-linecap:round;
+  transition:stroke var(--slow)}
+.face__ring .arc.break{stroke:var(--f-good)}
+.face__ring .arc.paused{stroke:var(--f-line)}
+.face__mid{grid-area:1/1; display:flex; flex-direction:column; align-items:center;
+  gap:10px; pointer-events:none}
+/* One fixed cell per character: Ndot 55 has no tabular figures, so a 1 is
+   narrower than a 0 and the time would breathe. Sizes come from fitFace(). */
+.face__digits{display:flex; justify-content:center; font-family:var(--f-digits);
+  font-weight:400; line-height:1; white-space:nowrap; color:var(--f-text);
+  font-size:var(--dsz,56px)}
+.face__digits span{display:block; width:var(--cell,.62em); flex:0 0 auto}
+.face__digits span.colon{width:var(--colw,.3em)}
+.face:not(.face--fit) .face__digits{visibility:hidden}
+.face[data-state="idle"] .face__digits,
+.face[data-state="paused"] .face__digits{color:var(--f-dim)}
+.face__sub{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--f-dim)}
+.face__meta{margin-top:var(--s6); font-size:13px; line-height:1.5; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--f-dim); text-align:center; min-height:20px}
+.face__meta b{color:var(--f-text); font-weight:400}
+.face .roundchips{margin-top:var(--s4)}
+.face .roundchips i{background:var(--f-line)}
+.face .roundchips i.on, .face .roundchips i.now{background:var(--f-accent)}
+.face__note{margin-top:var(--s3); font-size:12px; letter-spacing:.06em; color:var(--f-dim);
+  text-align:center; min-height:16px}
+.face__ctl{transition:opacity var(--slow)}
+.face__acts{position:absolute; left:0; right:0; bottom:calc(40px + env(safe-area-inset-bottom,0px));
+  display:flex; justify-content:space-between; padding:0 var(--s8)}
+.face__btn{background:none; border:0; color:var(--f-text); font:inherit; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; padding:var(--s3); cursor:pointer}
+.face__btn:focus-visible, .face__close:focus-visible{outline:2px solid var(--ring-focus); outline-offset:2px}
+.face__close{position:absolute; top:calc(24px + env(safe-area-inset-top,0px)); right:var(--s4);
+  width:44px; height:44px; display:grid; place-items:center; background:none; border:0;
+  color:var(--f-dim); cursor:pointer}
+.face__close svg{width:22px; height:22px}
+/* Controls fade after FACE_QUIET_MS without a touch; while faded they are
+   inert, so the touch that wakes them can't also press Stop. */
+.face--quiet .face__ctl{opacity:0; pointer-events:none}
+.timer__dial.is-face-entry{cursor:pointer}
+@media (prefers-reduced-motion:reduce){
+  .face__ring .arc, .face__ctl{transition:none !important}
+}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;
     transition-duration:.001ms !important; scroll-behavior:auto !important}
@@ -1379,6 +1482,34 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       <h1>What are you working on?</h1>
       <p>A block only counts the time it was actually running. Pauses, breaks and
         anything under a minute are never logged as study time.</p>
+    </div>
+
+    <div class="card card--accent" id="firstRun" hidden style="margin-bottom:var(--s4)">
+      <div class="card__head">
+        <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>Set up this phone</span>
+      </div>
+      <p class="card__note">Two suggestions, each ticked for the reason under it.
+        Untick what you don't want. Nothing is switched on until you press Apply,
+        and both stay switchable in Settings under This phone.</p>
+      <div class="fr-item">
+        <label class="switch"><input type="checkbox" id="frAlerts" checked>
+          <span class="switch__track"></span><span class="switch__label">Timer alerts</span></label>
+        <div class="help">Because Android freezes this page seconds after the screen
+          goes off, so a block's end is only heard if an alarm was handed to Android
+          at Start. Apply asks Android for notification permission.</div>
+      </div>
+      <div class="fr-item">
+        <label class="switch"><input type="checkbox" id="frRemind" checked>
+          <span class="switch__track"></span><span class="switch__label" id="frRemindLabel">Daily reminder</span></label>
+        <div class="help">Because a streak only survives a logged minute. It rings
+          with the app closed and says how long ago this phone last synced, since it
+          cannot look at your log when it fires.</div>
+      </div>
+      <div class="row" style="margin-top:var(--s4)">
+        <button class="btn btn--primary btn--sm" id="frApply">Apply</button>
+        <button class="btn btn--sm btn--ghost" id="frSkip">Not now</button>
+      </div>
+      <div class="inline-msg" id="frMsg"></div>
     </div>
 
     <div class="dash">
@@ -1802,6 +1933,25 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         <div class="inline-msg" id="cueMsg"></div>
       </div>
 
+      <div class="card" id="phoneCard" hidden>
+        <div class="card__head">
+          <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>This phone</span>
+        </div>
+        <p class="card__note">What Android has to allow for a block's end and the
+          reminder to arrive with the app closed. These belong to this phone: none
+          of it is synced or in a backup. Where the page cannot read an answer it says so
+          instead of guessing. Tap the ring on Today while a block runs to open the
+          focus face.</p>
+        <div id="phoneRows"></div>
+        <div class="prow">
+          <div><div class="prow__t">Daily reminder on this phone</div>
+            <div class="help prow__s" id="phRemindNote"></div></div>
+          <label class="switch"><input type="checkbox" id="phRemind" aria-label="Daily reminder on this phone">
+            <span class="switch__track"></span></label>
+        </div>
+        <div class="inline-msg" id="phoneMsg"></div>
+      </div>
+
       <div class="card">
         <div class="card__head">
           <span class="card__title"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg>Your data</span>
@@ -1903,9 +2053,669 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 <!-- Every undo in the app is offered here and nowhere else, so a toast that
      is not announced means a screen-reader user is told neither that a session
      was deleted nor that the deletion can be reversed. -->
+<!-- ================= FOCUS FACE (Android; hidden elsewhere) =================
+     The Today ring, full screen. It owns no timer: RING draws #faceArc in the
+     same write as #timerArc, and the buttons click Today's own. -->
+<div class="face" id="face" role="dialog" aria-label="Focus face" data-state="idle" hidden>
+  <div class="face__inner" id="faceInner">
+    <div class="face__clock" id="faceClock"></div>
+    <div class="face__dial" id="faceDial">
+      <svg class="face__ring" viewBox="0 0 228 228" aria-hidden="true">
+        <circle class="trk" cx="114" cy="114" r="103" stroke-width="8"/>
+        <circle class="arc" id="faceArc" cx="114" cy="114" r="103" stroke-width="8"
+                transform="rotate(-90 114 114)" stroke-dasharray="0 647.2"/>
+      </svg>
+      <div class="face__mid">
+        <div class="face__digits" id="faceDigits" role="timer"></div>
+        <div class="face__sub" id="faceSub"></div>
+      </div>
+    </div>
+    <div class="face__meta" id="faceMeta"></div>
+    <div class="roundchips" id="faceChips"></div>
+    <div class="face__note" id="faceNote"></div>
+    <div class="face__acts face__ctl" id="faceActs">
+      <button type="button" class="face__btn" data-face="pause" id="facePause">Pause</button>
+      <button type="button" class="face__btn" data-face="stop" id="faceStop">Stop</button>
+    </div>
+    <button type="button" class="face__close face__ctl" data-face="close" aria-label="Close focus face">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"><span id="toastMsg" class="grow"></span>
   <button class="btn btn--sm" id="toastAct" hidden></button></div>
 
+<!-- Hairline: the History empty state's hourglass. The kernel is
+     @lucasmarkes/hairline's, unchanged; the host mounts figures into
+     [data-hairline-figure] placeholders. Inline, so this stays one file. -->
+<script id="hl-kernel">
+/* hairline kernel sha256:8e2abcbdf63c7755195ee942c39e9c8ea6a539d1147e986dd1c153559121f075 */
+/*
+ * HL: everything a figure may call. Read this index; the code under it is the
+ * package's src/core, unchanged, and a figure should not need to read it.
+ *
+ * Every figure is drawn in a 400 × 320 viewBox. World space is x/y on the
+ * ground and z up. Plates are filled with the ground colour and painted back
+ * to front, so a nearer one covers a farther one: append in that order. At
+ * the default camera, Cam(45, 0.5, S), +x runs down to the right and +y down
+ * to the left, so the corner with the largest x and y is nearest the viewer:
+ * append by ascending x + y, from the far corner (smallest x and y) to it.
+ *
+ * Camera
+ *   Cam(azDeg, k, S)                       a camera: azimuth in degrees, k = sin(elevation) (0.5 is the 2:1 view), S = scale
+ *   fit(C, points, cx, cy)                 centres the box of [x, y, z] points on (cx, cy); call it once, before proj
+ *                                          it only centres, it never scales: choose S by trying values, with the most extreme pose in points.
+ *                                          The six figures use S 1.42 to 2.12; the boxes they fit come out 230 to 310 wide and 180 to 245 tall
+ *   proj(C)                                returns P(x, y, z), which gives [sx, sy]
+ *   unproj(C, sx, sy, z)                   the world [x, y] under a screen point, on the plane at height z
+ *   facing(C)                              returns front(sample): whether a ring sample faces the camera
+ * Rounded solids
+ *   rrect(u0, v0, u1, v1, r, n)            a rounded rectangle, as a ring of samples {u, v, nu, nv}
+ *   circ(R, n)                             a circle, as a ring
+ *   rings(x0, y0, x1, y1, r, b)            [ring, inner]: a rounded footprint and its crease ring, inset by b
+ *                                          r, the corner radius, is cut to half the shorter side. b, the crease's inset in world units
+ *                                          (0.6 to 2.2 in the figures), must stay under half the shorter side or the crease turns inside out
+ *   prism(P, front, ring, inner, z0, z1)   {sil, crease}: a solid standing from z0 to z1, as two path strings
+ *   ringAt(P, ring, z)                     the ring's points, projected at height z
+ *   run(ring, keep)                        the one cyclic run of samples that pass keep
+ *   hull(points)                           the convex hull of screen points
+ *   extremes(P, ring)                      [left, right, nearest] samples: where dashed drops fall from
+ *   fillet(points, radii, n)               rounds every vertex of a closed polygon; returns the new points
+ *                                          radii is an array, one radius per vertex, each cut to half its shorter edge; a single number gives NaN.
+ *                                          n is the steps round each corner, default 4: each vertex becomes n + 1 points
+ *   ghost(P, front, ring, z0, depth)       a reflection's path {d, y0, y1}; reflect() draws it for you
+ * Paths and numbers
+ *   poly(points)                           a closed path string
+ *   open(points)                           an open polyline string
+ *   seg(a, b)                              one segment between two screen points [sx, sy], as its own subpath; project world points with P first
+ *   clamp(v, a, b)
+ *   lerp(a, b, t)
+ *   rad(deg)
+ *   r2(n)                                  two decimals
+ * The continuous clock: one spring per moving number
+ *   spring(x, opts)                        at rest on x; write .t to retarget; opts {k, c, m, eps}, default k 100, c 18, m 1
+ *   stepS(sp, dt)                          advances by dt seconds; returns whether it is still moving
+ * The discrete clock: a 700ms tween on (.32, .72, 0, 1)
+ *   tween(v, dur)                          at rest on v; dur defaults to 700 (ms)
+ *   tset(tw, to, now, delay)               retargets from where it is, after delay ms: the stagger
+ *                                          the same target again does nothing, so calling it on every pointer move is safe
+ *   tval(tw, now)                          its value at now
+ *   tdone(tw, now)                         whether it has landed
+ *   bezier(x1, y1, x2, y2)                 a CSS cubic-bezier, as a function of progress
+ *   EASE_LIFT                              the lift curve itself
+ *   reducedMotion()                        true when the reader asked for less motion; springs and tweens already land at once
+ *   setReducedMotion(on)                   the loop's business, not a figure's
+ * Drawing
+ *   mk(tag, attrs, parent)                 one svg element: the only way a figure makes a node
+ *   solid(parent)                          {g, sil, cr}: a group holding a silhouette path and a crease path
+ *   put(solid, paths)                      writes prism()'s {sil, crease} into solid()'s {sil, cr}: sil into sil, crease into cr
+ *   flatDot(parent, C, r, cls)             a dot lying on the ground plane; cls is "dot", "dot m" or "dot off"
+ *   place(el, point)                       moves a dot or a circle to [sx, sy]
+ *   reflect(svg, parent, P, front, ring, z0, depth)   a fading mirror under a solid
+ *   fade(svg, y0, y1, a0)                  a vertical fade, as a mask; returns the value for a mask attribute
+ * Life
+ *   register(stage, tick)                  joins the one frame loop; tick(dt in seconds, now in ms) returns true to ask for another frame; gives {wake, unregister}
+ *   pointer(stage, handlers)               {move(point), down(point), leave()}, points in viewBox units; returns its disposer
+ *   disposer()                             {add, on, dispose}: collects tear-down, so destroy is bag.dispose
+ * The bench's business, not a figure's
+ *   css(lightDark)
+ *   inject(root)
+ *
+ * Classes, on path, polygon, ellipse and line. They are the whole palette; a
+ * figure sets no colour, width or fill of its own.
+ *     (none)   filled with the ground colour, medium stroke
+ *     sil      the silhouette's stroke        hi    the bright stroke: the only highlight
+ *     lo       the dim stroke                 nf    no fill        fo   fill only, no stroke
+ *     dash     a dashed guide
+ *     dot      a bright dot                   dot m   a medium dot     dot off   a dim dot
+ */
+var HL = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // packages/hairline/src/core/kernel.ts
+  var kernel_exports = {};
+  __export(kernel_exports, {
+    Cam: () => Cam,
+    EASE_LIFT: () => EASE_LIFT,
+    bezier: () => bezier,
+    circ: () => circ,
+    clamp: () => clamp,
+    css: () => css,
+    disposer: () => disposer,
+    extremes: () => extremes,
+    facing: () => facing,
+    fade: () => fade,
+    fillet: () => fillet,
+    fit: () => fit,
+    flatDot: () => flatDot,
+    ghost: () => ghost,
+    hull: () => hull,
+    inject: () => inject,
+    lerp: () => lerp,
+    mk: () => mk,
+    open: () => open,
+    place: () => place,
+    pointer: () => pointer,
+    poly: () => poly,
+    prism: () => prism,
+    proj: () => proj,
+    put: () => put,
+    r2: () => r2,
+    rad: () => rad,
+    reducedMotion: () => reducedMotion,
+    reflect: () => reflect,
+    register: () => register,
+    ringAt: () => ringAt,
+    rings: () => rings,
+    rrect: () => rrect,
+    run: () => run,
+    seg: () => seg,
+    setReducedMotion: () => setReducedMotion,
+    solid: () => solid,
+    spring: () => spring,
+    stepS: () => stepS,
+    tdone: () => tdone,
+    tset: () => tset,
+    tval: () => tval,
+    tween: () => tween,
+    unproj: () => unproj
+  });
+
+  // packages/hairline/src/core/iso.ts
+  var clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  var lerp = (a, b, t) => a + (b - a) * t;
+  var rad = (d) => d * Math.PI / 180;
+  var r2 = (n) => Math.round(n * 100) / 100;
+  var poly = (pts) => "M" + pts.map((p) => r2(p[0]) + " " + r2(p[1])).join("L") + "Z";
+  var seg = (a, b) => `M${r2(a[0])} ${r2(a[1])}L${r2(b[0])} ${r2(b[1])}`;
+  var open = (pts) => pts.length < 2 ? "" : "M" + pts.map((p) => r2(p[0]) + " " + r2(p[1])).join("L");
+  var Cam = (azDeg, k, S) => ({ az: rad(azDeg), k, S, ox: 0, oy: 0 });
+  function proj(C) {
+    const c = Math.cos(C.az), s = Math.sin(C.az), zf = Math.sqrt(1 - C.k * C.k);
+    return (x, y, z) => {
+      const X = x * c - y * s, Y = x * s + y * c;
+      return [C.ox + C.S * X, C.oy + C.S * (Y * C.k - z * zf)];
+    };
+  }
+  function unproj(C, sx, sy, z) {
+    const c = Math.cos(C.az), s = Math.sin(C.az), zf = Math.sqrt(1 - C.k * C.k);
+    const X = (sx - C.ox) / C.S, Y = ((sy - C.oy) / C.S + z * zf) / C.k;
+    return [X * c + Y * s, -X * s + Y * c];
+  }
+  function fit(C, pts, cx, cy) {
+    C.ox = 0;
+    C.oy = 0;
+    const P = proj(C);
+    let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+    for (const p of pts) {
+      const q = P(p[0], p[1], p[2]);
+      a = Math.min(a, q[0]);
+      b = Math.max(b, q[0]);
+      c = Math.min(c, q[1]);
+      d = Math.max(d, q[1]);
+    }
+    C.ox = cx - (a + b) / 2;
+    C.oy = cy - (c + d) / 2;
+  }
+  function rrect(u0, v0, u1, v1, r, n = 4) {
+    r = Math.max(0, Math.min(r, (u1 - u0) / 2, (v1 - v0) / 2));
+    const out = [];
+    for (const [cu, cv, a0] of [[u1 - r, v1 - r, 0], [u0 + r, v1 - r, 90], [u0 + r, v0 + r, 180], [u1 - r, v0 + r, 270]])
+      for (let k = 0; k <= n; k++) {
+        const a = rad(a0 + 90 * k / n), ca = Math.cos(a), sa = Math.sin(a);
+        out.push({ u: cu + r * ca, v: cv + r * sa, nu: ca, nv: sa });
+      }
+    return out;
+  }
+  function circ(R, n = 96) {
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const a = k / n * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+      out.push({ u: R * ca, v: R * sa, nu: ca, nv: sa });
+    }
+    return out;
+  }
+  function hull(input) {
+    const pts = input.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const x = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const p of pts) {
+      while (lo.length > 1 && x(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+      lo.push(p);
+    }
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (up.length > 1 && x(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop();
+      up.push(p);
+    }
+    lo.pop();
+    up.pop();
+    return lo.concat(up);
+  }
+  var ringAt = (P, ring, z) => ring.map((q) => P(q.u, q.v, z));
+  var facing = (C) => {
+    const s = Math.sin(C.az), c = Math.cos(C.az);
+    return (q) => q.nu * s + q.nv * c >= -1e-6;
+  };
+  function run(ring, keep) {
+    const n = ring.length;
+    let s = -1;
+    for (let i = 0; i < n; i++) if (keep(ring[i]) && !keep(ring[(i + n - 1) % n])) {
+      s = i;
+      break;
+    }
+    if (s < 0) return keep(ring[0]) ? ring.slice() : [];
+    const out = [];
+    for (let k = 0; k < n && keep(ring[(s + k) % n]); k++) out.push(ring[(s + k) % n]);
+    return out;
+  }
+  function prism(P, front, ring, inner, z0, z1) {
+    return {
+      sil: poly(hull(ringAt(P, ring, z1).concat(ringAt(P, ring, z0)))),
+      crease: inner ? open(ringAt(P, run(inner, front), z1)) : ""
+    };
+  }
+  var rings = (x0, y0, x1, y1, r, b) => [
+    rrect(x0, y0, x1, y1, r),
+    rrect(x0 + b, y0 + b, x1 - b, y1 - b, Math.max(0.3, r - b))
+  ];
+  function extremes(P, ring) {
+    const pr = ring.map((q) => P(q.u, q.v, 0));
+    let a = 0, b = 0, c = 0;
+    pr.forEach((p, k) => {
+      if (p[0] < pr[a][0]) a = k;
+      if (p[0] > pr[b][0]) b = k;
+      if (p[1] > pr[c][1]) c = k;
+    });
+    return [ring[a], ring[b], ring[c]];
+  }
+  function fillet(pts, rs, n = 4) {
+    const m = pts.length, out = [];
+    for (let i = 0; i < m; i++) {
+      const a = pts[(i + m - 1) % m], p = pts[i], b = pts[(i + 1) % m];
+      const la = Math.hypot(a[0] - p[0], a[1] - p[1]), lb = Math.hypot(b[0] - p[0], b[1] - p[1]);
+      const t = Math.min(rs[i], la / 2, lb / 2);
+      const p1 = [p[0] + (a[0] - p[0]) / la * t, p[1] + (a[1] - p[1]) / la * t];
+      const p2 = [p[0] + (b[0] - p[0]) / lb * t, p[1] + (b[1] - p[1]) / lb * t];
+      for (let k = 0; k <= n; k++) {
+        const s = k / n, w = 1 - s;
+        out.push([w * w * p1[0] + 2 * w * s * p[0] + s * s * p2[0], w * w * p1[1] + 2 * w * s * p[1] + s * s * p2[1]]);
+      }
+    }
+    return out;
+  }
+  function ghost(P, front, ring, z0, depth) {
+    const f = run(ring, front), lowP = ringAt(P, f, z0 - depth);
+    return {
+      d: open(lowP) + [f[0], f[f.length - 1]].map((q) => seg(P(q.u, q.v, z0), P(q.u, q.v, z0 - depth))).join(""),
+      y0: Math.min(...ringAt(P, f, z0).map((p) => p[1])),
+      y1: Math.max(...lowP.map((p) => p[1])) + 2
+    };
+  }
+
+  // packages/hairline/src/core/motion.ts
+  var reduced = false;
+  var setReducedMotion = (on) => {
+    reduced = on;
+  };
+  var reducedMotion = () => reduced;
+  function spring(x, o = {}) {
+    return { x, v: 0, t: x, k: o.k ?? 100, c: o.c ?? 18, m: o.m ?? 1, eps: o.eps ?? 0.01 };
+  }
+  function stepS(sp, dt) {
+    if (reduced) {
+      sp.x = sp.t;
+      sp.v = 0;
+      return false;
+    }
+    const n = Math.max(1, Math.ceil(dt * 240)), h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const a = (-sp.k * (sp.x - sp.t) - sp.c * sp.v) / sp.m;
+      sp.v += a * h;
+      sp.x += sp.v * h;
+    }
+    if (Math.abs(sp.x - sp.t) < sp.eps && Math.abs(sp.v) < sp.eps * 10) {
+      sp.x = sp.t;
+      sp.v = 0;
+      return false;
+    }
+    return true;
+  }
+  function bezier(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const X = (u) => ((ax * u + bx) * u + cx) * u;
+    const Y = (u) => ((ay * u + by) * u + cy) * u;
+    const dX = (u) => (3 * ax * u + 2 * bx) * u + cx;
+    return (t) => {
+      if (t <= 0) return 0;
+      if (t >= 1) return 1;
+      let u = t;
+      for (let i = 0; i < 8; i++) {
+        const e = X(u) - t;
+        if (Math.abs(e) < 1e-5) break;
+        const d = dX(u);
+        if (Math.abs(d) < 1e-6) break;
+        u -= e / d;
+      }
+      if (!(u >= 0 && u <= 1) || Math.abs(X(u) - t) > 1e-4) {
+        let lo = 0, hi = 1;
+        u = t;
+        for (let i = 0; i < 24; i++) {
+          if (X(u) < t) lo = u;
+          else hi = u;
+          u = (lo + hi) / 2;
+        }
+      }
+      return Y(u);
+    };
+  }
+  var EASE_LIFT = bezier(0.32, 0.72, 0, 1);
+  var tween = (v, dur = 700) => ({ from: v, to: v, t0: -1e9, dur });
+  var tval = (tw, now) => {
+    const p = clamp((now - tw.t0) / tw.dur, 0, 1);
+    return tw.from + (tw.to - tw.from) * (reduced ? 1 : EASE_LIFT(p));
+  };
+  var tset = (tw, to, now, delay) => {
+    if (tw.to === to) return;
+    tw.from = tval(tw, now);
+    tw.to = to;
+    tw.t0 = now + delay;
+  };
+  var tdone = (tw, now) => reduced || now >= tw.t0 + tw.dur;
+
+  // packages/hairline/src/core/stage.ts
+  var NS = "http://www.w3.org/2000/svg";
+  function mk(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function solid(parent) {
+    const g = mk("g", {}, parent);
+    return { g, sil: mk("path", { class: "sil" }, g), cr: mk("path", { class: "nf lo" }, g) };
+  }
+  var put = (el, s) => {
+    el.sil.setAttribute("d", s.sil);
+    el.cr.setAttribute("d", s.crease);
+  };
+  var flatDot = (parent, C, r, cls) => mk("ellipse", { rx: r2(r * C.S), ry: r2(r * C.S * C.k), class: cls }, parent);
+  var place = (el, q) => {
+    el.setAttribute("cx", String(r2(q[0])));
+    el.setAttribute("cy", String(r2(q[1])));
+  };
+  var fid = 0;
+  function fade(svg, y0, y1, a0 = 0.7) {
+    const id = "hl-fd" + ++fid, defs = mk("defs", {}, svg);
+    const lg = mk("linearGradient", { id: id + "g", gradientUnits: "userSpaceOnUse", x1: 0, y1: r2(y0), x2: 0, y2: r2(y1) }, defs);
+    mk("stop", { offset: 0, "stop-color": "#fff", "stop-opacity": a0 }, lg);
+    mk("stop", { offset: 1, "stop-color": "#fff", "stop-opacity": 0 }, lg);
+    const m = mk("mask", { id, maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 400, height: 320 }, defs);
+    mk("rect", { x: 0, y: 0, width: 400, height: 320, fill: `url(#${id}g)` }, m);
+    return `url(#${id})`;
+  }
+  function reflect(svg, parent, P, front, ring, z0, depth) {
+    const r = ghost(P, front, ring, z0, depth);
+    const gh = mk("g", { class: "ghost", mask: fade(svg, r.y0, r.y1) }, parent);
+    mk("path", { d: r.d }, gh);
+  }
+  var boards = [];
+  var byStage = /* @__PURE__ */ new Map();
+  var raf = 0;
+  var last = 0;
+  var io = null;
+  var rm = null;
+  function frame(now) {
+    const dt = Math.min(0.05, Math.max(0, (now - last) / 1e3));
+    last = now;
+    let any = false;
+    for (const b of boards.slice()) if (b.vis && b.awake) {
+      b.awake = !!b.tick(dt, now);
+      any = any || b.awake;
+    }
+    raf = any ? requestAnimationFrame(frame) : 0;
+  }
+  function wake(b) {
+    b.awake = true;
+    if (!raf) {
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+  }
+  var onMotion = () => {
+    setReducedMotion(!!rm?.matches);
+    boards.forEach(wake);
+  };
+  function start() {
+    if (io) return;
+    io = new IntersectionObserver((es) => {
+      for (const e of es) {
+        const b = byStage.get(e.target);
+        if (!b) continue;
+        b.vis = e.isIntersecting;
+        if (b.vis) wake(b);
+      }
+    }, { rootMargin: "80px" });
+    rm = matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(rm.matches);
+    rm.addEventListener("change", onMotion);
+  }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    io?.disconnect();
+    io = null;
+    rm?.removeEventListener("change", onMotion);
+    rm = null;
+  }
+  function register(stage, tick) {
+    start();
+    const b = { stage, tick, vis: false, awake: true };
+    boards.push(b);
+    byStage.set(stage, b);
+    io.observe(stage);
+    tick(0, performance.now());
+    let gone = false;
+    return {
+      wake: () => {
+        if (!gone) wake(b);
+      },
+      unregister: () => {
+        if (gone) return;
+        gone = true;
+        boards = boards.filter((x) => x !== b);
+        if (byStage.get(stage) === b) {
+          byStage.delete(stage);
+          io?.unobserve(stage);
+        }
+        if (!boards.length) stop();
+      }
+    };
+  }
+  function pointer(stage, on) {
+    let tm = 0;
+    const pt = (e) => {
+      const r = stage.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width * 400, (e.clientY - r.top) / r.height * 320];
+    };
+    const move = (e) => {
+      clearTimeout(tm);
+      on.move(pt(e), e);
+    };
+    const down = (e) => {
+      clearTimeout(tm);
+      if (e.pointerType !== "mouse") stage.releasePointerCapture?.(e.pointerId);
+      if (on.down) on.down(pt(e), e);
+      else on.move(pt(e), e);
+    };
+    const leave = (e) => {
+      clearTimeout(tm);
+      tm = window.setTimeout(() => on.leave(e), e.pointerType === "mouse" ? 0 : 1400);
+    };
+    stage.addEventListener("pointermove", move);
+    stage.addEventListener("pointerdown", down);
+    stage.addEventListener("pointerleave", leave);
+    return () => {
+      clearTimeout(tm);
+      stage.removeEventListener("pointermove", move);
+      stage.removeEventListener("pointerdown", down);
+      stage.removeEventListener("pointerleave", leave);
+    };
+  }
+  function disposer() {
+    let fns = [];
+    return {
+      add: (fn) => {
+        fns.push(fn);
+      },
+      on: (target, type, fn, opts) => {
+        const h = fn;
+        target.addEventListener(type, h, opts);
+        fns.push(() => target.removeEventListener(type, h, opts));
+      },
+      dispose: () => {
+        const run2 = fns;
+        fns = [];
+        for (let i = run2.length - 1; i >= 0; i--) run2[i]();
+      }
+    };
+  }
+
+  // packages/hairline/src/core/styles.ts
+  var LIGHT = { plate: "#ffffff", hi: "#232327", edge: "#a4a4ac", mid: "#c3c3c9", lo: "#e0e0e4" };
+  var DARK = { plate: "#08090a", hi: "#d0d6e0", edge: "#5b5d64", mid: "#3e3e44", lo: "#29292d" };
+  var KEYS = ["plate", "hi", "edge", "mid", "lo"];
+  var vars = (p) => KEYS.map((k) => `--hl-${k}:var(--hairline-${k},${p[k]});`).join("");
+  var EASE = "cubic-bezier(0.5,0,0.1,1)";
+  var SVG = ":where([data-hairline]>svg)";
+  function css(lightDark) {
+    const both = Object.fromEntries(KEYS.map((k) => [k, `light-dark(${LIGHT[k]},${DARK[k]})`]));
+    return [
+      // the box, and the palette: light unless something below says otherwise
+      `:where([data-hairline]){display:block;position:relative;aspect-ratio:5/4;touch-action:pan-y;user-select:none;-webkit-user-select:none;--hl-sw:var(--hairline-stroke,0.9);${vars(LIGHT)}}`,
+      // the page's color-scheme
+      lightDark ? `:where([data-hairline]){${vars(both)}}` : "",
+      // an ancestor that says dark
+      `:where(.dark,[data-theme="dark"]) :where([data-hairline]){${vars(DARK)}}`,
+      // the figure's own theme option
+      `:where([data-hairline][data-hairline-theme="light"]){${vars(LIGHT)}}`,
+      `:where([data-hairline][data-hairline-theme="dark"]){${vars(DARK)}}`,
+      `:where([data-hairline]:focus-visible){outline:1.5px solid var(--hl-hi);outline-offset:2px}`,
+      `${SVG}{position:absolute;inset:0;width:100%;height:100%;display:block}`,
+      // Riffle's live region: read, not seen
+      `:where([data-hairline]>[data-hairline-live]){position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}`,
+      // the drawing: plates are filled with the plate colour and painted back to front
+      `${SVG} :where(path,polygon,ellipse,line){fill:var(--hl-plate);stroke:var(--hl-mid);stroke-width:var(--hl-sw);vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;transition:stroke 260ms ${EASE}}`,
+      `${SVG} :where(.nf){fill:none}`,
+      `${SVG} :where(.fo){stroke:none}`,
+      `${SVG} :where(.sil){stroke:var(--hl-edge)}`,
+      `${SVG} :where(.hi){stroke:var(--hl-hi)}`,
+      `${SVG} :where(.lo){stroke:var(--hl-lo)}`,
+      `${SVG} :where(.dash){stroke-dasharray:1 3}`,
+      `${SVG} :where(.dot){stroke:none;fill:var(--hl-hi);transition:fill 260ms ${EASE}}`,
+      `${SVG} :where(.dot.m){fill:var(--hl-edge)}`,
+      `${SVG} :where(.dot.off){fill:var(--hl-lo)}`,
+      `${SVG} :where(.ghost path){fill:none;stroke:var(--hl-mid)}`
+    ].join("");
+  }
+  var done = /* @__PURE__ */ new WeakSet();
+  function inject(root) {
+    if (done.has(root)) return;
+    done.add(root);
+    const doc = root.nodeType === 9 ? root : root.ownerDocument;
+    const win = doc.defaultView;
+    const text = css(!!win?.CSS?.supports?.("color", "light-dark(#000,#fff)"));
+    if (win && "adoptedStyleSheets" in root) {
+      try {
+        const sheet = new win.CSSStyleSheet();
+        sheet.replaceSync(text);
+        root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+        return;
+      } catch {
+      }
+    }
+    const style = doc.createElement("style");
+    style.setAttribute("data-hairline-style", "");
+    style.textContent = text;
+    (root.nodeType === 9 ? doc.head ?? doc.documentElement : root).appendChild(style);
+  }
+  return __toCommonJS(kernel_exports);
+})();
+/* /hairline kernel */
+</script>
+<script id="hl-host">
+/* ====================================================================
+   HAIRLINE HOST · the page's half of an empty-state figure
+   · loads after hairline-kernel.js (window.HL) and before the figure
+   · the figure file ends in hairline({...}), which registers it and
+     mounts it into any placeholder already on the page
+   · hairline.scan(root) mounts every [data-hairline-figure="name"]
+     placeholder under root that is not mounted yet
+   · each scan first destroys figures whose placeholder has left the
+     page, so a view that re-renders its empty state never leaks a loop
+   · the read-out shows what the pointer is over and hides at "rest"
+   Public: window.hairline(figure), window.hairline.scan(root)
+   This file is the same in every app that uses a figure; the kernel is
+   @lucasmarkes/hairline's, copied unchanged.
+   ==================================================================== */
+(() => {
+  "use strict";
+
+  const figures = {};
+  let live = [];
+
+  // A figure loaded after the first render (an inline module runs after
+  // classic scripts) mounts into any placeholder already waiting for it.
+  const hairline = (figure) => { figures[figure.name] = figure; hairline.scan(); };
+
+  hairline.scan = (root) => {
+    live = live.filter((m) => m.stage.isConnected || (m.destroy(), false));
+    // Without the kernel or the figure the placeholder stays empty and the
+    // empty state's own words still say what is missing.
+    if (!window.HL) return;
+    for (const stage of (root || document).querySelectorAll("[data-hairline-figure]:not([data-hairline])")) {
+      const figure = figures[stage.dataset.hairlineFigure];
+      if (!figure) continue;
+      HL.inject(document);
+      stage.setAttribute("data-hairline", figure.name);
+      // Decorative here: the empty state's own words say what is missing,
+      // and a label would be read out again inside an aria-live status.
+      stage.setAttribute("aria-hidden", "true");
+      const svg = HL.mk("svg", { viewBox: "0 0 400 320", "aria-hidden": "true" }, stage);
+      const tag = document.createElement("span");
+      tag.className = "hl-read";
+      stage.append(tag);
+      let text = "rest";
+      const read = {
+        get textContent() { return text; },
+        set textContent(v) { text = v == null ? "" : String(v); tag.textContent = text === "rest" ? "" : text; },
+      };
+      const handle = figure.mount({ stage, svg, read }, figure.range[1]);
+      live.push({ stage, destroy: handle.destroy });
+    }
+  };
+
+  window.hairline = hairline;
+})();
+</script>
 <script>
 /* ======================================================================
    STUDY TRACKER · CORE
@@ -1954,6 +2764,20 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
      data; and the JSON backup is a straight dump of KEY, so tokens would land
      in a file you download and hand around. */
   var SYNC_KEY = "studyTracker.sync.v1";
+
+  /* What belongs to this device alone, for the same reason: whether this
+     phone rings the reminder, and which alarms it has handed to Android.
+     Outside KEY, so it is never uploaded, never in a backup and never
+     merged. Desktop never writes it (PLAN-android.md A6). */
+  var DEVICE_KEY = "studyTracker.device.v1";
+  function device() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_KEY) || "null") || {}; }
+    catch (e) { return {}; }
+  }
+  function setDevice(k, v) {
+    var d = device(); d[k] = v;
+    try { localStorage.setItem(DEVICE_KEY, JSON.stringify(d)); } catch (e) {}
+  }
 
   /* Recovery is capped at the planned interval so a tab that died at 14:05
      and reopens at 22:00 can never credit eight hours it did not earn. */
@@ -2171,10 +2995,20 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     return s;
   }
 
+  /* Set when the saved blob couldn't be parsed: the key it was copied to. */
+  var unreadableKey = null;
   function load() {
-    var raw = null;
-    try { raw = JSON.parse(localStorage.getItem(KEY) || "null"); }
-    catch (e) { raw = null; }
+    var raw = null, text = null;
+    try { text = localStorage.getItem(KEY); raw = JSON.parse(text || "null"); }
+    catch (e) {
+      raw = null;
+      /* Unreadable is not empty. Copy it aside before the first save (the
+         first Start press) writes an empty profile over the history in it. */
+      if (text) {
+        unreadableKey = KEY + ".unreadable-" + Date.now();
+        try { localStorage.setItem(unreadableKey, text); } catch (e2) { unreadableKey = null; }
+      }
+    }
     S = migrate(raw);
   }
   /* Local write first, always, then the network. A session you just finished
@@ -2185,6 +3019,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     S.updatedAt = Date.now();
     saveLocal();
     Sync.schedulePush();
+    nativeSync();
   }
 
   /* Writes that change nothing another device would want. Two callers, both
@@ -2956,8 +3791,49 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   ["pointerdown", "keydown"].forEach(function (ev) {
     window.addEventListener(ev, function () { gestured = true; }, { once: true });
   });
-  function inQuiet() {
-    var h = new Date().getHours(), q = S.settings.quietHours;
+
+  /* The Android build of the Tauri shell. Desktop Tauri and the browser both
+     read false. Android freezes and kills the page at will, so the timer is
+     restored rather than crash-recovered, and the permission below is a real
+     runtime prompt rather than the desktop plugin's unconditional grant
+     (PLAN-android.md A1, A3). */
+  var ANDROID_SHELL = !!window.__TAURI__ && /Android/i.test(navigator.userAgent);
+  /* The plugin's last answer. "default" until the first read returns. Read on
+     launch and on every return to the foreground, because notifications are
+     turned off in Android's settings, outside the app. */
+  var androidPerm = "default";
+  function readAndroidPerm() {
+    window.__TAURI__.core.invoke("plugin:notification|is_permission_granted")
+      .then(function (ok) {
+        androidPerm = ok ? "granted" : "denied"; nativeSync();
+        if (currentView === "settings") renderPhone();
+      }, function () {});
+  }
+  /* One answer to "does Android ring for this event?", read by both sides:
+     the planner arms alarms only when it's true, and cue() stays quiet only
+     when it's true. Any other rule would let a block end with two alerts or
+     none (A4). Notify off means no alarms, so the page's beep comes back. */
+  function nativeOwnsAlerts() {
+    return ANDROID_SHELL && androidPerm === "granted" && notifyOn();
+  }
+  /* Whether this device shows notifications. On the phone the answer is its
+     own (device key), because Android's permission is: a denial there must
+     not switch the laptop's notifications off through sync. Until the phone
+     has chosen, it follows the synced switch, as before (PLAN-android.md A3). */
+  function notifyOn() {
+    var d = ANDROID_SHELL ? device().notifyOn : undefined;
+    return typeof d === "boolean" ? d : !!S.settings.cues.notify;
+  }
+  if (ANDROID_SHELL) {
+    readAndroidPerm();
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) { readAndroidPerm(); if (currentView === "settings") renderPhone(); }
+    });
+  }
+  /* `t` lets the alarm planner ask about the moment an alarm will fire,
+     not the moment it's armed. */
+  function inQuiet(t) {
+    var h = new Date(t || Date.now()).getHours(), q = S.settings.quietHours;
     if (q.from === q.to) return false;
     return q.from < q.to ? (h >= q.from && h < q.to) : (h >= q.from || h < q.to);
   }
@@ -2984,7 +3860,14 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     remind: ["Time to study", "Nothing logged today yet."]
   };
 
-  function cue(kind) {
+  /* On Android with notifications allowed and switched on, the native alarm
+     owns the block, break and reminder alerts whether the app is open, frozen
+     or dead, so the page plays nothing for them: one event, one alert (A4).
+     Badges have no alarm and keep their beep. Denied or switched off, the
+     in-page cues are the only signal left, so they stay. `test` is Settings'
+     Test button, which must play. */
+  function cue(kind, test) {
+    if (nativeOwnsAlerts() && kind !== "badge" && !test) return;
     if (kind === "work") beep(880, 260);
     else if (kind === "remind") { beep(700, 180); setTimeout(function () { beep(900, 220); }, 190); }
     else if (kind === "break") beep(560, 260);
@@ -2995,7 +3878,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     if (S.settings.cues.vibrate && navigator.vibrate && gestured && !inQuiet()) {
       try { navigator.vibrate(kind === "badge" ? [40, 60, 40] : [90]); } catch (e) {}
     }
-    if (S.settings.cues.notify && !inQuiet()) {
+    if (notifyOn() && !inQuiet()) {
       var note = CUE_NOTE[kind] || CUE_NOTE.work;
       /* Desktop shell (Tauri): the web Notification API is unreliable inside
          the WebView, so route through the native OS plugin instead. The tray
@@ -3056,16 +3939,38 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     return T.workedMs + (T.paused ? 0 : Date.now() - T.lastResume);
   }
 
+  /* Two readers. Desktop and the browser recover from the heartbeat fields
+     (lastBeat, workedMs). Android rebuilds the timer from the rest -- phase,
+     endAt, the pause, the work banked before the current run -- because there
+     the page is frozen and killed without warning, and a heartbeat that stops
+     with the screen would lose the block (A1). Breaks are written too, so a
+     killed break comes back; heartbeat recovery ignores them. */
   function persistActive() {
-    if (!T.running || T.phase !== "work") { S.activeSession = null; saveLocal(); return; }
-    S.activeSession = {
-      startedAt: T.startedAt,
-      lastBeat: Date.now(),
-      plannedMinutes: workCapMin(),
-      label: T.subject ? T.subject.label : "General study",
-      workedMs: accumulatedWorkMs()
+    if (!T.running) { S.activeSession = null; saveLocal(); return; }
+    var a = {
+      phase: T.phase, endAt: T.endAt, paused: T.paused,
+      remainAtPause: T.remainAtPause, pausedAt: T.pausedAt,
+      round: T.round, quick: T.quick
     };
+    if (T.phase === "work") {
+      a.startedAt = T.startedAt;
+      a.lastBeat = Date.now();
+      a.plannedMinutes = workCapMin();
+      a.label = T.subject ? T.subject.label : "General study";
+      a.group = T.subject ? T.subject.group : "";
+      a.workedMs = accumulatedWorkMs();
+      a.bankedMs = T.workedMs;
+      a.lastResume = T.lastResume;
+    }
+    S.activeSession = a;
     saveLocal();
+  }
+
+  /* When the work in this block actually stopped. A page frozen past endAt
+     wakes minutes late, and a paused block stopped at the pause, not when it
+     was closed out -- stamping Date.now() dated both to the wrong time. */
+  function workEndAt() {
+    return T.paused ? T.pausedAt : Math.min(Date.now(), T.endAt);
   }
 
   function startPhase(phase) {
@@ -3120,7 +4025,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       code: null,
       label: T.subject ? T.subject.label : "General study",
       group: T.subject ? T.subject.group : "",
-      startedAt: T.startedAt, endedAt: Date.now(),
+      startedAt: T.startedAt, endedAt: workEndAt(),
       minutes: mins, source: "pomodoro",
       interrupted: !!interrupted, note: note || ""
     });
@@ -3153,12 +4058,25 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   /* ---- CRASH RECOVERY ------------------------------------------------- */
 
+  /* On Android a record with endAt is the timer itself, not a crash to clean
+     up after: a block still running or paused carries on where it was, and
+     one that ended while the app was dead is logged in full at endAt -- the
+     same credit a frozen page gets when it wakes, so a frozen app and a
+     killed one log the same block. Everywhere else, and for an old record
+     without endAt, the heartbeat recovery below runs as it always has:
+     there, closing the window is something you did. */
   function recoverIfNeeded() {
     var a = S.activeSession;
-    if (!a || !a.startedAt) return;
+    if (!a) return;
+    var android = ANDROID_SHELL && !!a.endAt;
+    if (android && (a.paused || Date.now() < a.endAt)) { restoreTimer(a); return; }
     S.activeSession = null;
+    /* A break over while the app was dead is dropped: its alarm already
+       fired, and there is nothing to log. */
+    if (!a.startedAt || (a.phase && a.phase !== "work")) { saveLocal(); return; }
 
-    var workedMs = a.workedMs != null ? a.workedMs : (a.lastBeat - a.startedAt);
+    var workedMs = android ? (a.bankedMs || 0) + (a.endAt - a.lastResume)
+      : a.workedMs != null ? a.workedMs : (a.lastBeat - a.startedAt);
     var cap = Math.max(1, a.plannedMinutes || S.settings.workMin) * 60 * 1000;
     var sec = Math.round(Math.max(0, Math.min(workedMs, cap)) / 1000);
 
@@ -3168,14 +4086,32 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       dayKey: dayKeyFor(a.startedAt, S.settings.dayBoundaryHour),
       code: null,
       label: a.label || "General study",
+      group: a.group || "",
       startedAt: a.startedAt,
-      endedAt: a.lastBeat || (a.startedAt + sec * 1000),
+      endedAt: android ? a.endAt : (a.lastBeat || (a.startedAt + sec * 1000)),
       minutes: Math.max(1, Math.round(sec / 60)),
-      source: "pomodoro", interrupted: true,
-      note: "Recovered after the app closed mid-session."
+      source: "pomodoro", interrupted: !android,
+      note: android ? "Finished while the app was closed."
+        : "Recovered after the app closed mid-session."
     };
     addSession(rec);
-    showRecoveryBanner(rec);
+    showRecoveryBanner(rec, android);
+  }
+
+  function restoreTimer(a) {
+    T.phase = a.phase; T.running = true; T.paused = !!a.paused;
+    T.endAt = a.endAt; T.remainAtPause = a.remainAtPause || 0;
+    T.pausedAt = a.pausedAt || 0; T.round = a.round || 1; T.quick = !!a.quick;
+    if (a.phase === "work") {
+      T.startedAt = a.startedAt; T.workedMs = a.bankedMs || 0; T.lastResume = a.lastResume;
+      T.subject = { code: null, label: a.label || "General study", group: a.group || "" };
+      $("subjHint").textContent = "Locked for this block: " +
+        (T.subject.group ? T.subject.group + " – " + T.subject.label : T.subject.label);
+    }
+    /* A paused work block past PAUSE_ABANDON_MS is closed out by the first
+       tick, exactly as if the page had stayed open. */
+    T.tick = setInterval(onTick, 200);
+    T.beat = setInterval(persistActive, HEARTBEAT_MS);
   }
 
   /* ---- REMINDER --------------------------------------------------------
@@ -3195,18 +4131,25 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   /* The reminder belongs to the logical day, not the calendar one. With the
      boundary at 05:00 and a 19:00 reminder, 02:00 is still that day and the
      reminder is seven hours overdue, not seventeen hours early. */
-  function reminderAt() {
+  function reminderAt(k) {
     var r = S.settings.reminder, b = S.settings.dayBoundaryHour || 0;
-    var d = parseKey(todayKey());
+    var d = parseKey(k || todayKey());
     var t = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
                      r.hour || 0, r.min || 0, 0, 0);
     if ((r.hour || 0) < b) t.setDate(t.getDate() + 1);
     return t.getTime();
   }
 
+  /* The time is synced; whether it rings is this device's call. A phone
+     that has chosen keeps its choice, and one that hasn't follows the
+     synced switch, which is all desktop ever reads (A6). */
+  function reminderOn() {
+    var d = device().remindOn;
+    return typeof d === "boolean" ? d : !!(S.settings.reminder && S.settings.reminder.on);
+  }
+
   function reminderDue() {
-    var r = S.settings.reminder;
-    if (!r || !r.on) return false;
+    if (!reminderOn()) return false;
     if (S.nudgedOn === todayKey()) return false;   // once a day, at most
     if (doneOn(todayKey())) return false;          // already studied
     return Date.now() >= reminderAt();
@@ -3253,15 +4196,18 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     startPhase("work");
   }
 
-  function showRecoveryBanner(rec) {
+  function showRecoveryBanner(rec, full) {
     var host = document.getElementById("recoveryHost");
     var d = document.createElement("div");
     d.className = "banner";
     d.innerHTML =
-      "<strong>Recovered an interrupted session.</strong> " +
+      (full ? "<strong>Finished while the app was closed.</strong> "
+            : "<strong>Recovered an interrupted session.</strong> ") +
       esc(String(rec.minutes)) + " min on " + esc(rec.label) + ", ending " +
       esc(fmtClock(rec.endedAt)) + " on " + esc(fmtDate(rec.dayKey)) + ". " +
-      "Credit is capped at one focus block, so it can never invent time you didn't study." +
+      (full ? "It was running, not paused, when it ended, so it counts in full. " +
+              "Delete it if you stopped early."
+            : "Credit is capped at one focus block, so it can never invent time you didn't study.") +
       "<div class='row'>" +
       "<button class='btn btn--sm' data-act='keep'>Keep it</button>" +
       "<button class='btn btn--sm btn--danger' data-act='drop'>Delete it</button></div>";
@@ -3271,6 +4217,345 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       d.remove();
     });
     host.appendChild(d);
+  }
+
+  /* ---- NATIVE ALARMS (Android only) ------------------------------------
+     Android freezes the page within seconds of the screen going off, so no
+     page timer can be what tells you a block ended (A2). Everything that has
+     to arrive with the app frozen or dead is handed to AlarmManager ahead of
+     time. Ported from Helth's js/native.js:
+
+       · PLAN   what should be armed now: the running block's or break's
+                countdown and the alert at its end, and the next 7 days of
+                reminders
+       · DIFF   arm what's new or moved, cancel what's gone. It runs from
+                save(), renderTimer() and the slow tick, so no control has to
+                remember this section exists
+       · TAPS   a tapped notification opens Today, cold start included
+
+     Off Android, nativeSync() returns before touching the plugin. */
+
+  /* Fixed ids. Reminders take 200 + the day's number mod 7, so a day keeps
+     its id across launches and a fired reminder's id isn't reused for a
+     week -- re-arming an id dismisses whatever still sits in the shade. */
+  var N_COUNTDOWN = 100, N_BLOCK = 101, N_BREAK = 102, N_REMIND = 200;
+  var REMIND_DAYS = 7;
+  /* The plugin silently drops a schedule whose time has passed, so nothing
+     new is armed this close to firing. Applied only when arming: an alarm
+     already armed stays in the plan to the second it fires, or the diff
+     would cancel it (Helth, on the 2a, 2026-09-23). */
+  var MIN_LEAD_MS = 2000;
+  /* A fired entry's record is kept this long before it's forgotten. */
+  var KEEP_FIRED_MS = 3 * 3600e3;
+
+  var NATIVE = { armedUntil: null };   // epoch ms of the last reminder armed
+  var nArmed = {}, nChannels = null, nBusy = false, nAgain = false, nQueued = false, nWarned = false;
+  if (ANDROID_SHELL) {
+    nArmed = device().armed || {};
+    /* A force-stop wipes every alarm the app owns while this record still
+       says they're armed, so each launch re-arms every entry not yet fired.
+       Seen on Helth, on the 2a: 49 alarms before a force-stop, 0 after. */
+    Object.keys(nArmed).forEach(function (id) {
+      if ((nArmed[id].at || nArmed[id].countdown) > Date.now()) nArmed[id].sig = "";
+    });
+  }
+
+  function nativePlan(now) {
+    var out = [];
+    NATIVE.armedUntil = null;
+    if (!nativeOwnsAlerts()) return out;
+
+    if (T.running && !T.paused && T.endAt > now) {
+      var end = T.endAt, work = T.phase === "work";
+      var label = T.subject ? T.subject.label : "General study";
+      out.push({ id: N_COUNTDOWN, countdown: end,
+        title: work ? label : T.phase === "long" ? "Long break" : "Short break",
+        body: (work ? "focus · ends " : "break · back at ") + fmtClock(end) });
+      /* Quiet hours silence the end, as cue() does. The countdown is a
+         silent post, so it stays. */
+      if (!inQuiet(end)) out.push(work
+        ? { id: N_BLOCK, at: end, title: "Focus block done",
+            body: workCapMin() + " min on " + label + ". " +
+                  (T.quick ? "No break queued." : "Break next.") }
+        : { id: N_BREAK, at: end, title: "Break over", body: "Back to it." });
+    }
+
+    if (!reminderOn()) return out;
+    /* The alarm fires with no JS running, so it can't check the log. The
+       sentence says how old this phone's knowledge is instead (A6). */
+    var c = Sync.signedIn() && Sync.cfg(), synced = c && c.lastSyncAt;
+    var knows = synced
+      ? "Nothing logged today as of " +
+        new Date(synced).toLocaleDateString(undefined, { weekday: "short" }) +
+        " " + fmtClock(synced) + ", when this phone last synced."
+      : "Nothing logged today on this phone.";
+    var last = null, today = todayKey();
+    for (var i = 0; i < REMIND_DAYS; i++) {
+      var k = shiftDay(today, i), at = reminderAt(k);
+      if (at <= now || doneOn(k) || S.nudgedOn === k || inQuiet(at)) continue;
+      last = { id: N_REMIND + daysBetween("1970-01-01", k) % REMIND_DAYS, at: at,
+               title: "Time to study", body: knows };
+      out.push(last);
+    }
+    /* The horizon is 7 days from the last open. Its last reminder says so. */
+    if (last) {
+      last.body += " Open Study Tracker to keep reminders coming.";
+      NATIVE.armedUntil = last.at;
+    }
+    return out;
+  }
+
+  function nativeChannels() {
+    var invoke = window.__TAURI__.core.invoke;
+    if (!nChannels) nChannels = Promise.all([
+      /* High importance is what makes Android show a heads-up with sound. */
+      invoke("plugin:notification|create_channel", {
+        id: "alerts", name: "Block ends and reminders", importance: 4,
+        visibility: 1, vibration: true,
+        description: "A focus block or break ending, and the daily reminder. Respects Do Not Disturb."
+      }),
+      /* Default importance, not Low: Nothing OS hides Low channels on the
+         lock screen. The post itself is silent (the plugin fork's setSilent),
+         so Start doesn't ding. */
+      invoke("plugin:notification|create_channel", {
+        id: "running", name: "Running timer", importance: 3, visibility: 1,
+        description: "The live countdown while a block or break runs."
+      })
+    ]);
+    return nChannels;
+  }
+
+  function nativeSig(e) { return JSON.stringify([e.at || 0, e.countdown || 0, e.title, e.body]); }
+
+  function nativePayload(e) {
+    var n = { id: e.id, title: e.title, body: e.body, visibility: 1,
+              /* res/drawable/ic_stat_study.xml. Without it the plugin falls
+                 back to Android's stock "i" glyph. */
+              icon: "ic_stat_study", extra: { view: "today" } };
+    if (e.countdown) {
+      n.channelId = "running"; n.ongoing = true; n.autoCancel = false;
+      n.extra.countdownTo = e.countdown;
+      n.extra.promoted = true;   // a Live Update, once the OS allows it (A13)
+    } else {
+      n.channelId = "alerts"; n.autoCancel = true;
+      n.schedule = { at: { date: new Date(e.at).toISOString(), repeating: false, allowWhileIdle: true } };
+    }
+    return n;
+  }
+
+  /* Coalesced to one pass per turn of the event loop: finishing a block
+     saves, renders and starts the break in one go, and the plan should see
+     where that ends up, not each step on the way. */
+  function nativeSync() {
+    if (!ANDROID_SHELL || nQueued) return;
+    nQueued = true;
+    setTimeout(function () { nQueued = false; nativeDiff(); }, 0);
+  }
+
+  function nativeDiff() {
+    /* Until the permission is known the plan is empty, and diffing an empty
+       plan would cancel every alarm this phone holds. */
+    if (androidPerm === "default" || !S) return;   // S: not loaded yet, same empty-plan hazard
+    if (nBusy) { nAgain = true; return; }
+    var now = Date.now(), want = nativePlan(now), wantIds = {}, arm = [], showN = [], cancel = [];
+    want.forEach(function (e) {
+      wantIds[e.id] = true;
+      var prev = nArmed[e.id];
+      if (prev && prev.sig === nativeSig(e)) return;
+      if (!e.countdown && e.at <= now + MIN_LEAD_MS) return;
+      (e.countdown ? showN : arm).push(e);
+    });
+    Object.keys(nArmed).forEach(function (id) {
+      if (wantIds[id]) return;
+      var a = nArmed[id], t = a.at || a.countdown;
+      /* Still ahead: paused, stopped, logged, moved or switched off. */
+      if (t > now) { cancel.push(+id); delete nArmed[id]; }
+      /* Already fired: leave it in the shade. */
+      else if (t < now - KEEP_FIRED_MS) delete nArmed[id];
+    });
+    if (!arm.length && !showN.length && !cancel.length) return;
+
+    var invoke = window.__TAURI__.core.invoke;
+    nBusy = true;
+    nativeChannels().then(function () {
+      var jobs = [];
+      if (cancel.length) jobs.push(invoke("plugin:notification|cancel", { notifications: cancel }));
+      if (arm.length) jobs.push(invoke("plugin:notification|batch", { notifications: arm.map(nativePayload) }));
+      showN.forEach(function (e) { jobs.push(invoke("plugin:notification|show", nativePayload(e))); });
+      return Promise.all(jobs);
+    }).then(function () {
+      arm.concat(showN).forEach(function (e) {
+        nArmed[e.id] = { at: e.at || 0, countdown: e.countdown || 0, sig: nativeSig(e) };
+      });
+    }).catch(function (err) {
+      /* Not recorded as armed, so the next pass retries. Warned once, not
+         once a minute. */
+      if (!nWarned) { nWarned = true; console.warn("Study Tracker: arming native alarms failed.", err); }
+    }).then(function () {
+      setDevice("armed", nArmed);   // cancels are recorded either way
+      nBusy = false;
+      if (nAgain) { nAgain = false; nativeDiff(); }
+    });
+  }
+
+  /* The fork holds a tap that launched the app until a listener registers,
+     so a cold start lands here too. Every entry belongs to Today. */
+  function nativeTaps() {
+    var api = ANDROID_SHELL && window.__TAURI__.notification;
+    if (!api || !api.onAction) return;
+    api.onAction(function () { show("today"); if (T.running) FACE.open(); }).catch(function () {});
+  }
+
+  /* ---- THIS PHONE (Android only) ---------------------------------------
+     Two views of the same device-key state: the card in Settings and the
+     first-run suggestion on Today. Both write only to DEVICE_KEY through
+     setDevice(), never to synced settings, and desktop never reaches
+     either. What Android will not tell a page is shown as unreadable, not
+     as a tick (PLAN-android.md A2, A6). */
+  var UNREADABLE = "Cannot be read from here. Check it in Android settings.";
+  var SAMSUNG_RE = /samsung/i;
+  var ANDROID_15 = 35;   // API level whose battery screen says "Allow background usage"
+
+  function phoneRow(title, note, cls, btn) {
+    return "<div class='prow'><div><div class='prow__t'>" + esc(title) + "</div>" +
+      "<div class='help prow__s " + (cls || "") + "'>" + note + "</div></div>" +
+      (btn ? "<button class='btn btn--sm' data-open='" + btn[0] + "'>" + esc(btn[1]) + "</button>" : "") +
+      "</div>";
+  }
+
+  function renderPhone() {
+    var card = $("phoneCard");
+    if (!ANDROID_SHELL || !card) return;
+    card.hidden = false;
+    var rows = "";
+
+    rows += androidPerm === "granted"
+      ? phoneRow("Notifications", "Allowed.", "ok")
+      : androidPerm === "denied"
+        ? phoneRow("Notifications", "Off in Android settings, so nothing rings with the app closed.",
+            "warn", ["notifications", "Open settings"])
+        : phoneRow("Notifications", "Not asked yet. The Notification switch under Cues asks.", "");
+
+    var exact = stn("exactAlarms");
+    rows += exact === true ? phoneRow("Exact alarms", "Allowed.", "ok")
+      : exact === false ? phoneRow("Exact alarms",
+          "Not allowed. Android may deliver a block's end a minute or more late.", "warn",
+          ["exactAlarms", "Open settings"])
+      : phoneRow("Exact alarms", UNREADABLE, "", ["exactAlarms", "Open settings"]);
+
+    var sdk = stn("sdk"), maker = stn("maker"), exempt = stn("batteryExempt");
+    var bTitle = typeof sdk === "number" && sdk >= ANDROID_15
+      ? "Battery: Allow background usage" : "Battery: Unrestricted";
+    rows += exempt === true ? phoneRow(bTitle, "Android reports Study Tracker as exempt.", "ok")
+      : exempt === false ? phoneRow(bTitle,
+          "Android reports it as restricted. It can hold back alarms while the phone idles.", "warn",
+          ["battery", "Open settings"])
+      : phoneRow(bTitle, UNREADABLE, "", ["battery", "Open settings"]);
+
+    if (typeof maker === "string" && SAMSUNG_RE.test(maker)) {
+      var ok = !!device().sleepOk;
+      rows += "<div class='prow'><div><div class='prow__t'>Never sleeping apps</div>" +
+        "<div class='help prow__s'>Samsung keeps this list where no app can read it. " +
+        "Add Study Tracker under Settings, Battery, Background usage limits, then tick: " +
+        (ok ? "you confirmed this." : "not confirmed yet.") + "</div></div>" +
+        "<label class='switch'><input type='checkbox' id='phSleep' aria-label='Confirmed: Study Tracker is in Never sleeping apps'" +
+        (ok ? " checked" : "") + "><span class='switch__track'></span></label></div>";
+    }
+
+    var until = NATIVE.armedUntil;
+    rows += until
+      ? phoneRow("Alarms armed until", esc(fmtDate(dayKeyFor(until, 0)) + " " + fmtClock(until)) +
+          ". Opening the app re-arms the next 7 days.", "")
+      : phoneRow("Alarms armed until", "No reminder alarm is armed: the reminder is off, " +
+          "notifications are off, or every coming day is already logged.", "");
+    $("phoneRows").innerHTML = rows;
+
+    $("phRemind").checked = reminderOn();
+    $("phRemindNote").textContent = typeof device().remindOn === "boolean"
+      ? "Set on this phone. The time is shared with your other devices."
+      : "Following the synced setting until you change it here.";
+  }
+
+  /* Both the Settings switch and this card's read the same setter, so the
+     wording and the device-key write live in one place. */
+  function setRemind(on) {
+    $("sRemindOn").checked = on;      // whichever control was used, both agree
+    if (ANDROID_SHELL) {
+      setDevice("remindOn", on);
+      S.nudgedOn = null; saveLocal(); nativeSync();
+    } else {
+      S.settings.reminder.on = on;
+      S.nudgedOn = null; save();
+    }
+    msg("cueMsg", !on ? "Reminder off." : ANDROID_SHELL
+      ? (nativeOwnsAlerts()
+        ? "Reminder on for this phone. Android rings it with the app closed, " +
+          "for the next 7 days from each time you open the app."
+        : "Reminder on for this phone. Notifications are off, so it only " +
+          "shows as a banner when you open the app.")
+      : "Reminder on. The banner always works; the notification needs a tab " +
+        "open and the Notification switch above.", on ? "ok" : "");
+    renderPhone();
+  }
+
+  /* The prompt, once, shared by the Notification switch and first-run.
+     Already granted is answered from the cache: the plugin's request never
+     resolves when there is nothing left to ask (Helth A3, seen on the 2a). */
+  function askAndroidNotify(done) {
+    var answer = function (res) {
+      androidPerm = res === "granted" ? "granted" : "denied";
+      done(androidPerm === "granted");
+    };
+    if (androidPerm === "granted") answer("granted");
+    else window.__TAURI__.core.invoke("plugin:notification|request_permission")
+      .then(answer, function () { answer("denied"); });
+  }
+
+  function wirePhone() {
+    if (!ANDROID_SHELL) return;
+    $("phoneCard").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-open]"); if (!b) return;
+      var has = window.STNative && typeof window.STNative.openSettings === "function";
+      if (has) stn("openSettings", b.dataset.open);
+      else msg("phoneMsg", "Open Android Settings, Apps, Study Tracker. This build cannot open it for you.", "");
+    });
+    $("phoneCard").addEventListener("change", function (e) {
+      if (e.target.id === "phSleep") { setDevice("sleepOk", e.target.checked); renderPhone(); }
+      if (e.target.id === "phRemind") setRemind(e.target.checked);
+    });
+
+    /* First run: shown until answered once. Every choice below lands in the
+       device key only. */
+    var fr = $("firstRun");
+    if (device().firstRunDone) return;
+    fr.hidden = false;
+    $("frRemindLabel").textContent = "Daily reminder at " +
+      pad(S.settings.reminder.hour) + ":" + pad(S.settings.reminder.min);
+    function finish(text, cls) {
+      setDevice("firstRunDone", true);
+      msg("frMsg", text, cls);
+      nativeSync(); renderPhone();
+      setTimeout(function () { fr.hidden = true; }, cls === "err" ? 8000 : 2500);
+      $("frApply").disabled = $("frSkip").disabled = true;
+    }
+    $("frSkip").addEventListener("click", function () {
+      setDevice("firstRunDone", true); fr.hidden = true;
+    });
+    $("frApply").addEventListener("click", function () {
+      setDevice("remindOn", $("frRemind").checked);
+      S.nudgedOn = null; saveLocal();
+      if (!$("frAlerts").checked) {
+        setDevice("notifyOn", false);
+        finish("Timer alerts left off. Switch them on under Cues whenever you like.", "");
+        return;
+      }
+      askAndroidNotify(function (granted) {
+        setDevice("notifyOn", granted);
+        if (granted) finish("Timer alerts on" + ($("frRemind").checked ? ", reminder on" : "") + ".", "ok");
+        else finish("Android has notifications off for Study Tracker, so alerts are left off. " +
+          "Turn them on under Settings, This phone.", "err");
+      });
+    });
   }
 
   /* ---- SMALL DOM HELPERS ---------------------------------------------- */
@@ -3335,22 +4620,147 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   var ARC_C = 2 * Math.PI * 103;          // matches r="103" in the dial markup
 
-  function renderTimer(faceOnly) {
-    var sec = Math.ceil(remainingSec());
-    var face = $("timerFace");
-    face.textContent = pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
-    face.className = "timer__face" + (T.running && T.paused ? " paused" : "");
+  /* ---- RING DRIVER -----------------------------------------------------
+     Draws the ring from the wall clock instead of chasing the 200ms tick
+     with a CSS transition. Before this, a phase change flicked the ring at
+     up to 81 px a frame and a finished block still drew a dot at 12 o'clock.
+     Measured before/after in _scratch/study-android/prototype/index.html
+     (PLAN-android.md Part C, "The ring driver") and ported from there:
+       - the drain is linear, off the same remainingSec() the digits read,
+         and repaints only once the arc has moved 0.1 CSS px
+       - anything that arrives as an event (a phase change, Stop, a resume,
+         a page waking up) is a jump: it sweeps over --slow/--ease instead of
+         snapping, and a second jump mid-sweep restarts from where the arc
+         is actually drawn, so it never teleports
+       - the last stroke-width of travel fades the arc out, since a round
+         cap still draws a dot at zero length
+       - prefers-reduced-motion snaps the sweep; the drain itself is time,
+         not motion, so it's left alone */
+  var RING = (function () {
+    function bezier(x1, y1, x2, y2) {
+      var cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+      var cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+      function sx(t) { return ((ax * t + bx) * t + cx) * t; }
+      function sy(t) { return ((ay * t + by) * t + cy) * t; }
+      function dsx(t) { return (3 * ax * t + 2 * bx) * t + cx; }
+      return function (x) {
+        var t = x, i;
+        for (i = 0; i < 8; i++) {
+          var e = sx(t) - x, d = dsx(t);
+          if (Math.abs(e) < 1e-6) return sy(t);
+          if (Math.abs(d) < 1e-6) break;
+          t -= e / d;
+        }
+        var lo = 0, hi = 1; t = x;
+        for (i = 0; i < 40 && hi - lo > 1e-6; i++) {
+          if (sx(t) < x) lo = t; else hi = t;
+          t = (lo + hi) / 2;
+        }
+        return sy(t);
+      };
+    }
+    var css = getComputedStyle(document.documentElement);
+    var EASE = bezier.apply(null, css.getPropertyValue("--ease").match(/-?[\d.]+/g).map(Number));
+    var SWEEP_MS = parseFloat(css.getPropertyValue("--slow")) * 1000;
+    var RM = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    var STEP_PX = 0.1;   // a tenth of a CSS px: under one device pixel on every screen this ships to
+    var JUMP_PX = 2;     // bigger than this, arriving with an event, sweeps instead of jumping
 
-    /* The ring shows time remaining, so it empties as the block runs. An idle
-       timer draws a full ring: the block has not started losing anything yet. */
-    var total = phaseSeconds(T.phase);
-    var frac = T.running ? Math.max(0, Math.min(1, remainingSec() / total)) : 1;
-    var arc = $("timerArc");
-    arc.setAttribute("stroke-dasharray",
-      (ARC_C * frac).toFixed(1) + " " + ARC_C.toFixed(1));
-    arc.setAttribute("class", "arc" +
+    function ringFrac() {
+      return T.running ? Math.max(0, Math.min(1, remainingSec() / phaseSeconds(T.phase))) : 1;
+    }
+
+    /* Today's arc and the focus face's, written in the same call so the two
+       circles can never disagree. The face is a second target, not a second
+       driver: it has no timer of its own. */
+    var arcs = [$("timerArc"), $("faceArc")];
+    var shown = null, written = null, sweep = null, check = false, raf = 0, tmo = 0, cpx = 0, spx = 0;
+    arcs.forEach(function (a) {
+      a.setAttribute("stroke-dasharray", ARC_C.toFixed(3) + " " + ARC_C.toFixed(3));
+    });
+
+    /* Steps are sized off the smallest ring on screen: a face ring 1.4x the
+       size would otherwise repaint 1.4x as often to keep the same step.
+       Hidden rings measure 0 and are skipped. */
+    function measure() {
+      var w = 0;
+      arcs.forEach(function (a) {
+        var x = a.ownerSVGElement.getBoundingClientRect().width;
+        if (x && (!w || x < w)) w = x;
+      });
+      var s = w / 228;
+      cpx = ARC_C * s; spx = 8 * s;
+    }
+    function draw(f) {
+      var off = (ARC_C * (1 - f)).toFixed(3);
+      var op = Math.max(0, Math.min(1, spx ? f * cpx / spx : f)).toFixed(3);
+      arcs.forEach(function (a) { a.style.strokeDashoffset = off; a.style.opacity = op; });
+      written = f;
+    }
+    function frame() {
+      raf = 0; tmo = 0;
+      var target = ringFrac(), rt = performance.now();
+      if (shown === null) { shown = target; draw(target); }
+      if (check) {
+        check = false;
+        if (Math.abs(target - shown) * cpx > JUMP_PX && !(RM && RM.matches)) sweep = { from: shown, at: rt };
+      }
+      if (sweep) {
+        var p = Math.min(1, (rt - sweep.at) / SWEEP_MS);
+        shown = sweep.from + (target - sweep.from) * EASE(p);
+        if (p >= 1) sweep = null;
+      } else shown = target;
+      if (sweep || Math.abs(shown - written) * cpx >= STEP_PX ||
+          (shown !== written && (shown === 0 || shown === 1)))
+        draw(shown);
+      schedule();
+    }
+    function schedule() {
+      if (sweep) { raf = requestAnimationFrame(frame); return; }
+      if (!T.running || T.paused) return;               // nothing moves until the next event
+      /* Real ms until the arc end has moved STEP_PX from the last drawn value.
+         +2ms because a timer can fire a hair early, and a wake that finds the
+         arc 0.099 px along would otherwise draw nothing and wait a whole step
+         more. */
+      var moved = Math.abs(ringFrac() - written) * cpx;
+      var rate = cpx / (phaseSeconds(T.phase) * 1000);   // px per real ms
+      var wait = rate ? Math.max(0, STEP_PX - moved) / rate + 2 : 1000;
+      if (wait < 20) raf = requestAnimationFrame(frame);
+      else tmo = setTimeout(frame, Math.min(wait, 1000));
+    }
+    return {
+      kick: function () {
+        measure();
+        check = true;
+        if (raf) cancelAnimationFrame(raf);
+        if (tmo) clearTimeout(tmo);
+        raf = requestAnimationFrame(frame); tmo = 0;
+      }
+    };
+  })();
+
+  /* The digits change on the true second, not up to 200ms late -- scheduled
+     to the boundary instead of read off the 200ms tick. */
+  var digitTmo = 0;
+  function renderDigits() {
+    clearTimeout(digitTmo);
+    var sec = Math.ceil(remainingSec());
+    var txt = pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
+    $("timerFace").textContent = txt;
+    FACE.digits(txt);
+    if (!T.running || T.paused) return;
+    var restMs = remainingSec() * 1000;
+    digitTmo = setTimeout(renderDigits, (restMs % 1000 || 1000) + 1);
+  }
+
+  function renderTimer(faceOnly) {
+    renderDigits();
+    $("timerFace").className = "timer__face" + (T.running && T.paused ? " paused" : "");
+    $("timerArc").setAttribute("class", "arc" +
       (T.phase !== "work" ? " break" : "") + (T.paused ? " paused" : ""));
+    RING.kick();
     if (faceOnly) return;
+    nativeSync();
 
     /* The phase pill carries an icon, so it is rebuilt rather than having its
        text swapped — textContent here would silently delete the glyph. */
@@ -3388,7 +4798,244 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
        directly. Hooking the mood update here, not only from renderToday(),
        is what actually catches it turning Focused the moment a block starts. */
     renderCompanion();
+    FACE.render();
   }
+
+  /* ---- FOCUS FACE (Android) --------------------------------------------
+     The Today ring, full screen on black (PLAN-android.md Part C). It has
+     no timer of its own and no copy of the timer's state:
+       - the arc is drawn by RING, in the same call as Today's
+       - the digits come from renderDigits(), the same on-the-second draw
+       - Pause and Stop click Today's own buttons, and a 500 ms hold clicks
+         Start, so there is exactly one definition of each action
+     Four states, read off T: focus, paused, break, idle. The whole cycle
+     (block, break, idle) runs inside it; closing it never stops anything.
+
+     Text is set in Ndot 57 / Lettera where the phone has them (A12) and
+     Doto / the mono stack elsewhere, so the digit size is fitted to the
+     ring rather than fixed, and each character gets a fixed cell because
+     Ndot 55 has no tabular figures. */
+  var FACE_HOLD_MS = 500;      // Android's own long-press timeout
+  var FACE_QUIET_MS = 5000;    // controls fade after this long without a touch
+  var FACE_DRIFT_PX = 3;       // burn-in drift, re-picked once a minute
+  var FACE_DIGIT_FRAC = 0.66;  // four digit cells + the colon, of the ring's inner diameter
+  var FACE_INNER = 2 * (103 - 4) / 228;   // inner diameter / ring diameter (r 103, stroke 8)
+  var FACE_FONT_WAIT_MS = 1500;           // fit with whatever loaded if a font hangs
+  var FACE_PITCH_EM = 0.1;     // Ndot's dot pitch: a narrow digit shifts by whole pitches only
+
+  /* window.STNative is MainActivity's bridge (Kotlin). Absent in a browser,
+     on desktop, and in an APK built before it existed: a missing method is
+     undefined, never a made-up answer. The Java bridge matches a method by
+     argument count, so a zero-argument method called with an undefined arg
+     throws "Method not found" (seen on the 2a: every read came back
+     unreadable). */
+  function stn(name, arg) {
+    try {
+      var b = window.STNative;
+      if (b && typeof b[name] === "function") return arguments.length > 1 ? b[name](arg) : b[name]();
+    } catch (e) {}
+    return undefined;
+  }
+
+  var FACE = (function () {
+    var el = $("face"), isOpen = false, awakeNow = null;
+    var quietTmo = 0, holdTmo = 0, minuteTmo = 0, fitSeq = 0;
+    var offs = {}, lastTxt = "";
+    var cells = [0, 1, 2, 3, 4].map(function (i) {
+      var c = document.createElement("span");
+      if (i === 2) c.className = "colon";
+      $("faceDigits").appendChild(c);
+      return c;
+    });
+
+    function state() {
+      return !T.running ? "idle" : T.paused ? "paused" : T.phase === "work" ? "focus" : "break";
+    }
+    function subjectLabel() {
+      return T.running && T.subject ? T.subject.label
+        : subjectFrom($("subjInput"), $("groupInput")).label;
+    }
+
+    /* Called from renderDigits(): the same string Today shows, except idle,
+       where Today keeps the last phase's length (05:00 after a break) and
+       the face says what Start will actually do. */
+    function digits(txt) {
+      if (!T.running) {
+        var s = phaseSeconds("work");
+        txt = pad(Math.floor(s / 60)) + ":" + pad(s % 60);
+      }
+      if (txt === lastTxt && cells[0].textContent) return;
+      lastTxt = txt;
+      for (var i = 0; i < 5; i++) {
+        cells[i].textContent = txt.charAt(i);
+        cells[i].style.textIndent = (offs[txt.charAt(i)] || 0) + "em";
+      }
+      $("faceDigits").setAttribute("aria-label", txt);
+    }
+
+    function render() {
+      var st = state(), work = T.phase === "work";
+      el.dataset.state = st;
+      $("faceArc").setAttribute("class", "arc" +
+        (st === "break" ? " break" : "") + (st === "paused" ? " paused" : ""));
+      lastTxt = "";
+      digits($("timerFace").textContent);
+      $("faceSub").textContent = st === "break"
+        ? (T.phase === "long" ? "Long break" : "Short break") : $("timerSub").textContent;
+
+      var lab = esc(subjectLabel()), meta;
+      if (st === "focus") meta = "<b>" + lab + "</b> · ends " + fmtClock(T.endAt);
+      else if (st === "paused") meta = "<b>" + lab + "</b> · paused " + fmtClock(T.pausedAt);
+      else if (st === "break") meta = "back at " + fmtClock(T.endAt);
+      else meta = "hold to start <b>" + lab + "</b>";
+      $("faceMeta").innerHTML = meta;
+      $("faceChips").innerHTML = $("roundChips").innerHTML;
+      /* What Today would say under the ring, e.g. after Stop or a break's end.
+         Only when nothing is counting, so a stale line never sits over a live one. */
+      $("faceNote").textContent = st === "idle" ? $("timerMsg").textContent : "";
+
+      $("facePause").textContent = T.paused ? "Resume" : "Pause";
+      $("faceActs").hidden = !T.running;
+      if (isOpen) { setAwake(st === "focus" || st === "break"); wake(); }
+    }
+
+    /* The bridge is called only when the answer changes. */
+    function setAwake(on) {
+      if (awakeNow === on) return;
+      awakeNow = on;
+      stn("awake", on);
+    }
+
+    /* Controls come back on any touch and go again after FACE_QUIET_MS, but
+       only while something is counting: idle needs its hint, paused its Resume. */
+    function wake() {
+      el.classList.remove("face--quiet");
+      clearTimeout(quietTmo);
+      var st = state();
+      if (st === "focus" || st === "break")
+        quietTmo = setTimeout(function () { el.classList.add("face--quiet"); }, FACE_QUIET_MS);
+    }
+
+    /* Measured after the faces are loaded by name: document.fonts.ready can
+       resolve before a face has been used, and the cells would then be
+       measured in the fallback. Four digit cells plus the colon are set to
+       FACE_DIGIT_FRAC of the ring's inner diameter, so an Ndot cut, Doto and
+       the mono fallback (all different widths) each fit. */
+    function fit() {
+      var seq = ++fitSeq, dialW = $("faceDial").getBoundingClientRect().width;
+      if (!dialW) return;
+      var waited = new Promise(function (r) { setTimeout(r, FACE_FONT_WAIT_MS); });
+      var loaded = document.fonts && document.fonts.load ? Promise.all([
+        document.fonts.load("100px 'ST Ndot'", "0123456789:"),
+        document.fonts.load("12px 'ST Lettera'", "ROUND")
+      ]).catch(function () {}) : Promise.resolve();
+      Promise.race([loaded, waited]).then(function () {
+        if (seq !== fitSeq || !isOpen) return;
+        var probe = document.createElement("div");
+        probe.className = "face__digits";
+        probe.style.cssText = "position:absolute; left:0; top:0; visibility:hidden; font-size:100px; display:block";
+        var w = {};
+        "0123456789:".split("").forEach(function (ch) {
+          var sp = document.createElement("span");
+          sp.style.cssText = "display:inline-block; width:auto";
+          sp.textContent = ch; probe.appendChild(sp);
+        });
+        $("faceDial").appendChild(probe);
+        Array.prototype.forEach.call(probe.children, function (sp) {
+          w[sp.textContent] = sp.getBoundingClientRect().width;
+        });
+        probe.remove();
+        var cell = 0;
+        "0123456789".split("").forEach(function (d) { cell = Math.max(cell, w[d]); });
+        var total = 4 * cell + w[":"], inner = dialW * FACE_INNER;
+        var size = 100 * FACE_DIGIT_FRAC * inner / total;
+        offs = {};
+        "0123456789".split("").forEach(function (d) {
+          /* Whole dot pitches only (never half), so every dot stays on one grid. */
+          offs[d] = Math.floor((cell - w[d]) / 2 / (100 * FACE_PITCH_EM)) * FACE_PITCH_EM;
+        });
+        el.style.setProperty("--dsz", size.toFixed(2) + "px");
+        el.style.setProperty("--cell", (cell / 100).toFixed(4) + "em");
+        el.style.setProperty("--colw", (w[":"] / 100).toFixed(4) + "em");
+        el.classList.add("face--fit");
+        lastTxt = ""; digits($("timerFace").textContent);
+        FACE.info = { fontSize: size, cellEm: cell / 100, colonEm: w[":"] / 100, inner: inner };
+      });
+    }
+
+    /* Once a minute: the clock, and the burn-in drift. The drift is skipped
+       under reduced motion, as Helth's is: a screen meant to hold still
+       shouldn't crawl. Not a countdown timer -- the digits are renderDigits'. */
+    function minute() {
+      clearTimeout(minuteTmo);
+      $("faceClock").textContent = fmtClock(Date.now());
+      var rm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!rm) {
+        var m = Math.floor(Date.now() / 60000);
+        var dx = (m % 7 - 3) / 3 * FACE_DRIFT_PX, dy = (m % 5 - 2) / 2 * FACE_DRIFT_PX;
+        $("faceInner").style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px)";
+      }
+      minuteTmo = setTimeout(minute, 60000 - Date.now() % 60000 + 50);
+    }
+
+    function open() {
+      if (isOpen || !el) return;
+      isOpen = true; awakeNow = null;
+      el.hidden = false;
+      document.body.style.overflow = "hidden";
+      stn("face", true);
+      render(); RING.kick(); fit(); minute();
+      try { el.querySelector("[data-face=close]").focus({ preventScroll: true }); } catch (e) {}
+    }
+    function close() {
+      if (!isOpen) return;
+      isOpen = false;
+      clearTimeout(quietTmo); clearTimeout(holdTmo); clearTimeout(minuteTmo);
+      el.hidden = true; el.classList.remove("face--quiet");
+      document.body.style.overflow = "";
+      awakeNow = null;
+      stn("face", false);
+      RING.kick();
+    }
+
+    el.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-face]"); if (!b) return;
+      var a = b.dataset.face;
+      if (a === "close") close();
+      else if (a === "pause") $("pauseBtn").click();
+      else if (a === "stop") $("stopBtn").click();
+    });
+    /* A hold, not a tap, starts a block from idle: a stray touch on a dark
+       desk shouldn't. Any touch also wakes the controls. */
+    el.addEventListener("pointerdown", function (e) {
+      wake();
+      if (e.target.closest("button") || state() !== "idle") return;
+      clearTimeout(holdTmo);
+      holdTmo = setTimeout(function () { if (state() === "idle") $("startBtn").click(); }, FACE_HOLD_MS);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) {
+      el.addEventListener(ev, function () { clearTimeout(holdTmo); });
+    });
+    el.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && isOpen) close();
+    });
+    window.addEventListener("resize", function () { if (isOpen) { fit(); RING.kick(); } });
+
+    /* Entry from Today: the ring itself, while a block or break runs. */
+    if (ANDROID_SHELL) {
+      var dial = document.querySelector(".timer__dial");
+      dial.classList.add("is-face-entry");
+      dial.setAttribute("role", "button"); dial.setAttribute("tabindex", "0");
+      dial.setAttribute("aria-label", "Open the focus face");
+      dial.addEventListener("click", function () { if (T.running) open(); });
+      dial.addEventListener("keydown", function (e) {
+        if ((e.key === "Enter" || e.key === " ") && T.running) { e.preventDefault(); open(); }
+      });
+    }
+    return { open: open, close: close, render: render, digits: digits,
+             isOpen: function () { return isOpen; }, info: null };
+  })();
 
   /* ---- RENDER: TODAY -------------------------------------------------- */
 
@@ -3663,7 +5310,11 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   function logTable(list, showDate) {
     if (!list.length) {
-      return "<div class='empty'>Nothing logged yet. Start a focus block, or add time " +
+      /* Only the full History log gets the hourglass: Today's log is empty
+         every morning, and a figure there would be furniture, not news. */
+      return "<div class='empty'>" +
+             (showDate ? "<div class='empty__figure' data-hairline-figure='hourglass'></div>" : "") +
+             "Nothing logged yet. Start a focus block, or add time " +
              "you already spent.</div>";
     }
     var rows = list.map(function (s) {
@@ -3853,6 +5504,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
           "<span class='xs muted'>Showing " + shown.length + " of " +
           all.length + "</span></div>"
         : "");
+    if (window.hairline) window.hairline.scan($("fullLog"));
     var more = $("logMore");
     if (more) more.addEventListener("click", function () {
       logLimit += LOG_PAGE; renderHistory();
@@ -4072,13 +5724,14 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     $("sCompanion").checked = !!s.showCompanion;
     $("sBeep").checked = !!s.cues.beep;
     $("sVib").checked = !!s.cues.vibrate;
-    $("sNotify").checked = !!s.cues.notify;
+    $("sNotify").checked = notifyOn();
     $("sQFrom").innerHTML = hourOpts(s.quietHours.from);
     $("sQTo").innerHTML = hourOpts(s.quietHours.to);
-    $("sRemindOn").checked = !!s.reminder.on;
+    $("sRemindOn").checked = reminderOn();
     $("sRemindHour").innerHTML = hourOpts(s.reminder.hour);
     $("sRemindMin").innerHTML = minOpts(s.reminder.min);
     renderSync();
+    renderPhone();
     $("aboutTxt").innerHTML =
       "<strong>Schema v" + S.schemaVersion + ".</strong> Everything is stored in this " +
       "browser under one key. " +
@@ -4150,15 +5803,29 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
 
   /* ---- BACKUP / RESTORE / EXPORT -------------------------------------- */
 
+  /* A9: Android's WebView has no download handler, so the <a download>
+     click below does nothing there and would still return true. The shell
+     writes through MainActivity's saveFile instead, which reports whether
+     the file actually landed in Downloads. An APK without the bridge
+     reports "" rather than claiming a backup it never made. Returns the name
+     the file was saved under, or "": MediaStore renames a second export the
+     same day to "name (1).json", and the message has to say that name. An APK
+     from before that change answers true, which still means the asked-for name. */
   function download(name, text, mime) {
+    if (ANDROID_SHELL) {
+      try {
+        var r = window.STNative.saveFile(name, mime, text);
+        return r === true ? name : typeof r === "string" ? r : "";
+      } catch (e) { return ""; }
+    }
     try {
       var url = URL.createObjectURL(new Blob([text], { type: mime }));
       var a = document.createElement("a");
       a.href = url; a.download = name;
       document.body.appendChild(a); a.click();
       setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 800);
-      return true;
-    } catch (e) { return false; }
+      return name;
+    } catch (e) { return ""; }
   }
   function csvCell(v) {
     var s = String(v == null ? "" : v);
@@ -4330,6 +5997,23 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     applyTheme();
     if (awardBadges(true).length) saveLocal();
     recoverIfNeeded();
+    if (unreadableKey) {
+      var ub = document.createElement("div");
+      ub.className = "banner";
+      ub.innerHTML = "<strong>Saved data couldn't be read.</strong> It was kept under " +
+        esc(unreadableKey) + " in this browser's storage, and the app started empty.";
+      $("recoveryHost").appendChild(ub);
+    }
+
+    /* Another tab of this app saved: adopt its copy. Without this, a tab
+       left open writes its stale log over the other's new session (a block
+       logged in one tab, Start pressed in the other: 1 stored session -> 0).
+       This tab's own running timer lives in T, not S, so it carries on. */
+    window.addEventListener("storage", function (e) {
+      if (e.key !== KEY || e.newValue == null) return;
+      try { S = migrate(JSON.parse(e.newValue)); } catch (err) { return; }
+      applyTheme(); renderAll();
+    });
 
     wireLogHost($("todayLog"));
     wireLogHost($("fullLog"));
@@ -4445,7 +6129,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
         code: null,
         label: T.subject ? T.subject.label : "General study",
         group: T.subject ? T.subject.group : "",
-        startedAt: T.startedAt, endedAt: Date.now(),
+        startedAt: T.startedAt, endedAt: workEndAt(),
         minutes: mins, source: "pomodoro", interrupted: false, note: ""
       });
       stopAll(); renderAll();
@@ -4530,9 +6214,22 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       var p = pair.split("|");
       $(p[0]).addEventListener("change", function () {
         var on = $(p[0]).checked;
-        S.settings.cues[p[1]] = on;
-        save();
-        if (p[1] === "notify" && on && window.__TAURI__) {
+        /* On the phone the notification choice is the phone's alone. */
+        if (p[1] === "notify" && ANDROID_SHELL) { setDevice("notifyOn", on); nativeSync(); }
+        else { S.settings.cues[p[1]] = on; save(); }
+        if (p[1] === "notify" && on && ANDROID_SHELL) {
+          /* POST_NOTIFICATIONS is a real prompt on Android 13+, so the answer
+             is what gets reported. Already granted is answered from the
+             cache: the plugin's request never resolves when there is nothing
+             left to ask (found on the 2a, Helth A3). */
+          askAndroidNotify(function (granted) {
+            if (granted) { msg("cueMsg", "Notifications on.", "ok"); renderPhone(); nativeSync(); return; }
+            setDevice("notifyOn", false); $(p[0]).checked = false;
+            msg("cueMsg", "Android has notifications off for Study Tracker — turn them on " +
+              "in Android Settings → Apps → Study Tracker → Notifications. Left off.", "err");
+            renderPhone(); nativeSync();
+          });
+        } else if (p[1] === "notify" && on && window.__TAURI__) {
           /* Desktop shell: the native plugin grants unconditionally on
              Linux/Windows, so there is no browser prompt to raise. */
           try { window.__TAURI__.core.invoke("plugin:notification|request_permission"); } catch (e) {}
@@ -4557,8 +6254,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
        taken at the last `cargo build`, so it goes stale the moment this file
        changes again. run_update shells out to copy-assets.sh + cargo build
        --release + install.sh (see src-tauri/src/main.rs); relaunch swaps the
-       running process for the freshly installed one. */
-    if (window.__TAURI__) {
+       running process for the freshly installed one. Not on Android, where
+       run_update isn't registered: the phone updates by `adb install -r`. */
+    if (window.__TAURI__ && !ANDROID_SHELL) {
       $("updateCard").hidden = false;
       $("updateBtn").addEventListener("click", function () {
         $("updateBtn").disabled = true;
@@ -4587,14 +6285,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
        part-way through a day, should get you today's reminder rather than
        silently skipping to tomorrow because an earlier setting had already
        marked the day spent. */
-    $("sRemindOn").addEventListener("change", function () {
-      S.settings.reminder.on = this.checked;
-      S.nudgedOn = null; save();
-      msg("cueMsg", this.checked
-        ? "Reminder on. The banner always works; the notification needs a tab " +
-          "open and the Notification switch above."
-        : "Reminder off.", this.checked ? "ok" : "");
-    });
+    $("sRemindOn").addEventListener("change", function () { setRemind(this.checked); });
     $("sRemindHour").addEventListener("change", function () {
       S.settings.reminder.hour = +this.value; S.nudgedOn = null; save();
     });
@@ -4602,7 +6293,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       S.settings.reminder.min = +this.value; S.nudgedOn = null; save();
     });
     $("testCue").addEventListener("click", function () {
-      cue("work");
+      cue("work", true);
       msg("cueMsg", inQuiet() ? "Quiet hours are active right now, so nothing played."
         : "Played.", inQuiet() ? "" : "ok");
     });
@@ -4610,15 +6301,17 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     /* -- data -- */
     $("expJson").addEventListener("click", function () {
       var name = "study-tracker-backup-" + todayKey() + ".json";
-      if (download(name, JSON.stringify(S, null, 2), "application/json"))
-        msg("dataMsg", "Downloaded " + name, "ok");
-      else msg("dataMsg", "Download blocked by the browser — try the CSV export.", "err");
+      var saved = download(name, JSON.stringify(S, null, 2), "application/json");
+      if (saved) msg("dataMsg", "Downloaded " + saved, "ok");
+      else msg("dataMsg", ANDROID_SHELL ? "Couldn't write " + name + " to Downloads."
+        : "Download blocked by the browser — try the CSV export.", "err");
     });
     $("expCsv").addEventListener("click", function () {
       var name = "study-sessions-" + todayKey() + ".csv";
-      if (download(name, exportCsv(), "text/csv"))
-        msg("dataMsg", "Downloaded " + name + " (" + S.sessions.length + " rows)", "ok");
-      else msg("dataMsg", "Download blocked by the browser.", "err");
+      var saved = download(name, exportCsv(), "text/csv");
+      if (saved) msg("dataMsg", "Downloaded " + saved + " (" + S.sessions.length + " rows)", "ok");
+      else msg("dataMsg", ANDROID_SHELL ? "Couldn't write " + name + " to Downloads."
+        : "Download blocked by the browser.", "err");
     });
     $("impBtn").addEventListener("click", function () { $("impFile").click(); });
     $("impFile").addEventListener("change", function () {
@@ -4773,7 +6466,10 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       }
       if (reminderDue()) fireReminder();
       if (currentView === "today") { renderStreakTile(); renderNextBadge(); }
+      nativeSync();
     }, SLOW_TICK_MS);
+    nativeTaps();
+    wirePhone();
 
     /* Started last, after every view can render: the first pull replaces S
        wholesale, so the callback has to be able to repaint the whole app. */
@@ -4785,7 +6481,9 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
       if (currentView === "settings") renderSync();
     });
 
-    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    /* Not inside the Tauri shell either: its assets ship in the binary, and on
+       Android's tauri.localhost scheme registration throws on every launch. */
+    if ("serviceWorker" in navigator && location.protocol !== "file:" && !window.__TAURI__) {
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   }
@@ -4801,6 +6499,7 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
     PALETTES: PALETTES, resolvedMode: resolvedMode, companionMood: companionMood,
     streakRisk: streakRisk, hoursToBoundary: hoursToBoundary,
     nearestBadge: nearestBadge, reminderDue: reminderDue, reminderAt: reminderAt,
+    reminderOn: reminderOn, native: NATIVE,
     workCapMin: workCapMin, timer: function () { return T; },
     resolvedPalette: function () { return resolvedPalette().id; }
   };
@@ -4810,6 +6509,118 @@ select{appearance:none; cursor:pointer; padding-right:var(--s8);
   else init();
 
 })();
+</script>
+<script type="module" id="hl-figure">
+/**
+ * Hourglass: a glass in a three-post frame, every grain of sand still in the
+ * top bulb and the bottom one empty. The pointer tips it toward the side it
+ * is on, on a spring, rocking on the rim of its base; the packed sand tips
+ * with it and none falls. The slider is the furthest it leans, in degrees.
+ *
+ * The pattern: a continuous input, as Terrain, but one number for the whole
+ * object. The lean is read from the pointer's screen x against a fixed
+ * centre, so tipping never moves the thing it is tested against.
+ */
+const {
+  Cam, circ, clamp, fit, hull, poly, proj, rad, ringAt, spring, stepS,
+  disposer, mk, pointer, register,
+} = HL;
+
+const R = 30, CAP = 5, H = 120, NZ = 60, PR = 24, POST = 2.3, YAW = 20, SAND = 30;
+// One bulb's radius by height above the neck: a swell from the 3-unit neck to 20, closing to 6 at the cap.
+// The bottom bulb is the same, mirrored. Sampled every 2.5 units so the hull reads as a curve, not facets.
+const rAt = (dz) => (dz <= 30 ? 3 + 17 * Math.sin((Math.PI / 2) * (dz / 30)) ** 0.8 : 20 - 14 * ((dz - 30) / 25) ** 2);
+const BULB = Array.from({ length: 23 }, (_, i) => [i * 2.5, rAt(i * 2.5)]);
+const POSTS = [0, 1, 2].map((k) => rad(YAW + 90 + 120 * k)).map((a) => [PR * Math.cos(a), PR * Math.sin(a)]);
+
+/** World points tipped by theta degrees toward screen right (negative: left), about the base rim on that side. */
+function tipper(theta) {
+  const t = rad(Math.abs(theta)), c = Math.cos(t), s = Math.sin(t), sg = theta < 0 ? -1 : 1, k = Math.SQRT1_2;
+  return (x, y, z) => {
+    const a = sg * (x - y) * k - R, b = (x + y) * k;
+    const A = sg * (a * c + z * s + R);
+    return [(A + b) * k, (b - A) * k, -a * s + z * c];
+  };
+}
+
+function mount({ stage, svg, read }, value) {
+  const bag = disposer();
+  let most = value;
+
+  const C = Cam(45, 0.5, 1.98);
+  const ends = [];
+  for (const th of [-28, 0, 28]) { const T = tipper(th); for (const [x, y] of [[R, R], [-R, -R], [R, -R], [-R, R]]) for (const z of [0, H]) ends.push(T(x * 0.72, y * 0.72, z)); }
+  fit(C, ends, 200, 166);
+  const P0 = proj(C);
+
+  const g = mk("g", {}, svg);
+  const el = (cls) => mk("path", { class: cls }, g);
+  // Paint order: base, the posts behind the glass, sand, glass, the posts in front, the cap.
+  const depth = ([x, y]) => x + y;
+  const back = POSTS.filter((p) => depth(p) < 0), front = POSTS.filter((p) => depth(p) >= 0);
+  const base = el("sil"), baseCr = el("nf lo");
+  const backEls = back.map(() => el("sil"));
+  const sand = el("sil"), sandTop = el("nf lo");
+  // The glass is dim and the sand carries the silhouette; the empty bottom bulb is the bright mark.
+  const upper = el("nf lo"), lower = el("nf hi"), neck = el("nf lo");
+  const frontEls = front.map(() => el("sil"));
+  const cap = el("sil"), capCr = el("nf lo");
+
+  const lean = spring(0);
+  let drawn = NaN;
+
+  function draw() {
+    const th = lean.x;
+    if (th === drawn) return;
+    drawn = th;
+    const T = tipper(th), Pw = (x, y, z) => P0(...T(x, y, z));
+    const ring = (r, z, x = 0, y = 0, n = 32) => ringAt(Pw, circ(r, n).map((q) => ({ ...q, u: q.u + x, v: q.v + y })), z);
+    const solidOf = (rs) => poly(hull(rs.flat()));
+    base.setAttribute("d", solidOf([ring(R, 0), ring(R, CAP)]));
+    baseCr.setAttribute("d", poly(ring(R - 2, CAP)));
+    cap.setAttribute("d", solidOf([ring(R, H - CAP), ring(R, H)]));
+    capCr.setAttribute("d", poly(ring(R - 2, H)));
+    const post = ([x, y]) => solidOf([ring(POST, CAP, x, y, 12), ring(POST, H - CAP, x, y, 12)]);
+    back.forEach((p, i) => backEls[i].setAttribute("d", post(p)));
+    front.forEach((p, i) => frontEls[i].setAttribute("d", post(p)));
+    upper.setAttribute("d", solidOf(BULB.map(([dz, r]) => ring(r, NZ + dz))));
+    lower.setAttribute("d", solidOf(BULB.map(([dz, r]) => ring(r, NZ - dz))));
+    neck.setAttribute("d", poly(ring(3, NZ, 0, 0, 16)));
+    // The sand: packed into the top bulb from the neck up, one grain-width inside the glass.
+    const levels = BULB.filter(([dz]) => dz < SAND).map(([dz]) => dz).concat(SAND);
+    sand.setAttribute("d", solidOf(levels.map((dz) => ring(Math.max(1.6, rAt(dz) - 1.4), NZ + dz))));
+    sandTop.setAttribute("d", poly(ring(rAt(SAND) - 3.2, NZ + SAND)));
+  }
+
+  const B = register(stage, (dt) => { const m = stepS(lean, dt); draw(); return m; });
+  bag.add(B.unregister);
+
+  // The pointer's side of a fixed centre line sets the lean; the read-out counts the sand that has fallen: none.
+  const mid = P0(0, 0, NZ)[0];
+  function aim(p) {
+    if (p) {
+      lean.t = clamp((p[0] - mid) / 110, -1, 1) * most;
+      read.textContent = `${Math.round(Math.abs(lean.t))}° · 0:00`;
+    } else { lean.t = 0; read.textContent = "rest"; }
+    B.wake();
+  }
+
+  bag.add(pointer(stage, { move: aim, leave: () => aim(null) }));
+  bag.add(() => svg.replaceChildren());
+
+  return {
+    set: (v) => { most = v; },
+    destroy: bag.dispose,
+  };
+}
+
+hairline({
+  name: "hourglass",
+  means: "An hourglass with every grain still on top: the pointer tips it toward its side, and none of the sand falls.",
+  rules: [1, 3, 5, 6],
+  range: [12, 20, 28],
+  mount,
+});
 </script>
 </body>
 </html>

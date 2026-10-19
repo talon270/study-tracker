@@ -3,7 +3,7 @@
    a stale shell is always better than a blank page. Bump CACHE on release. */
 "use strict";
 
-var CACHE = "study-tracker-v12";  // bumped: sync tombstones + per-session edit stamps (schema 7)
+var CACHE = "study-tracker-v13";  // bumped: unreadable save kept aside, second-tab adoption, own-prefix cache cleanup
 var ASSETS = [
   "./",
   "./index.html",
@@ -20,9 +20,10 @@ self.addEventListener("install", function (e) {
 
 self.addEventListener("activate", function (e) {
   e.waitUntil(
+    /* Only this app's caches: every app on talon270.github.io shares one CacheStorage, and deleting the rest took their offline copies with it. */
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        return k === CACHE ? null : caches.delete(k);
+        return k === CACHE || k.indexOf("study-tracker-") !== 0 ? null : caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
